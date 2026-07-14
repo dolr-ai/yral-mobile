@@ -41,6 +41,7 @@ import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.domain.BotSubscriptionCatalog
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
@@ -303,6 +304,13 @@ fun ChatConversationScreen(
     val hasChatAccess by derivedStateOf {
         proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified
     }
+    val collageStates by viewModel.collageStates.collectAsStateWithLifecycle()
+    val requestImageCooldown by viewModel.requestImageCooldownSeconds.collectAsStateWithLifecycle()
+    // Collage bubbles fetch with the CURRENT subscription state; pushing the
+    // composed gate (Pro OR per-influencer access) into the VM makes every
+    // collage refetch on a flip — historical blurred bubbles turn clear the
+    // moment a purchase verifies, and vice versa on lapse.
+    LaunchedEffect(hasChatAccess) { viewModel.setHasChatAccess(hasChatAccess) }
     val atSubscriptionThreshold by derivedStateOf {
         totalMessageCount >= viewState.subscriptionMandatoryThreshold
     }
@@ -402,10 +410,11 @@ fun ChatConversationScreen(
         )
     }
 
-    fun sendMessageIfAllowed(
-        draft: SendMessageDraft,
-        onBeforeSend: () -> Unit = {},
-    ) {
+    // Shared send gates (bot account, login prompt, subscription card,
+    // purchase unavailable). Runs [onAllowed] only when nothing blocks —
+    // used by both draft sends and the quota-consuming collage request,
+    // so the gates always fire BEFORE any server side effect.
+    fun runIfSendAllowed(onAllowed: () -> Unit) {
         val blocked =
             when {
                 viewState.isBotAccount -> {
@@ -413,15 +422,11 @@ fun ChatConversationScreen(
                 }
 
                 shouldPromptForLogin -> {
-                    // Capture the intended send so successful login auto-resumes
-                    // it (chip-tap or typed draft both flow through this gate).
-                    // On cancel the callback never fires and the input stays as
-                    // typed because onBeforeSend (which clears the field) is
-                    // deferred until after the resumed send.
-                    promptLogin {
-                        onBeforeSend()
-                        viewModel.sendMessage(draft)
-                    }
+                    // Capture the intended action so successful login
+                    // auto-resumes it (chip-tap, typed draft, or collage
+                    // request all flow through this gate). On cancel the
+                    // callback never fires, so e.g. the typed input stays.
+                    promptLogin { onAllowed() }
                     true
                 }
 
@@ -440,6 +445,15 @@ fun ChatConversationScreen(
                 }
             }
         if (!blocked) {
+            onAllowed()
+        }
+    }
+
+    fun sendMessageIfAllowed(
+        draft: SendMessageDraft,
+        onBeforeSend: () -> Unit = {},
+    ) {
+        runIfSendAllowed {
             onBeforeSend()
             viewModel.sendMessage(draft)
         }
@@ -469,9 +483,17 @@ fun ChatConversationScreen(
                 }
                 while (true) {
                     val remaining = remainingAccessMs(expiresAtMs)
-                    val text = if (remaining <= 0L) null else formatMillisToHHmmSS(remaining)
-                    val isExpiringSoon = remaining in 1..EXPIRING_SOON_THRESHOLD_MS
-                    value = AccessExpiryDisplay(text, isExpiringSoon)
+                    if (remaining <= 0L) {
+                        value = AccessExpiryDisplay(null, false)
+                        // Ask the backend rather than flipping locally: an
+                        // auto-renewing sub has usually just renewed (new
+                        // expiry restarts this ticker); a real lapse clears
+                        // the subscribed state in the VM.
+                        viewModel.recheckChatAccessOnExpiry()
+                        break
+                    }
+                    val isExpiringSoon = remaining <= EXPIRING_SOON_THRESHOLD_MS
+                    value = AccessExpiryDisplay(formatMillisToHHmmSS(remaining), isExpiringSoon)
                     delay(1.seconds)
                 }
             }
@@ -547,8 +569,35 @@ fun ChatConversationScreen(
                             streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                             assistantError = assistantError,
                             onAssistantErrorRetry = { viewModel.retryFailedAssistantReply() },
+                            collageConfig =
+                                CollageListConfig(
+                                    states = collageStates,
+                                    botId = viewState.influencer?.id.orEmpty(),
+                                    influencerDisplayName =
+                                        viewState.influencer
+                                            ?.displayName
+                                            ?.ifBlank { viewState.influencer?.name }
+                                            .orEmpty(),
+                                    onLoad = viewModel::loadCollage,
+                                    onSubscribeClick = {
+                                        purchaseContext?.let {
+                                            viewModel.launchInfluencerSubscriptionPurchase(it)
+                                        }
+                                    },
+                                    onImagePreview = { images, imageUrl ->
+                                        activeImagePreview =
+                                            ChatImagePreviewSource.Message(
+                                                imageUrl = imageUrl,
+                                                galleryUrls = images,
+                                            )
+                                    },
+                                ),
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
+                            },
+                            onUnlockImage = { _ ->
+                                // Image-unlock payment flow gets wired here once the
+                                // end-to-end integration lands; UI-only for now.
                             },
                             onRetry = { localId -> viewModel.retry(localId) },
                         )
@@ -745,6 +794,19 @@ fun ChatConversationScreen(
                                             },
                                             onCameraClick = imageCaptureLauncher,
                                             onGalleryClick = imagePickerLauncher,
+                                            // Photo collages are exclusive to subscription bots
+                                            // (Tara) — hidden for every other bot and for H2H
+                                            // peers, who can't fulfil them.
+                                            onRequestImageClick =
+                                                if (
+                                                    !viewState.isHumanChat &&
+                                                    BotSubscriptionCatalog.usesBotSubscription(viewState.influencer?.id)
+                                                ) {
+                                                    { runIfSendAllowed { viewModel.requestCollageImages() } }
+                                                } else {
+                                                    null
+                                                },
+                                            requestImageRemainingSeconds = requestImageCooldown,
                                             // Mic button is gated on AudioRecordingEnabled (kill-switch +
                                             // GA pacing) AND not-an-H2H-chat. Voice messages aren't
                                             // supported on H2H peer chats — the H2H send route doesn't

@@ -19,6 +19,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,6 +28,8 @@ import kotlin.time.Duration
 import com.yral.shared.iap.core.model.Purchase as IAPPurchase
 
 private val PURCHASE_TIMEOUT: Duration = Duration.parse("5m")
+private val PURCHASE_RECONCILE_POLL_INTERVAL: Duration = Duration.parse("5s")
+private const val PURCHASE_RECONCILE_TIME_SLACK_MS = 120_000L
 
 internal class AndroidIAPProvider(
     context: Context,
@@ -120,6 +123,7 @@ internal class AndroidIAPProvider(
                 pendingPurchasesAcknowledgeFlags[productIdString] = acknowledgePurchase
             }
 
+            val flowStartedAtMs = System.currentTimeMillis()
             val billingResult = client.launchBillingFlow(activity, flowParams)
 
             if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
@@ -145,6 +149,12 @@ internal class AndroidIAPProvider(
                     ),
                 )
             }
+
+            // Play can fail to deliver the PurchasesUpdatedListener callback
+            // (observed live: purchase completed on Play's side, listener never
+            // fired, this flow hung until timeout). Reconcile against Play's
+            // local purchase cache so a completed purchase still resolves.
+            startPurchaseReconciliationPoll(productIdString, flowStartedAtMs)
 
             withTimeout(PURCHASE_TIMEOUT) {
                 deferred.await()
@@ -188,6 +198,61 @@ internal class AndroidIAPProvider(
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }
             }
+
+    /**
+     * Fallback for missed [PurchasesUpdatedListener] callbacks: while the
+     * purchase flow is pending, poll Play's local purchase cache and complete
+     * the pending deferred if the purchase actually went through. Exits as
+     * soon as the pending entry is gone (listener delivered, timeout cleanup,
+     * or a previous poll iteration completed it).
+     */
+    private fun startPurchaseReconciliationPoll(
+        productIdString: String,
+        flowStartedAtMs: Long,
+    ) {
+        callbackScope.launch {
+            var resolved = false
+            while (!resolved) {
+                delay(PURCHASE_RECONCILE_POLL_INTERVAL)
+                val pending = pendingPurchasesLock.withLock { pendingPurchases[productIdString] }
+                if (pending == null || pending.isCompleted) break
+                resolved = reconcilePendingPurchase(productIdString, flowStartedAtMs)
+            }
+        }
+    }
+
+    /** One poll iteration; true when the pending purchase was found and completed. */
+    private suspend fun reconcilePendingPurchase(
+        productIdString: String,
+        flowStartedAtMs: Long,
+    ): Boolean {
+        val acknowledge =
+            pendingPurchasesLock.withLock {
+                pendingPurchasesAcknowledgeFlags[productIdString] ?: true
+            }
+        val match =
+            purchaseManager
+                .restorePurchases(acknowledgePurchase = acknowledge)
+                .getOrNull()
+                .orEmpty()
+                .firstOrNull { purchase ->
+                    purchase.productId?.productId == productIdString &&
+                        purchase.state == PurchaseState.PURCHASED &&
+                        purchase.purchaseTime >= flowStartedAtMs - PURCHASE_RECONCILE_TIME_SLACK_MS
+                } ?: return false
+        Logger.d("SubscriptionX") {
+            "Reconciliation poll resolved $productIdString (listener callback was missed)"
+        }
+        pendingPurchasesLock.withLock {
+            pendingPurchases.remove(productIdString)?.let { deferred ->
+                pendingPurchasesAcknowledgeFlags.remove(productIdString)
+                if (!deferred.isCompleted) {
+                    deferred.complete(Result.success(match))
+                }
+            }
+        }
+        return true
+    }
 
     private fun handlePurchaseUpdate(
         billingResult: BillingResult,

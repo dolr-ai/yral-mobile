@@ -5,6 +5,8 @@ import com.yral.shared.features.chat.data.ChatAccessBillingDataSource
 import com.yral.shared.features.chat.data.models.GrantChatAccessRequestDto
 import com.yral.shared.features.chat.domain.models.ChatAccessStatus
 import com.yral.shared.features.chat.domain.models.GrantError
+import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.core.model.ProductType
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -33,7 +35,15 @@ class GrantChatAccessUseCase(
                 purchaseToken = parameter.purchaseToken,
                 botId = parameter.botId,
             )
-        val result = dataSource.grantChatAccess(request)
+        // Per-bot subscriptions ("bot_sub_*") verify against a dedicated
+        // billing endpoint; the one-time daily_chat keeps the original grant.
+        val isBotSubscription = ProductId.fromString(parameter.productId)?.productType == ProductType.SUBS
+        val result =
+            if (isBotSubscription) {
+                dataSource.grantBotSubscription(request)
+            } else {
+                dataSource.grantChatAccess(request)
+            }
         val httpStatus = result.httpStatus
         val response = result.apiResponse
 
@@ -41,7 +51,9 @@ class GrantChatAccessUseCase(
             httpStatus in HTTP_OK_RANGE && response.success -> {
                 val data = response.data
                 return ChatAccessStatus(
-                    hasAccess = data?.hasAccess == true,
+                    // The subscription verify response has an empty data
+                    // payload — a 2xx success IS the access confirmation.
+                    hasAccess = isBotSubscription || data?.hasAccess == true,
                     expiresAtMs = data?.expiresAt?.let { parseIso8601ToEpochMs(it) },
                 )
             }

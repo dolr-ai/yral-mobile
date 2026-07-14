@@ -118,6 +118,33 @@ jobs:
           echo "NEW_VERSION_CODE=$NEW" >> $GITHUB_ENV
           echo "NEW_VERSION_NAME=$VERSION" >> $GITHUB_ENV
 
+      # Commit the bump BEFORE building/uploading. Invariant: never upload a
+      # version code that main doesn't already record. A run once uploaded
+      # 1688 to Play and then failed this commit step, leaving main at 1687 —
+      # every subsequent deploy recomputed 1688 and was rejected by Play
+      # ("Version code 1688 has already been used"). Failing here instead
+      # aborts with nothing consumed; a code skipped by a later build failure
+      # is a harmless gap.
+      - name: Commit updated Android version metadata to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ./androidApp/build.gradle.kts
+          git commit -m "[skip ci] chore: bump staging version to $NEW_VERSION_NAME (versionCode $NEW_VERSION_CODE)"
+          # --autostash: earlier pod install steps can leave tracked files
+          # (Podfile.lock) modified, and a plain pull --rebase refuses on a
+          # dirty tree — that's exactly what orphaned versionCode 1688.
+          git status --short
+          for attempt in 1 2 3; do
+            if git pull --rebase --autostash origin main && git push origin main; then
+              exit 0
+            fi
+            echo "push attempt $attempt failed, retrying..."
+            sleep 10
+          done
+          echo "Failed to push version bump to main after 3 attempts" >&2
+          exit 1
+
       - name: Set up Android keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_ALPHA_KEYSTORE_CONTENTS_BASE_64 }}
@@ -159,15 +186,6 @@ jobs:
           releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
           track: production
           status: completed
-
-      - name: Commit updated Android version metadata to main
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ./androidApp/build.gradle.kts
-          git commit -m "[skip ci] chore: bump staging version to $NEW_VERSION_NAME (versionCode $NEW_VERSION_CODE)"
-          git pull --rebase origin main
-          git push origin main
 
       # ── iOS → TestFlight ─────────────────────────────────────────────────
       - name: Resolve TestFlight release notes

@@ -2,21 +2,22 @@ package com.yral.shared.features.chat.data
 
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.data.models.ChatMessageDto
+import com.yral.shared.features.chat.data.models.CollageResponseDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
-import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
-import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
+import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
-import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
+import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 
 @Suppress("TooManyFunctions")
@@ -42,6 +43,28 @@ interface ChatDataSource {
     ): InboxSearchResponseDto
 
     suspend fun getInfluencer(id: String): InfluencerDto
+
+    /**
+     * POST /api/v1/influencers/{id}/request-images — consumes today's quota
+     * and returns the collage payload. Cold path (no pre-gen yet) can take
+     * 45–65 s, hence the extended per-request timeout in the impl.
+     */
+    suspend fun requestInfluencerImages(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): CollageResponseDto
+
+    /**
+     * GET /api/v1/influencers/{id}/collage — idempotent render-time read.
+     * Lookup precedence server-side: collage_id > date > today. 404 when the
+     * requested collage doesn't exist (e.g. today's not generated yet).
+     */
+    suspend fun getInfluencerCollage(
+        influencerId: String,
+        isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
+    ): CollageResponseDto
 
     // ---------- Coach pivot Bucket 2 — View full prompt page ----------
 

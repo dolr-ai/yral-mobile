@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.ui.conversation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.Alignment.Companion.BottomStart
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -45,13 +49,17 @@ import com.yral.shared.libs.designsystem.component.getLocalImageModel
 import com.yral.shared.libs.designsystem.theme.AppTopography
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.blurred_image_unlock_cta
 import yral_mobile.shared.features.chat.generated.resources.message_failed_tap_to_resend
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_bubble_tip_black
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_bubble_tip_pink
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_exclamation_circle
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -66,6 +74,8 @@ internal fun MessageContent(
     isStreaming: Boolean = false,
     markdownLockedOverride: Boolean? = null,
     onRetry: (() -> Unit)? = null,
+    isBlurred: Boolean = false,
+    onUnlockClick: (() -> Unit)? = null,
 ) {
     MessageBubble(
         content = content,
@@ -78,6 +88,8 @@ internal fun MessageContent(
         isStreaming = isStreaming,
         markdownLockedOverride = markdownLockedOverride,
         onRetry = onRetry,
+        isBlurred = isBlurred,
+        onUnlockClick = onUnlockClick,
     )
 }
 
@@ -93,6 +105,8 @@ internal fun MessageBubble(
     isStreaming: Boolean,
     markdownLockedOverride: Boolean?,
     onRetry: (() -> Unit)?,
+    isBlurred: Boolean,
+    onUnlockClick: (() -> Unit)?,
 ) {
     val baseModifier = Modifier.widthIn(max = maxWidth)
     val clickableModifier =
@@ -116,6 +130,8 @@ internal fun MessageBubble(
                 isFailed = isFailed,
                 isStreaming = isStreaming,
                 markdownLockedOverride = markdownLockedOverride,
+                isBlurred = isBlurred,
+                onUnlockClick = onUnlockClick,
             )
         }
     }
@@ -140,6 +156,8 @@ private fun RegularBubble(
     isFailed: Boolean,
     isStreaming: Boolean = false,
     markdownLockedOverride: Boolean? = null,
+    isBlurred: Boolean = false,
+    onUnlockClick: (() -> Unit)? = null,
 ) {
     // Phase 5c rendering contract (do not regress):
     //   1. Path lock — `markdownLockedOverride` pins Markdown vs Text for the full
@@ -198,6 +216,8 @@ private fun RegularBubble(
             mediaUrls = mediaUrls,
             onImageClick = onImageClick,
             maxWidth = maxWidth,
+            isBlurred = isBlurred,
+            onUnlockClick = onUnlockClick,
         )
     }
 }
@@ -247,7 +267,7 @@ private fun markDownColors(textColor: Color): DefaultMarkdownColors =
     }
 
 @Composable
-private fun MessageInBubble(
+internal fun MessageInBubble(
     isUser: Boolean = false,
     isFailed: Boolean = false,
     isOnlyMedia: Boolean = false,
@@ -320,6 +340,8 @@ private fun MessageImages(
     mediaUrls: List<String>,
     onImageClick: ((String) -> Unit)?,
     maxWidth: Dp,
+    isBlurred: Boolean = false,
+    onUnlockClick: (() -> Unit)? = null,
 ) {
     if (mediaUrls.isEmpty()) return
 
@@ -329,6 +351,8 @@ private fun MessageImages(
             imageUrl = imageUrl,
             onImageClick = onImageClick,
             maxWidth = maxWidth,
+            isBlurred = isBlurred,
+            onUnlockClick = onUnlockClick,
         )
     }
 }
@@ -338,6 +362,8 @@ private fun ChatMessageImage(
     imageUrl: String,
     onImageClick: ((String) -> Unit)?,
     maxWidth: Dp,
+    isBlurred: Boolean = false,
+    onUnlockClick: (() -> Unit)? = null,
 ) {
     val density = LocalDensity.current
     val imageModel = rememberChatImageModel(imageUrl)
@@ -359,10 +385,12 @@ private fun ChatMessageImage(
                 .height(imageContainerSize.heightPx.toDp())
         }.clip(RoundedCornerShape(6.dp))
             .let { baseModifier ->
-                if (onImageClick != null) {
-                    baseModifier.clickable { onImageClick(imageUrl) }
-                } else {
-                    baseModifier
+                when {
+                    // Locked image: no full-screen preview — tapping anywhere
+                    // routes to the unlock flow instead.
+                    isBlurred -> baseModifier.clickable { onUnlockClick?.invoke() }
+                    onImageClick != null -> baseModifier.clickable { onImageClick(imageUrl) }
+                    else -> baseModifier
                 }
             }
 
@@ -373,7 +401,10 @@ private fun ChatMessageImage(
         AsyncImage(
             model = imageModel,
             contentDescription = "image",
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier.fillMaxSize().let { baseModifier ->
+                    if (isBlurred) baseModifier.blur(BLURRED_IMAGE_BLUR_RADIUS) else baseModifier
+                },
             contentScale = ContentScale.Fit,
             onState = { state ->
                 isLoading = state !is AsyncImagePainter.State.Success && state !is AsyncImagePainter.State.Error
@@ -388,6 +419,51 @@ private fun ChatMessageImage(
 
         if (isLoading) {
             YralLoader()
+        }
+
+        if (isBlurred) {
+            // Scrim doubles as the hide layer on platforms where Modifier.blur
+            // is a no-op (Android < 12) and gives the pill contrast elsewhere.
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = BLURRED_IMAGE_SCRIM_ALPHA)),
+                contentAlignment = Alignment.Center,
+            ) {
+                UnlockImagePill(onClick = { onUnlockClick?.invoke() })
+            }
+        }
+    }
+}
+
+// Mirrors the SubscribeButton pill in the design system (AccountInfoView.kt):
+// Yellow400 fill, Yellow200 border/text, thunder icon.
+@Composable
+private fun UnlockImagePill(onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.height(UNLOCK_PILL_HEIGHT),
+        shape = RoundedCornerShape(4.dp),
+        color = YralColors.Yellow400,
+        border = BorderStroke(1.dp, YralColors.Yellow200),
+        onClick = onClick,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = UNLOCK_PILL_HORIZONTAL_PADDING),
+            horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.blurred_image_unlock_cta),
+                style = LocalAppTopography.current.regSemiBold,
+                color = YralColors.Yellow200,
+            )
+            Image(
+                painter = painterResource(DesignRes.drawable.ic_thunder),
+                contentDescription = null,
+                contentScale = ContentScale.Inside,
+                modifier = Modifier.size(UNLOCK_PILL_ICON_SIZE),
+            )
         }
     }
 }
@@ -407,6 +483,26 @@ internal fun localChatImageFilePathOrNull(imageUrl: String): String? =
 
 internal fun String.shouldRenderAsMarkdown(): Boolean = all { it.code <= ASCII_MAX_CODE }
 
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun BlurredChatMessageImagePreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        ChatMessageImage(
+            imageUrl = "https://example.com/image.jpg",
+            onImageClick = null,
+            maxWidth = 280.dp,
+            isBlurred = true,
+            onUnlockClick = {},
+        )
+    }
+}
+
 private const val FILE_URL_PREFIX = "file://"
 private const val ABSOLUTE_PATH_PREFIX = "/"
 private const val ASCII_MAX_CODE = 0x7F
+private val BLURRED_IMAGE_BLUR_RADIUS = 16.dp
+private const val BLURRED_IMAGE_SCRIM_ALPHA = 0.4f
+private val UNLOCK_PILL_HEIGHT = 40.dp
+private val UNLOCK_PILL_HORIZONTAL_PADDING = 12.dp
+private val UNLOCK_PILL_ICON_SIZE = 14.dp

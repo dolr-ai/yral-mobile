@@ -17,9 +17,19 @@ import kotlinx.serialization.json.Json
 
 internal expect fun getGrantChatAccessEndpoint(): String
 
+internal expect fun getBotSubscriptionGrantEndpoint(): String
+
 interface ChatAccessBillingDataSource {
     val packageName: String
     suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult
+
+    /**
+     * Verifies/records a per-bot auto-renewing subscription purchase
+     * ("bot_sub_*" products). Same request shape as [grantChatAccess];
+     * the backend acknowledges the Google subscription server-side.
+     */
+    suspend fun grantBotSubscription(request: GrantChatAccessRequestDto): GrantResult
+
     suspend fun checkChatAccess(
         userId: String,
         botId: String,
@@ -37,19 +47,37 @@ class ChatAccessBillingRemoteDataSource(
         private const val CHECK_ENDPOINT = "google/chat-access/check"
     }
 
-    override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult {
-        Logger.d(TAG) { "grantChatAccess request: botId=${request.botId}, productId=${request.productId}" }
+    override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult =
+        postGrant(
+            endpoint = getGrantChatAccessEndpoint(),
+            request = request,
+            logLabel = "grantChatAccess",
+        )
+
+    override suspend fun grantBotSubscription(request: GrantChatAccessRequestDto): GrantResult =
+        postGrant(
+            endpoint = getBotSubscriptionGrantEndpoint(),
+            request = request,
+            logLabel = "grantBotSubscription",
+        )
+
+    private suspend fun postGrant(
+        endpoint: String,
+        request: GrantChatAccessRequestDto,
+        logLabel: String,
+    ): GrantResult {
+        Logger.d(TAG) { "$logLabel request: botId=${request.botId}, productId=${request.productId}" }
         val response =
             httpClient.post {
                 expectSuccess = false
                 url {
                     host = billingBaseUrl
-                    path(getGrantChatAccessEndpoint())
+                    path(endpoint)
                 }
                 setBody(request.toPlatformGrantRequestBody())
             }
         val body = response.bodyAsText()
-        Logger.d(TAG) { "grantChatAccess status=${response.status}, response: $body" }
+        Logger.d(TAG) { "$logLabel status=${response.status}, response: $body" }
         return GrantResult(
             httpStatus = response.status.value,
             apiResponse = json.decodeFromString<ChatAccessApiResponse>(body),

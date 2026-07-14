@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -58,16 +62,17 @@ internal fun ImagePreviewOverlay(
                 .background(Color.Black)
                 .clickable {},
     ) {
-        YralAsyncImage(
-            imageUrl =
-                when (previewSource) {
-                    is ChatImagePreviewSource.Draft -> rememberChatImageModel(previewSource.imageAttachment.filePath)
-                    is ChatImagePreviewSource.Message -> rememberChatImageModel(previewSource.imageUrl)
-                },
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
-            shape = RectangleShape,
-        )
+        when (previewSource) {
+            is ChatImagePreviewSource.Draft ->
+                YralAsyncImage(
+                    imageUrl = rememberChatImageModel(previewSource.imageAttachment.filePath),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                    shape = RectangleShape,
+                )
+
+            is ChatImagePreviewSource.Message -> MessageImagePager(previewSource)
+        }
         if (draftAttachment != null && onSend != null) {
             Column(modifier = Modifier.align(BottomCenter)) {
                 Box(
@@ -105,6 +110,50 @@ internal fun ImagePreviewOverlay(
         CloseButton(onDismiss)
     }
 }
+
+/**
+ * Full-screen viewer for message images. When the source carries sibling
+ * images (a collage), they page horizontally starting at the tapped one,
+ * with a position counter; a lone image renders exactly as before.
+ */
+@Composable
+private fun BoxScope.MessageImagePager(source: ChatImagePreviewSource.Message) {
+    val images =
+        remember(source) {
+            source.galleryUrls.ifEmpty { listOf(source.imageUrl) }
+        }
+    val pagerState =
+        rememberPagerState(
+            initialPage = images.indexOf(source.imageUrl).coerceAtLeast(0),
+            pageCount = { images.size },
+        )
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+    ) { page ->
+        YralAsyncImage(
+            imageUrl = rememberChatImageModel(images[page]),
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+            shape = RectangleShape,
+        )
+    }
+    if (images.size > 1) {
+        Text(
+            text = "${pagerState.currentPage + 1}/${images.size}",
+            style = LocalAppTopography.current.regSemiBold,
+            color = Color.White,
+            modifier =
+                Modifier
+                    .align(BottomCenter)
+                    .padding(bottom = 24.dp)
+                    .background(YralColors.Neutral600.copy(alpha = PAGE_COUNTER_BG_ALPHA), CircleShape)
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+        )
+    }
+}
+
+private const val PAGE_COUNTER_BG_ALPHA = 0.7f
 
 @Composable
 private fun BoxScope.CloseButton(onDismiss: () -> Unit) {

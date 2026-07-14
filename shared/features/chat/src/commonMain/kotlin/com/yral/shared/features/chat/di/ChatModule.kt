@@ -10,6 +10,7 @@ import com.yral.shared.features.chat.data.ChatDataSource
 import com.yral.shared.features.chat.data.ChatRemoteDataSource
 import com.yral.shared.features.chat.data.ChatRepositoryImpl
 import com.yral.shared.features.chat.data.ChatStreamingDataSource
+import com.yral.shared.features.chat.data.CollageCache
 import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
@@ -18,11 +19,13 @@ import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
+import com.yral.shared.features.chat.domain.usecases.GetInfluencerCollageUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.GetSystemPromptPreviewUseCase
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.domain.usecases.RequestInfluencerImagesUseCase
 import com.yral.shared.features.chat.domain.usecases.SearchDiscoveryUseCase
 import com.yral.shared.features.chat.domain.usecases.SearchInboxUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
@@ -78,6 +81,8 @@ val chatModule =
         factoryOf(::CreateHumanConversationUseCase)
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
+        factoryOf(::GetInfluencerCollageUseCase)
+        factoryOf(::RequestInfluencerImagesUseCase)
         factoryOf(::GetSystemPromptPreviewUseCase)
         factoryOf(::SearchDiscoveryUseCase)
         factoryOf(::SearchInboxUseCase)
@@ -95,6 +100,7 @@ val chatModule =
         // primitive defaults (Int). `singleOf` would try to resolve Int from the
         // Koin graph and crash with NoDefinitionFoundException.
         single { ConversationContentCache() }
+        single { CollageCache() }
         viewModelOf(::ChatWallViewModel)
         viewModelOf(::DiscoverySearchViewModel)
         viewModelOf(::InboxSearchViewModel)
@@ -125,6 +131,9 @@ val chatModule =
                 sendHumanCreatorMessageUseCase = get(),
                 getHumanCreatorTakeoverStatusUseCase = get(),
                 conversationContentCache = get(),
+                requestInfluencerImagesUseCase = get(),
+                getInfluencerCollageUseCase = get(),
+                collageCache = get(),
             )
         }
         viewModelOf(::InboxViewModel)

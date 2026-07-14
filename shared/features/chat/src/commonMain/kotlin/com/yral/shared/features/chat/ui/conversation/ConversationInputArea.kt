@@ -34,6 +34,7 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.camera
 import yral_mobile.shared.features.chat.generated.resources.message_placeholder
 import yral_mobile.shared.features.chat.generated.resources.photo_library
+import yral_mobile.shared.features.chat.generated.resources.request_image
 import yral_mobile.shared.features.chat.generated.resources.send
 import yral_mobile.shared.features.chat.generated.resources.voice_message
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
@@ -42,10 +43,27 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_microphone
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send_disabled
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val MAX_CHARACTER_LIMIT = 4000
 private const val MAX_LINES = 5
+private const val SECONDS_PER_HOUR = 3600
+private const val SECONDS_PER_MINUTE = 60
+private const val TIMER_DIGITS = 2
+
+// The collage-request cooldown counts down to the next 04:00 UTC pre-gen —
+// up to a full day — so include hours; the m:ss formatter alone would
+// render e.g. "1439:59".
+private fun formatRequestImageCooldown(totalSeconds: Int): String {
+    val hours = totalSeconds.coerceAtLeast(0) / SECONDS_PER_HOUR
+    if (hours <= 0) return formatRemainingMmSs(totalSeconds)
+    val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
+    val seconds = totalSeconds % SECONDS_PER_MINUTE
+    val minutesStr = minutes.toString().padStart(TIMER_DIGITS, '0')
+    val secondsStr = seconds.toString().padStart(TIMER_DIGITS, '0')
+    return "$hours:$minutesStr:$secondsStr"
+}
 
 @Composable
 internal fun ChatInputArea(
@@ -54,6 +72,9 @@ internal fun ChatInputArea(
     onSendClick: () -> Unit,
     onCameraClick: (() -> Unit)? = null,
     onGalleryClick: (() -> Unit)? = null,
+    onRequestImageClick: (() -> Unit)? = null,
+    // Non-null disables the Request Image option and shows this cooldown.
+    requestImageRemainingSeconds: Int? = null,
     onMicClick: (() -> Unit)? = null,
     showAttachmentMenu: Boolean = true,
     placeholder: String? = null,
@@ -111,6 +132,8 @@ internal fun ChatInputArea(
             showAttachmentMenu,
             onCameraClick,
             onGalleryClick,
+            onRequestImageClick,
+            requestImageRemainingSeconds,
             onMicClick,
             hasWaitingAssistant,
         )
@@ -124,6 +147,8 @@ private fun InputActions(
     showAttachmentMenu: Boolean,
     onCameraClick: (() -> Unit)?,
     onGalleryClick: (() -> Unit)?,
+    onRequestImageClick: (() -> Unit)?,
+    requestImageRemainingSeconds: Int?,
     onMicClick: (() -> Unit)?,
     hasWaitingAssistant: Boolean,
 ) {
@@ -142,18 +167,35 @@ private fun InputActions(
                 // Show attachment menu (camera/gallery) when both callbacks provided
                 YralContextMenu(
                     items =
-                        listOf(
-                            YralContextMenuItem(
-                                text = stringResource(Res.string.camera),
-                                icon = DesignRes.drawable.ic_camera,
-                                onClick = onCameraClick,
-                            ),
-                            YralContextMenuItem(
-                                text = stringResource(Res.string.photo_library),
-                                icon = DesignRes.drawable.ic_gallery,
-                                onClick = onGalleryClick,
-                            ),
-                        ),
+                        buildList {
+                            add(
+                                YralContextMenuItem(
+                                    text = stringResource(Res.string.camera),
+                                    icon = DesignRes.drawable.ic_camera,
+                                    onClick = onCameraClick,
+                                ),
+                            )
+                            add(
+                                YralContextMenuItem(
+                                    text = stringResource(Res.string.photo_library),
+                                    icon = DesignRes.drawable.ic_gallery,
+                                    onClick = onGalleryClick,
+                                ),
+                            )
+                            if (onRequestImageClick != null) {
+                                add(
+                                    YralContextMenuItem(
+                                        text = stringResource(Res.string.request_image),
+                                        icon = DesignRes.drawable.ic_thunder,
+                                        onClick = onRequestImageClick,
+                                        enabled = requestImageRemainingSeconds == null,
+                                        trailingText =
+                                            requestImageRemainingSeconds
+                                                ?.let(::formatRequestImageCooldown),
+                                    ),
+                                )
+                            }
+                        },
                     triggerIcon = DesignRes.drawable.ic_plus_circle,
                     triggerSize = 24.dp,
                     menuIconSize = 20.dp,

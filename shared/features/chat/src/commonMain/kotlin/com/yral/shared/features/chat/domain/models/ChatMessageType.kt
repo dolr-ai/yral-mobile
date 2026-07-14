@@ -7,37 +7,16 @@ enum class ChatMessageType(
     IMAGE("image"),
     MULTIMODAL("multimodal"),
     AUDIO("audio"),
+    COLLAGE("collage"),
     ;
 
     companion object {
-        fun fromApi(value: String): ChatMessageType =
-            when (value.trim().lowercase()) {
-                TEXT.apiValue -> TEXT
-
-                IMAGE.apiValue -> IMAGE
-
-                MULTIMODAL.apiValue -> MULTIMODAL
-
-                AUDIO.apiValue -> AUDIO
-
-                // backend returns uppercase sometimes; normalize
-                "text" -> TEXT
-
-                "image" -> IMAGE
-
-                "multimodal" -> MULTIMODAL
-
-                "audio" -> AUDIO
-
-                "TEXT".lowercase() -> TEXT
-
-                "IMAGE".lowercase() -> IMAGE
-
-                "MULTIMODAL".lowercase() -> MULTIMODAL
-
-                "AUDIO".lowercase() -> AUDIO
-
-                else -> TEXT
-            }
+        // Lowercasing also normalizes the uppercase variants the backend
+        // sometimes returns. Unknown types degrade to TEXT so old payloads
+        // (and new server-side types) render the content string, not crash.
+        fun fromApi(value: String): ChatMessageType {
+            val normalized = value.trim().lowercase()
+            return entries.firstOrNull { it.apiValue == normalized } ?: TEXT
+        }
     }
 }

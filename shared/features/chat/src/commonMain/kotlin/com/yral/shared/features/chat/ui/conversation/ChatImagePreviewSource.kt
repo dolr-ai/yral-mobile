@@ -9,5 +9,8 @@ internal sealed interface ChatImagePreviewSource {
 
     data class Message(
         val imageUrl: String,
+        // Sibling images (e.g. the full collage) — when there's more than one,
+        // the preview becomes a swipeable pager starting at [imageUrl].
+        val galleryUrls: List<String> = emptyList(),
     ) : ChatImagePreviewSource
 }

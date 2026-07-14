@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralContextMenuConstants.DEFAULT_MENU_ICON_SIZE
 import com.yral.shared.libs.designsystem.component.YralContextMenuConstants.DEFAULT_MENU_ITEM_MAX_HEIGHT
 import com.yral.shared.libs.designsystem.component.YralContextMenuConstants.DEFAULT_TRIGGER_SIZE
+import com.yral.shared.libs.designsystem.component.YralContextMenuConstants.DISABLED_ICON_ALPHA
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
@@ -82,7 +84,12 @@ fun YralContextMenu(
                         Text(
                             text = item.text,
                             style = LocalAppTopography.current.baseRegular,
-                            color = YralColors.NeutralTextPrimary,
+                            color =
+                                if (item.enabled) {
+                                    YralColors.NeutralTextPrimary
+                                } else {
+                                    YralColors.NeutralTextSecondary
+                                },
                         )
                     },
                     leadingIcon =
@@ -91,11 +98,25 @@ fun YralContextMenu(
                                 Image(
                                     painter = painterResource(icon),
                                     contentDescription = null,
-                                    modifier = Modifier.size(menuIconSize),
+                                    modifier =
+                                        Modifier
+                                            .size(menuIconSize)
+                                            .alpha(if (item.enabled) 1f else DISABLED_ICON_ALPHA),
                                     contentScale = ContentScale.FillBounds,
                                 )
                             }
                         },
+                    trailingIcon =
+                        item.trailingText?.let { trailingText ->
+                            {
+                                Text(
+                                    text = trailingText,
+                                    style = LocalAppTopography.current.baseRegular,
+                                    color = YralColors.NeutralTextSecondary,
+                                )
+                            }
+                        },
+                    enabled = item.enabled,
                     onClick = {
                         showMenu = false
                         item.onClick()
@@ -115,10 +136,14 @@ data class YralContextMenuItem(
     val text: String,
     val icon: DrawableResource? = null,
     val onClick: () -> Unit,
+    val enabled: Boolean = true,
+    // Rendered after the label (e.g. a cooldown countdown for disabled items).
+    val trailingText: String? = null,
 )
 
 private object YralContextMenuConstants {
     const val DEFAULT_TRIGGER_SIZE = 20f
     const val DEFAULT_MENU_ICON_SIZE = 20f
     const val DEFAULT_MENU_ITEM_MAX_HEIGHT = 40f
+    const val DISABLED_ICON_ALPHA = 0.4f
 }

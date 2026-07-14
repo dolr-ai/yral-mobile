@@ -113,7 +113,7 @@ internal fun CreatorTakeoverBar(
     }
 }
 
-private fun formatRemainingMmSs(totalSeconds: Int): String {
+internal fun formatRemainingMmSs(totalSeconds: Int): String {
     val safe = totalSeconds.coerceAtLeast(0)
     val minutes = safe / SECONDS_PER_MINUTE
     val seconds = safe % SECONDS_PER_MINUTE

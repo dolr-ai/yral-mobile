@@ -7,19 +7,20 @@ import com.yral.shared.features.chat.data.models.toDomainActiveOnly
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
-import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
-import com.yral.shared.features.chat.domain.models.InboxSearchResult
-import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.totalUnreadConversationBadgeCount
 import kotlinx.coroutines.flow.Flow
 
@@ -98,6 +99,28 @@ class ChatRepositoryImpl(
         dataSource
             .getSystemPromptPreview(botId)
             .toDomain()
+
+    override suspend fun requestInfluencerImages(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): Collage =
+        dataSource
+            .requestInfluencerImages(influencerId = influencerId, isSubscribed = isSubscribed)
+            .toDomain()
+
+    override suspend fun getInfluencerCollage(
+        influencerId: String,
+        isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
+    ): Collage =
+        dataSource
+            .getInfluencerCollage(
+                influencerId = influencerId,
+                isSubscribed = isSubscribed,
+                collageId = collageId,
+                date = date,
+            ).toDomain()
 
     override suspend fun createConversation(influencerId: String): Conversation =
         dataSource
@@ -222,6 +245,9 @@ class ChatRepositoryImpl(
                         mediaUrls = mediaUrls,
                         audioUrl = audioUrl,
                         audioDurationSeconds = draft.audioDurationSeconds,
+                        collageId = draft.collageId,
+                        collageBotId = draft.collageBotId,
+                        collageDate = draft.collageDate,
                     ),
             )
         return response.toDomain(conversationIdFallback = conversationId)

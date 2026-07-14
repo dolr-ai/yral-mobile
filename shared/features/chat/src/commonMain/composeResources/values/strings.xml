@@ -21,6 +21,15 @@
     <string name="camera">Camera</string>
     <string name="photo_library">Photo Library</string>
     <string name="voice_message">Voice message</string>
+    <string name="request_image">Request Image</string>
+    <string name="request_image_message">Requested an image</string>
+
+    <!-- Collage (Request Images) -->
+    <string name="collage_generating_message">%1$s is putting together some photos… 📸</string>
+    <string name="collage_subscribe_cta">Subscribe to view %1$s's photos</string>
+    <string name="collage_unavailable">These photos are no longer available</string>
+    <string name="collage_request_failed_toast">Couldn't get photos. Please try again.</string>
+    <string name="collage_quota_used_toast">You've already requested photos today</string>
     <string name="voice_message_permission_denied">Microphone access needed to record voice messages. Enable it in app settings.</string>
     <string name="send">Send</string>
     <string name="switch_to_human_profile_to_chat">Switch to your human profile to chat with this influencer.</string>
@@ -43,6 +52,9 @@
     <!-- Image Preview Overlay -->
     <string name="message_optional">Message (optional)</string>
     <string name="close">Close</string>
+
+    <!-- Blurred (paid) image -->
+    <string name="blurred_image_unlock_cta">Unlock</string>
 
     <!-- Influencer subscription card (replaces ChatInputArea when at threshold) -->
     <string name="influencer_subscription_limited_time_offer">Limited Time Offer</string>

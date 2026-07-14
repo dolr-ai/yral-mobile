@@ -22,17 +22,21 @@ import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.data.CollageCache
 import com.yral.shared.features.chat.data.ConversationContentCache
+import com.yral.shared.features.chat.domain.BotSubscriptionCatalog
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
+import com.yral.shared.features.chat.domain.httpStatusOrNull
 import com.yral.shared.features.chat.domain.models.AssistantError
 import com.yral.shared.features.chat.domain.models.AssistantErrorCode
 import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.GrantError
@@ -43,10 +47,12 @@ import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
+import com.yral.shared.features.chat.domain.usecases.GetInfluencerCollageUseCase
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessParams
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.domain.usecases.RequestInfluencerImagesUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
@@ -56,6 +62,7 @@ import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.core.model.ProductType
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.utils.PurchaseContext
@@ -68,6 +75,7 @@ import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -90,14 +98,18 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.assistant_error_connection_timed_out
+import yral_mobile.shared.features.chat.generated.resources.collage_quota_used_toast
+import yral_mobile.shared.features.chat.generated.resources.collage_request_failed_toast
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_pending
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_unavailable
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_unlocked_toast
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_verification_pending
+import yral_mobile.shared.features.chat.generated.resources.request_image_message
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -135,6 +147,9 @@ class ConversationViewModel(
     private val sendHumanCreatorMessageUseCase: SendHumanCreatorMessageUseCase,
     private val getHumanCreatorTakeoverStatusUseCase: GetHumanCreatorTakeoverStatusUseCase,
     private val conversationContentCache: ConversationContentCache,
+    private val requestInfluencerImagesUseCase: RequestInfluencerImagesUseCase,
+    private val getInfluencerCollageUseCase: GetInfluencerCollageUseCase,
+    private val collageCache: CollageCache,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -469,7 +484,7 @@ class ConversationViewModel(
                             )
                         }
                     } else {
-                        retryUnconsumedDailyChatAccess(influencerId)
+                        retryUngrantedChatAccess(influencerId)
                     }
                 }.onFailure { error ->
                     Logger.e("SubscriptionX", error) { "checkChatAccess failed" }
@@ -479,29 +494,59 @@ class ConversationViewModel(
         }
     }
 
-    private suspend fun retryUnconsumedDailyChatAccess(botId: String) {
+    private suspend fun retryUngrantedChatAccess(botId: String) {
+        val product = BotSubscriptionCatalog.chatProductFor(botId)
         runSuspendCatching {
             iapManager.restorePurchases()
         }.onSuccess { restoreResult ->
             val purchases = restoreResult.getOrNull()?.purchases.orEmpty()
-            val unconsumedDailyChat =
+            val ungrantedPurchase =
                 purchases.firstOrNull { purchase ->
-                    purchase.productId == ProductId.DAILY_CHAT &&
+                    purchase.productId == product &&
                         purchase.state == PurchaseState.PURCHASED
                 }
 
-            if (unconsumedDailyChat?.purchaseToken != null) {
-                Logger.d("SubscriptionX") { "Found unconsumed daily_chat, retrying grant..." }
-                retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId)
+            if (ungrantedPurchase?.purchaseToken != null) {
+                Logger.d("SubscriptionX") { "Found ungranted ${product.productId}, retrying grant..." }
+                retryGrantAccess(botId, ungrantedPurchase, product.productId)
             } else {
-                _viewState.update { it.copy(isChatAccessLoading = false) }
+                clearChatAccessState()
                 fetchInfluencerSubscriptionProducts()
             }
         }.onFailure {
-            Logger.e("SubscriptionX", it) { "Daily Chat restore failed" }
-            _viewState.update { it.copy(isChatAccessLoading = false) }
+            Logger.e("SubscriptionX", it) { "Chat access restore failed" }
+            clearChatAccessState()
             fetchInfluencerSubscriptionProducts()
         }
+    }
+
+    /**
+     * Backend says no access and Play has no purchase to re-grant — the
+     * subscription/day-pass genuinely lapsed, so drop the subscribed state
+     * (header button back to Subscribe, collages re-blur via the
+     * hasChatAccess flip).
+     */
+    private fun clearChatAccessState() {
+        _viewState.update {
+            it.copy(
+                isChatAccessLoading = false,
+                isInfluencerSubscriptionPurchasedAndVerified = false,
+                chatAccessExpiresAtMs = null,
+            )
+        }
+    }
+
+    /**
+     * The on-screen access countdown hit zero. Deliberately a re-check, not a
+     * local flip: an auto-renewing subscription usually RENEWED at this moment
+     * (checkChatAccess returns the new expiry via the billing cross-over), and
+     * if the backend is briefly stale the restore→re-grant fallback inside the
+     * check refreshes it from Play.
+     */
+    fun recheckChatAccessOnExpiry() {
+        val influencerId = _viewState.value.influencer?.id ?: return
+        Logger.d("SubscriptionX") { "access countdown expired, rechecking chat access" }
+        updateInfluencerSubscriptionProductState(influencerId)
     }
 
     private suspend fun retryGrantAccess(
@@ -528,7 +573,7 @@ class ConversationViewModel(
         }.onFailure { error ->
             Logger.e("SubscriptionX", error) { "Grant retry failed for $productId" }
             chatTelemetry.subscriptionFailed(botId, "grant_retry_${error.message}")
-            handleGrantFailure(error, purchaseToken, purchase.purchaseTime)
+            handleGrantFailure(error, purchaseToken, purchase.purchaseTime, productId)
         }
     }
 
@@ -536,12 +581,21 @@ class ConversationViewModel(
         error: Throwable,
         purchaseToken: String,
         purchaseTime: Long?,
+        productId: String,
     ) {
         when (error) {
             is GrantError.ClientError -> {
                 // 400: Token rejected (wrong bot, expired, cancelled). Consume to stop retry loop.
-                Logger.w("SubscriptionX") { "Grant rejected (400): ${error.errorMsg}. Consuming purchase." }
-                consumePurchaseInBackground(purchaseToken)
+                // Consuming is a consumable-only Play API — a rejected bot
+                // subscription token must be left alone (the store owns its
+                // lifecycle; retry/self-heal happens via the verify endpoint).
+                val isConsumable = ProductId.fromString(productId)?.productType == ProductType.ONE_TIME
+                Logger.w("SubscriptionX") {
+                    "Grant rejected (400): ${error.errorMsg}. ${if (isConsumable) "Consuming purchase." else ""}"
+                }
+                if (isConsumable) {
+                    consumePurchaseInBackground(purchaseToken)
+                }
                 _viewState.update {
                     it.copy(
                         isInfluencerSubscriptionPurchasedAndVerified = false,
@@ -572,18 +626,21 @@ class ConversationViewModel(
     }
 
     private fun fetchInfluencerSubscriptionProducts() {
+        // Tara sells an auto-renewing bot_sub subscription; every other bot
+        // sells the one-time daily_chat consumable.
+        val product = BotSubscriptionCatalog.chatProductFor(_viewState.value.influencer?.id)
         viewModelScope.launch {
             crashlyticsManager.logMessage(
-                "YRALIAP chat fetchProducts start ids=[${ProductId.DAILY_CHAT.productId}] " +
+                "YRALIAP chat fetchProducts start ids=[${product.productId}] " +
                     "subEnabled=${_viewState.value.isSubscriptionEnabled} " +
                     "hasAccess=${_viewState.value.isInfluencerSubscriptionPurchasedAndVerified}",
             )
-            fetchProductsUseCase(listOf(ProductId.DAILY_CHAT))
+            fetchProductsUseCase(listOf(product))
                 .onSuccess { products ->
-                    val influencerAvailable = ProductId.DAILY_CHAT.productId in products.map { it.id }.toSet()
+                    val influencerAvailable = product.productId in products.map { it.id }.toSet()
                     val influencerOfferPrice =
                         products
-                            .find { it.id == ProductId.DAILY_CHAT.productId }
+                            .find { it.id == product.productId }
                             ?.let { p -> p.offerPrice.ifBlank { p.price } }
                     _viewState.update {
                         it.copy(
@@ -593,7 +650,7 @@ class ConversationViewModel(
                     }
                     crashlyticsManager.logMessage(
                         "YRALIAP chat fetchProducts success valid=${products.map { it.id }} " +
-                            "dailyChatAvailable=$influencerAvailable price=$influencerOfferPrice",
+                            "${product.productId}Available=$influencerAvailable price=$influencerOfferPrice",
                     )
                 }.onFailure {
                     crashlyticsManager.logMessage(
@@ -651,18 +708,20 @@ class ConversationViewModel(
         purchaseContext: PurchaseContext,
         botId: String?,
     ) {
-        // Check for unconsumed DAILY_CHAT from a previous failed grant
-        val existingPurchase = findUnconsumedDailyChat()
+        val product = BotSubscriptionCatalog.chatProductFor(botId)
+        // Check for a purchase the billing service doesn't know about yet
+        // (failed grant / interrupted verify) before buying again.
+        val existingPurchase = findUngrantedChatPurchase(product)
         if (existingPurchase != null && botId != null) {
-            Logger.d("SubscriptionX") { "Found unconsumed DAILY_CHAT, retrying grant instead of new purchase" }
-            retryGrantAccess(botId, existingPurchase, ProductId.DAILY_CHAT.productId)
+            Logger.d("SubscriptionX") { "Found ungranted ${product.productId}, retrying grant instead of new purchase" }
+            retryGrantAccess(botId, existingPurchase, product.productId)
             _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
             return
         }
 
         runSuspendCatching {
             iapManager.purchaseProduct(
-                productId = ProductId.DAILY_CHAT,
+                productId = product,
                 context = purchaseContext,
                 acknowledgePurchase = false,
                 verifyPurchase = false,
@@ -677,6 +736,10 @@ class ConversationViewModel(
             if (purchase == null || purchaseToken == null) {
                 botId?.let { chatTelemetry.subscriptionFailed(it, "no_purchase") }
                 _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+                // The purchase flow can end without a result even though Play
+                // completed the purchase (missed listener callback / timeout) —
+                // reconcile against Play's cache so it still gets granted.
+                if (botId != null) retryUngrantedChatAccess(botId)
                 return@onSuccess
             }
             if (botId != null) {
@@ -685,7 +748,7 @@ class ConversationViewModel(
                     GrantChatAccessParams(
                         botId = botId,
                         purchaseToken = purchaseToken,
-                        productId = ProductId.DAILY_CHAT.productId,
+                        productId = product.productId,
                     ),
                 ).onSuccess { grantStatus ->
                     Logger.d("SubscriptionX") {
@@ -698,7 +761,7 @@ class ConversationViewModel(
                 }.onFailure { grantError ->
                     Logger.e("SubscriptionX", grantError) { "Grant failed after purchase" }
                     botId.let { chatTelemetry.subscriptionFailed(it, "grant_${grantError.message}") }
-                    handleGrantFailure(grantError, purchaseToken, purchaseTime)
+                    handleGrantFailure(grantError, purchaseToken, purchaseTime, product.productId)
                 }
             } else {
                 Logger.w("SubscriptionX") { "No botId, using fallback 24h access" }
@@ -809,6 +872,9 @@ class ConversationViewModel(
             // Phase 6: errors are scoped to the conversation that produced them.
             // Crossing the conversation boundary clears any in-flight error bubble.
             _assistantError.value = null
+            // Collage state (including the request-today cooldown) is per-bot;
+            // a stale cooldown must not disable Request Image for another bot.
+            resetCollageState()
         }
 
         // Merge incoming influencer with any existing data to preserve category from the wall
@@ -961,7 +1027,7 @@ class ConversationViewModel(
         // appearing on H2H chats opened after browsing any other chat first.
         _viewState.update { it.copy(participantPrincipalId = participantPrincipalId) }
         // N1 gate: single call-site for the entire IAP cascade
-        // (checkChatAccessUseCase → retryUnconsumedDailyChatAccess →
+        // (checkChatAccessUseCase → retryUngrantedChatAccess →
         // fetchInfluencerSubscriptionProducts). All four fallback entry
         // points reach back through updateInfluencerSubscriptionProductState
         // so this one skip covers them all.
@@ -1373,6 +1439,9 @@ class ConversationViewModel(
                 status = LocalMessageStatus.SENDING,
                 isPlaceholder = false,
                 draftForRetry = draft,
+                collageId = draft.collageId,
+                collageBotId = draft.collageBotId,
+                collageDate = draft.collageDate,
             )
 
         _viewState.value.influencer?.let { influencer ->
@@ -1957,6 +2026,409 @@ class ConversationViewModel(
             }
     }
 
+    // ── Collage (Request Images) ─────────────────────────────────────────
+    // Chat messages carry only a reference (collageId when present, plus
+    // botId + date); bubbles resolve it here at render time so the URLs
+    // always match the CURRENT subscription state (blurred for
+    // non-subscribers, clear after purchase — including for historical
+    // messages, which refetch on the flip).
+
+    private val _collageStates = MutableStateFlow<Map<String, CollageUiState>>(emptyMap())
+    val collageStates: StateFlow<Map<String, CollageUiState>> = _collageStates.asStateFlow()
+
+    private val _requestImageCooldownSeconds = MutableStateFlow<Int?>(null)
+    val requestImageCooldownSeconds: StateFlow<Int?> = _requestImageCooldownSeconds.asStateFlow()
+
+    private val collageFetchJobs = mutableMapOf<String, Job>()
+
+    // Everything needed to (re)fetch a collage reference. collageId is the
+    // preferred server handle; legacy messages predate it and resolve via
+    // (botId, date). Client-side identity stays (botId, date) — one collage
+    // per bot per day — so both message shapes share one key space.
+    private data class CollageRef(
+        val botId: String,
+        val date: String,
+        val collageId: String?,
+    ) {
+        val key: String get() = "$botId|$date"
+    }
+
+    private val collageRefs = mutableMapOf<String, CollageRef>()
+    private var collageCooldownJob: Job? = null
+    private var collageHasChatAccess = false
+    private var isCollageRequestInFlight = false
+
+    /**
+     * Pushed from the screen — the effective subscription gate (Pro OR
+     * per-influencer access) is composed there, outside this VM. A flip
+     * refetches every collage currently tracked with the new is_subscribed
+     * so blurred and clear bubbles never coexist in one conversation.
+     */
+    fun setHasChatAccess(hasAccess: Boolean) {
+        if (collageHasChatAccess == hasAccess) return
+        collageHasChatAccess = hasAccess
+        if (collageRefs.isEmpty()) return
+        Logger.d("CollageX") { "hasChatAccess -> $hasAccess, refetching ${collageRefs.size} collage(s)" }
+        collageFetchJobs.values.forEach { it.cancel() }
+        collageFetchJobs.clear()
+        _collageStates.update { state -> state.mapValues { CollageUiState.Loading } }
+        collageRefs.values.toList().forEach { launchCollageFetch(it) }
+    }
+
+    /** Render-time resolve of a collage reference; called from the bubble's LaunchedEffect. */
+    @OptIn(ExperimentalTime::class)
+    @Suppress("ReturnCount") // precondition gates: blank ref, already resolved, in flight
+    fun loadCollage(
+        botId: String,
+        date: String,
+        collageId: String?,
+    ) {
+        if (botId.isBlank() || date.isBlank()) return
+        // Cooldown sighting: a collage dated today in this conversation means
+        // today's request is already spent — the conversation history is the
+        // server-persisted record, so this survives reinstalls and devices.
+        if (date == currentCollageDateString()) {
+            startCollageCooldown()
+        }
+        val ref = CollageRef(botId = botId, date = date, collageId = collageId)
+        // Keep the richest ref seen for this key: an id-less sighting (e.g.
+        // the optimistic Local echo racing the Remote row) must not erase a
+        // collageId already recorded for it.
+        val tracked = collageRefs[ref.key]
+        if (tracked == null || (tracked.collageId == null && collageId != null)) {
+            collageRefs[ref.key] = ref
+        }
+        val nowMs = Clock.System.now().toEpochMilliseconds()
+        val existing = _collageStates.value[ref.key]
+        if (existing is CollageUiState.Ready &&
+            nowMs - existing.fetchedAtMs < CollageCache.COLLAGE_URL_TTL_MS
+        ) {
+            return
+        }
+        if (collageFetchJobs[ref.key]?.isActive == true) return
+        val cached =
+            collageCache.read(
+                botId = botId,
+                date = date,
+                isSubscribed = collageHasChatAccess,
+                nowMs = nowMs,
+            )
+        if (cached != null) {
+            _collageStates.update {
+                it + (ref.key to CollageUiState.Ready(cached.collage, fetchedAtMs = cached.storedAtMs))
+            }
+            return
+        }
+        _collageStates.update { it + (ref.key to CollageUiState.Loading) }
+        launchCollageFetch(collageRefs.getValue(ref.key))
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun launchCollageFetch(ref: CollageRef) {
+        val key = ref.key
+        collageFetchJobs[key] =
+            viewModelScope.launch {
+                val isSubscribed = collageHasChatAccess
+                var attempt = 0
+                var terminal = false
+                while (!terminal) {
+                    var retryAfterMs: Long? = null
+                    Logger.d("CollageX") {
+                        "fetch GET bot=${ref.botId} date=${ref.date} collageId=${ref.collageId} " +
+                            "isSubscribed=$isSubscribed attempt=$attempt"
+                    }
+                    getInfluencerCollageUseCase(
+                        GetInfluencerCollageUseCase.Params(
+                            influencerId = ref.botId,
+                            isSubscribed = isSubscribed,
+                            collageId = ref.collageId,
+                            date = ref.date,
+                        ),
+                    ).onSuccess { collage ->
+                        terminal = true
+                        Logger.d("CollageX") {
+                            "fetch success key=$key collageId=${collage.id} date=${collage.date} " +
+                                "images=${collage.images.size} isBlurred=${collage.isBlurred} " +
+                                "urls=${collage.images}"
+                        }
+                        val fetchedAtMs = Clock.System.now().toEpochMilliseconds()
+                        collageCache.write(collage = collage, isSubscribed = isSubscribed, nowMs = fetchedAtMs)
+                        _collageStates.update {
+                            it + (key to CollageUiState.Ready(collage, fetchedAtMs = fetchedAtMs))
+                        }
+                    }.onFailure { error ->
+                        // 404 on an id-less reference dated today = collage
+                        // still generating (cold-path race, e.g. another device
+                        // just POSTed) — retry briefly. A reference WITH an id
+                        // means the collage already exists, so its 404 (like
+                        // any other error) degrades to Unavailable; a
+                        // scroll-back re-entry retriggers loadCollage.
+                        val stillGenerating =
+                            error.httpStatusOrNull() == HttpStatusCode.NotFound &&
+                                ref.collageId == null &&
+                                ref.date == currentCollageDateString()
+                        Logger.e("CollageX", error) {
+                            "fetch failed key=$key status=${error.httpStatusOrNull()} " +
+                                "type=${error::class.simpleName} msg=${error.message} " +
+                                "stillGenerating=$stillGenerating attempt=$attempt"
+                        }
+                        if (stillGenerating && attempt < COLLAGE_NOT_READY_RETRY_DELAYS_MS.size) {
+                            retryAfterMs = COLLAGE_NOT_READY_RETRY_DELAYS_MS[attempt]
+                        } else {
+                            terminal = true
+                            _collageStates.update { it + (key to CollageUiState.Unavailable) }
+                        }
+                    }
+                    retryAfterMs?.let {
+                        attempt++
+                        delay(it)
+                    }
+                }
+            }
+    }
+
+    /**
+     * "Request Image" tap: POST request-images (consumes today's quota; the
+     * rare cold path takes 45–65 s — shimmer placeholder meanwhile), then
+     * send the (botId, date) reference into the conversation as a collage
+     * message. The message never carries image URLs.
+     */
+    @OptIn(ExperimentalTime::class)
+    @Suppress("ReturnCount") // precondition gates: no conversation, no influencer, H2H, cooldown
+    fun requestCollageImages() {
+        val convId = conversationId ?: return
+        val influencer = _viewState.value.influencer ?: return
+        if (_viewState.value.isHumanChat) return
+        // Photo collages are exclusive to subscription bots (Tara).
+        if (!BotSubscriptionCatalog.usesBotSubscription(influencer.id)) return
+        if (isCollageRequestInFlight || _requestImageCooldownSeconds.value != null) return
+        isCollageRequestInFlight = true
+        Logger.d("CollageX") { "requestImages start bot=${influencer.id} isSubscribed=$collageHasChatAccess" }
+        val now = Clock.System.now().toEpochMilliseconds()
+        val shimmer =
+            LocalMessage(
+                localId = "local-collage-shimmer-$now",
+                role = ConversationMessageRole.ASSISTANT,
+                content = null,
+                messageType = ChatMessageType.COLLAGE,
+                createdAtMs = now,
+                status = LocalMessageStatus.WAITING,
+                isPlaceholder = true,
+                draftForRetry = null,
+            )
+        _overlay.update { it.copy(pending = it.pending + shimmer) }
+        viewModelScope.launch {
+            try {
+                requestInfluencerImagesUseCase(
+                    RequestInfluencerImagesUseCase.Params(
+                        influencerId = influencer.id,
+                        isSubscribed = collageHasChatAccess,
+                    ),
+                ).onSuccess { collage ->
+                    onCollageRequestSucceeded(convId, shimmer.localId, collage)
+                }.onFailure { error ->
+                    onCollageRequestFailed(shimmer.localId, error)
+                }
+            } finally {
+                isCollageRequestInFlight = false
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun onCollageRequestSucceeded(
+        convId: String,
+        shimmerLocalId: String,
+        collage: Collage,
+    ) {
+        Logger.d("CollageX") {
+            "requestImages success collageId=${collage.id} date=${collage.date} " +
+                "images=${collage.images.size} isBlurred=${collage.isBlurred} theme=${collage.theme} " +
+                "urls=${collage.images}"
+        }
+        val fetchedAtMs = Clock.System.now().toEpochMilliseconds()
+        collageCache.write(collage = collage, isSubscribed = collageHasChatAccess, nowMs = fetchedAtMs)
+        // Pre-warm so the bubble renders instantly once the message lands.
+        val ref = CollageRef(botId = collage.botId, date = collage.date, collageId = collage.id)
+        collageRefs[ref.key] = ref
+        _collageStates.update { it + (ref.key to CollageUiState.Ready(collage, fetchedAtMs = fetchedAtMs)) }
+        startCollageCooldown()
+        val draft =
+            SendMessageDraft(
+                messageType = ChatMessageType.COLLAGE,
+                // Fallback body: old clients degrade unknown types to TEXT
+                // and render this string instead of the grid.
+                content = getString(Res.string.request_image_message),
+                collageId = collage.id,
+                collageBotId = collage.botId,
+                collageDate = collage.date,
+            )
+        val now = Clock.System.now().toEpochMilliseconds()
+        val userLocal =
+            LocalMessage(
+                localId = "local-user-$now",
+                role = ConversationMessageRole.USER,
+                content = draft.content,
+                messageType = ChatMessageType.COLLAGE,
+                createdAtMs = now,
+                status = LocalMessageStatus.SENDING,
+                isPlaceholder = false,
+                draftForRetry = draft,
+                collageId = collage.id,
+                collageBotId = collage.botId,
+                collageDate = collage.date,
+            )
+        _overlay.update { state ->
+            state.copy(pending = state.pending.filterNot { it.localId == shimmerLocalId } + userLocal)
+        }
+        // Direct send — the generic sendMessage() pipeline would add an
+        // assistant waiting placeholder + AI-reply telemetry, both wrong for
+        // a collage share. Send failure marks the Local FAILED with
+        // draftForRetry, so the existing tap-to-resend re-sends the reference
+        // only (the collage itself is already generated; no second POST).
+        Logger.d("CollageX") {
+            "sending collage message convId=$convId collageId=${collage.id} " +
+                "botId=${collage.botId} date=${collage.date}"
+        }
+        sendMessageUseCase(
+            SendMessageUseCase.Params(conversationId = convId, draft = draft),
+        ).onSuccess { result ->
+            handleCollageSendSuccess(result, userLocal.localId, collage)
+        }.onFailure { error ->
+            Logger.e("CollageX", error) {
+                "collage message send failed status=${error.httpStatusOrNull()} msg=${error.message}"
+            }
+            handleSendFailure(error, userLocal.localId, assistantLocalId = "")
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun handleCollageSendSuccess(
+        result: SendMessageResult,
+        userLocalId: String,
+        collage: Collage,
+    ) {
+        Logger.d("CollageX") {
+            val echo = result.userMessage
+            "send echo id=${echo.id} type=${echo.messageType} collageId=${echo.collageId} " +
+                "botId=${echo.collageBotId} date=${echo.collageDate} " +
+                "hasContent=${!echo.content.isNullOrBlank()} createdAt=${echo.createdAt}"
+        }
+        // Self-heal the echo: the optimistic Local we're about to remove
+        // rendered the grid from its collage refs. If the send endpoint
+        // doesn't echo those refs (or the type) back, the swapped-in Remote
+        // would render as an empty text bubble — re-attach what we just sent.
+        // History rendering after a relaunch still needs the backend to
+        // persist the refs; the log above is the evidence either way.
+        val userMessage =
+            result.userMessage.let { echo ->
+                if (echo.collageBotId == null || echo.collageDate == null) {
+                    echo.copy(
+                        messageType = ChatMessageType.COLLAGE,
+                        collageId = collage.id,
+                        collageBotId = collage.botId,
+                        collageDate = collage.date,
+                    )
+                } else {
+                    echo
+                }
+            }
+        // buildSentMessages drops entries whose created_at fails to parse —
+        // for the collage echo, fall back to "now" instead of vanishing.
+        val userInsertedAtMs =
+            parseTimestampToEpochMs(userMessage.createdAt)
+                ?: Clock.System.now().toEpochMilliseconds()
+        val sentMessages =
+            buildList {
+                add(SentMessage(insertedAtMs = userInsertedAtMs, message = userMessage))
+                result.assistantMessage?.let { assistant ->
+                    parseTimestampToEpochMs(assistant.createdAt)?.let {
+                        add(SentMessage(insertedAtMs = it, message = assistant))
+                    }
+                }
+            }
+        _overlay.update { state ->
+            state.copy(
+                pending = state.pending.filterNot { it.localId == userLocalId },
+                sent = state.sent + sentMessages,
+            )
+        }
+    }
+
+    private suspend fun onCollageRequestFailed(
+        shimmerLocalId: String,
+        error: Throwable,
+    ) {
+        Logger.e("CollageX", error) {
+            "requestImages failed status=${error.httpStatusOrNull()} type=${error::class.simpleName} " +
+                "msg=${error.message} cause=${error.cause?.let { "${it::class.simpleName}: ${it.message}" }}"
+        }
+        _overlay.update { state ->
+            state.copy(pending = state.pending.filterNot { it.localId == shimmerLocalId })
+        }
+        if (error.httpStatusOrNull() == HttpStatusCode.TooManyRequests) {
+            // Server says today's quota is already spent (e.g. requested from
+            // another device) — server stays authoritative over the local menu.
+            startCollageCooldown()
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(
+                    ToastStatus.Info,
+                    getString(Res.string.collage_quota_used_toast),
+                ),
+            )
+        } else {
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(
+                    ToastStatus.Error,
+                    getString(Res.string.collage_request_failed_toast),
+                ),
+            )
+        }
+    }
+
+    /** Idempotent: starts the disabled-until-next-UTC-midnight countdown once. */
+    @OptIn(ExperimentalTime::class)
+    private fun startCollageCooldown() {
+        if (collageCooldownJob?.isActive == true) return
+        collageCooldownJob =
+            viewModelScope.launch {
+                while (isActive) {
+                    val nowMs = Clock.System.now().toEpochMilliseconds()
+                    val remainingSeconds = ((nextCollageResetMs(nowMs) - nowMs) / MS_PER_SECOND).toInt()
+                    if (remainingSeconds <= 0) break
+                    _requestImageCooldownSeconds.value = remainingSeconds
+                    delay(1.seconds)
+                }
+                _requestImageCooldownSeconds.value = null
+            }
+    }
+
+    private fun resetCollageState() {
+        collageFetchJobs.values.forEach { it.cancel() }
+        collageFetchJobs.clear()
+        collageRefs.clear()
+        _collageStates.value = emptyMap()
+        collageCooldownJob?.cancel()
+        collageCooldownJob = null
+        _requestImageCooldownSeconds.value = null
+        isCollageRequestInFlight = false
+    }
+
+    // Collage-day arithmetic. The server quota window is the UTC calendar
+    // day — its 429 says resets_at=T00:00:00+00:00 — and GET /collage
+    // defaults to "today's UTC calendar date". (The 04:00 UTC nightly
+    // pre-gen is only when generation runs, not the quota boundary.)
+    private fun currentCollageDayIndex(nowMs: Long): Long = nowMs.floorDiv(MS_PER_DAY)
+
+    private fun nextCollageResetMs(nowMs: Long): Long = (currentCollageDayIndex(nowMs) + 1) * MS_PER_DAY
+
+    /** Today's collage_date ("YYYY-MM-DD"), for comparing against message references. */
+    @OptIn(ExperimentalTime::class)
+    private fun currentCollageDateString(): String =
+        LocalDate
+            .fromEpochDays(currentCollageDayIndex(Clock.System.now().toEpochMilliseconds()).toInt())
+            .toString()
+
     private data class OverlayState(
         val pending: List<LocalMessage> = emptyList(),
         val sent: List<SentMessage> = emptyList(),
@@ -2230,15 +2702,21 @@ class ConversationViewModel(
         }
     }
 
+    /**
+     * A restored purchase of [product] the billing service may not know
+     * about yet: an unconsumed daily_chat from a failed grant, or an active
+     * bot subscription missing its verify call. Retrying the grant instead
+     * of re-purchasing is safe — both backend flows are idempotent.
+     */
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun findUnconsumedDailyChat(): Purchase? =
+    private suspend fun findUngrantedChatPurchase(product: ProductId): Purchase? =
         try {
             iapManager
                 .restorePurchases()
                 .getOrNull()
                 ?.purchases
                 ?.firstOrNull { purchase ->
-                    purchase.productId == ProductId.DAILY_CHAT && purchase.state == PurchaseState.PURCHASED
+                    purchase.productId == product && purchase.state == PurchaseState.PURCHASED
                 }
         } catch (_: Exception) {
             null
@@ -2281,6 +2759,13 @@ class ConversationViewModel(
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
         private const val TAKEOVER_STATUS_POLL_EVERY_N = 2
         private const val TAKEOVER_POLL_PAGE_SIZE = 20
+
+        private const val MS_PER_DAY = 24L * 60 * 60 * 1000
+        private const val MS_PER_SECOND = 1000L
+
+        // GET /collage 404s while today's collage is still generating
+        // (cold-path race with another device's POST) — brief backoff.
+        private val COLLAGE_NOT_READY_RETRY_DELAYS_MS = listOf(5_000L, 15_000L)
     }
 }
 
@@ -2288,6 +2773,20 @@ data class InfluencerSubscriptionToastEvent(
     val status: ToastStatus,
     val message: String,
 )
+
+/** Render state of one collage reference, keyed by "botId|date" in [ConversationViewModel.collageStates]. */
+sealed class CollageUiState {
+    data object Loading : CollageUiState()
+
+    data class Ready(
+        val collage: Collage,
+        /** Signed image URLs rot after 15 min — [ConversationViewModel.loadCollage] refetches past the TTL. */
+        val fetchedAtMs: Long,
+    ) : CollageUiState()
+
+    /** Fetch failed terminally — older-than-today reference or exhausted retries. */
+    data object Unavailable : CollageUiState()
+}
 
 data class ConversationViewState(
     val isCreating: Boolean = false,
@@ -2376,4 +2875,9 @@ data class LocalMessage(
     // `done` so the Remote replacement renders with the same path — no Text↔Markdown
     // subtree swap.
     val useMarkdownLocked: Boolean? = null,
+    // COLLAGE reference — the optimistic echo renders through the same
+    // reference→GET path as Remote collage messages; URLs never live here.
+    val collageId: String? = null,
+    val collageBotId: String? = null,
+    val collageDate: String? = null,
 )

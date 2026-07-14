@@ -1,9 +1,11 @@
 package com.yral.shared.features.chat.data.models
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationLastMessage
@@ -12,19 +14,19 @@ import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResul
 import com.yral.shared.features.chat.domain.models.ConversationUser
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
+import com.yral.shared.features.chat.domain.models.EnabledSkill
+import com.yral.shared.features.chat.domain.models.EngagementSchedule
+import com.yral.shared.features.chat.domain.models.FirstTurnNudge
 import com.yral.shared.features.chat.domain.models.HUMAN_CHAT_CONVERSATION_TYPE
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
+import com.yral.shared.features.chat.domain.models.InactivityProactive
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
-import com.yral.shared.features.chat.domain.models.SendMessageResult
-import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
-import com.yral.shared.features.chat.domain.models.EnabledSkill
-import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.SearchResultKind
-import com.yral.shared.features.chat.domain.models.EngagementSchedule
-import com.yral.shared.features.chat.domain.models.FirstTurnNudge
-import com.yral.shared.features.chat.domain.models.InactivityProactive
+import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.SkillCheckins
 import com.yral.shared.features.chat.domain.models.SystemPromptLayers
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
@@ -187,6 +189,15 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
     val resolvedConversationId =
         conversationId ?: conversationIdFallback
             ?: error("ChatMessage requires a valid conversationId")
+    if (ChatMessageType.fromApi(messageType) == ChatMessageType.COLLAGE) {
+        // Diagnostic: proves whether the backend persists/returns the collage
+        // reference on messages (history + send echo). Collage rows are rare,
+        // so this stays quiet in normal operation.
+        Logger.d("CollageX") {
+            "message row id=$id type=$messageType collageId=$collageId " +
+                "botId=$collageBotId date=$collageDate hasContent=${!content.isNullOrBlank()}"
+        }
+    }
     return ChatMessage(
         id = id,
         conversationId = resolvedConversationId,
@@ -199,8 +210,23 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
         tokenCount = tokenCount,
         createdAt = createdAt,
         senderId = senderId,
+        isBlur = isBlur ?: false,
+        collageId = collageId,
+        collageBotId = collageBotId,
+        collageDate = collageDate,
     )
 }
+
+fun CollageResponseDto.toDomain(): Collage =
+    Collage(
+        id = collageId,
+        botId = collageBotId,
+        date = collageDate,
+        images = images,
+        isBlurred = isBlurred,
+        theme = theme,
+        generatedAt = generatedAt,
+    )
 
 fun ConversationMessagesResponseDto.toDomain(): ConversationMessagesPageResult {
     val rawCount = messages.size
