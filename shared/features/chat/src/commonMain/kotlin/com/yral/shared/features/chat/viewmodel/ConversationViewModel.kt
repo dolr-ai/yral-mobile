@@ -2065,11 +2065,25 @@ class ConversationViewModel(
         if (tracked == null || (tracked.collageId == null && collageId != null)) {
             collageRefs[ref.key] = ref
         }
-        if (_collageStates.value[ref.key] is CollageUiState.Ready) return
+        val nowMs = Clock.System.now().toEpochMilliseconds()
+        val existing = _collageStates.value[ref.key]
+        if (existing is CollageUiState.Ready &&
+            nowMs - existing.fetchedAtMs < CollageCache.COLLAGE_URL_TTL_MS
+        ) {
+            return
+        }
         if (collageFetchJobs[ref.key]?.isActive == true) return
-        val cached = collageCache.read(botId = botId, date = date, isSubscribed = collageHasChatAccess)
+        val cached =
+            collageCache.read(
+                botId = botId,
+                date = date,
+                isSubscribed = collageHasChatAccess,
+                nowMs = nowMs,
+            )
         if (cached != null) {
-            _collageStates.update { it + (ref.key to CollageUiState.Ready(cached)) }
+            _collageStates.update {
+                it + (ref.key to CollageUiState.Ready(cached.collage, fetchedAtMs = cached.storedAtMs))
+            }
             return
         }
         _collageStates.update { it + (ref.key to CollageUiState.Loading) }
@@ -2104,8 +2118,11 @@ class ConversationViewModel(
                                 "images=${collage.images.size} isBlurred=${collage.isBlurred} " +
                                 "urls=${collage.images}"
                         }
-                        collageCache.write(collage = collage, isSubscribed = isSubscribed)
-                        _collageStates.update { it + (key to CollageUiState.Ready(collage)) }
+                        val fetchedAtMs = Clock.System.now().toEpochMilliseconds()
+                        collageCache.write(collage = collage, isSubscribed = isSubscribed, nowMs = fetchedAtMs)
+                        _collageStates.update {
+                            it + (key to CollageUiState.Ready(collage, fetchedAtMs = fetchedAtMs))
+                        }
                     }.onFailure { error ->
                         // 404 on an id-less reference dated today = collage
                         // still generating (cold-path race, e.g. another device
@@ -2196,11 +2213,12 @@ class ConversationViewModel(
                 "images=${collage.images.size} isBlurred=${collage.isBlurred} theme=${collage.theme} " +
                 "urls=${collage.images}"
         }
-        collageCache.write(collage = collage, isSubscribed = collageHasChatAccess)
+        val fetchedAtMs = Clock.System.now().toEpochMilliseconds()
+        collageCache.write(collage = collage, isSubscribed = collageHasChatAccess, nowMs = fetchedAtMs)
         // Pre-warm so the bubble renders instantly once the message lands.
         val ref = CollageRef(botId = collage.botId, date = collage.date, collageId = collage.id)
         collageRefs[ref.key] = ref
-        _collageStates.update { it + (ref.key to CollageUiState.Ready(collage)) }
+        _collageStates.update { it + (ref.key to CollageUiState.Ready(collage, fetchedAtMs = fetchedAtMs)) }
         startCollageCooldown()
         val draft =
             SendMessageDraft(
@@ -2729,6 +2747,8 @@ sealed class CollageUiState {
 
     data class Ready(
         val collage: Collage,
+        /** Signed image URLs rot after 15 min — [ConversationViewModel.loadCollage] refetches past the TTL. */
+        val fetchedAtMs: Long,
     ) : CollageUiState()
 
     /** Fetch failed terminally — older-than-today reference or exhausted retries. */
