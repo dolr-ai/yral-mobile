@@ -707,6 +707,10 @@ class ConversationViewModel(
             if (purchase == null || purchaseToken == null) {
                 botId?.let { chatTelemetry.subscriptionFailed(it, "no_purchase") }
                 _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+                // The purchase flow can end without a result even though Play
+                // completed the purchase (missed listener callback / timeout) —
+                // reconcile against Play's cache so it still gets granted.
+                if (botId != null) retryUngrantedChatAccess(botId)
                 return@onSuccess
             }
             if (botId != null) {
