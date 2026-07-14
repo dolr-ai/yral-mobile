@@ -154,7 +154,6 @@ private fun MessageRow(
         CollageMessageRow(
             info = collageInfo,
             config = collageConfig,
-            onImageClick = onImageClick,
             maxWidth = maxWidth,
         )
         return
@@ -217,13 +216,14 @@ internal data class CollageListConfig(
     val influencerDisplayName: String = "",
     val onLoad: (botId: String, date: String, collageId: String?) -> Unit = { _, _, _ -> },
     val onSubscribeClick: () -> Unit = {},
+    // Full-screen preview with the whole collage as a swipeable gallery.
+    val onImagePreview: (images: List<String>, imageUrl: String) -> Unit = { _, _ -> },
 )
 
 @Composable
 private fun CollageMessageRow(
     info: CollageDisplayInfo,
     config: CollageListConfig,
-    onImageClick: (imageUrl: String) -> Unit,
     maxWidth: Dp,
 ) {
     Box(
@@ -241,7 +241,7 @@ private fun CollageMessageRow(
                     state = config.states["${info.botId}|${info.date}"],
                     influencerName = config.influencerDisplayName,
                     onLoad = { config.onLoad(info.botId, info.date, info.collageId) },
-                    onImageClick = onImageClick,
+                    onImageClick = config.onImagePreview,
                     onSubscribeClick = config.onSubscribeClick,
                     maxWidth = maxWidth,
                 )

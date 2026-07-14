@@ -73,7 +73,7 @@ internal fun CollageBubble(
     state: CollageUiState?,
     influencerName: String,
     onLoad: () -> Unit,
-    onImageClick: (String) -> Unit,
+    onImageClick: (images: List<String>, imageUrl: String) -> Unit,
     onSubscribeClick: () -> Unit,
     maxWidth: Dp,
 ) {
@@ -128,7 +128,7 @@ private fun CollageGrid(
     images: List<String>,
     isBlurred: Boolean,
     influencerName: String,
-    onImageClick: (String) -> Unit,
+    onImageClick: (images: List<String>, imageUrl: String) -> Unit,
     onSubscribeClick: () -> Unit,
     maxWidth: Dp,
 ) {
@@ -143,7 +143,7 @@ private fun CollageGrid(
                             imageUrl = imageUrl,
                             cellSize = cellSize,
                             // Locked grid: taps route to the subscribe CTA, not the preview.
-                            onClick = if (isBlurred) null else ({ onImageClick(imageUrl) }),
+                            onClick = if (isBlurred) null else ({ onImageClick(images, imageUrl) }),
                         )
                     }
                 }

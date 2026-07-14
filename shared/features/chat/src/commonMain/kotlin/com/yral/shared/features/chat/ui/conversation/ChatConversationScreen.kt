@@ -576,6 +576,13 @@ fun ChatConversationScreen(
                                             viewModel.launchInfluencerSubscriptionPurchase(it)
                                         }
                                     },
+                                    onImagePreview = { images, imageUrl ->
+                                        activeImagePreview =
+                                            ChatImagePreviewSource.Message(
+                                                imageUrl = imageUrl,
+                                                galleryUrls = images,
+                                            )
+                                    },
                                 ),
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
