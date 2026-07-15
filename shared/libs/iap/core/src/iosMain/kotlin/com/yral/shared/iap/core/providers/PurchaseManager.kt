@@ -205,7 +205,14 @@ internal class PurchaseManager(
         transaction: SKPaymentTransaction,
         productId: String,
     ) {
-        val purchase = convertTransactionToPurchase(transaction, PurchaseState.PURCHASED)
+        // SK1 assigns restored transactions a fresh id; the billing server can only
+        // look up the original purchase/renewal id via the App Store Server API.
+        val originalTransactionId = transaction.originalTransaction?.transactionIdentifier
+        val purchase =
+            convertTransactionToPurchase(transaction, PurchaseState.PURCHASED)
+                .let { converted ->
+                    originalTransactionId?.let { converted.copy(purchaseToken = it) } ?: converted
+                }
         val receipt = getReceiptData()
         val purchaseWithReceipt = purchase.copy(receipt = receipt)
         restoreLock.withLock {

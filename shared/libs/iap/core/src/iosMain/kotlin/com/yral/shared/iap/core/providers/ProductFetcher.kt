@@ -79,6 +79,8 @@ internal class ProductFetcher {
                                 val priceString = priceFormatter.stringFromNumber(skProduct.price) ?: ""
                                 val priceAmountMicros =
                                     (skProduct.price.doubleValue * PRICE_TO_MICROS_FACTOR).roundToLong()
+                                val (offerPriceString, offerPriceMicros) =
+                                    introOfferPricing(skProduct, priceString, priceAmountMicros)
 
                                 val subscriptionPeriod = skProduct.subscriptionPeriod
                                 val productType =
@@ -92,8 +94,8 @@ internal class ProductFetcher {
                                         id = skProduct.productIdentifier,
                                         price = priceString,
                                         priceAmountMicros = priceAmountMicros,
-                                        offerPrice = priceString,
-                                        offerPriceAmountMicros = priceAmountMicros,
+                                        offerPrice = offerPriceString,
+                                        offerPriceAmountMicros = offerPriceMicros,
                                         currencyCode =
                                             skProduct.priceLocale
                                                 .objectForKey(NSLocaleCurrencyCode)
@@ -140,6 +142,26 @@ internal class ProductFetcher {
                 request.cancel()
             }
         }
+
+    // A free trial's introductory price is 0 — keep the base price then; Apple's
+    // payment sheet communicates the trial terms. SK1 reports the intro offer
+    // regardless of the user's eligibility, so the sheet is the source of truth.
+    private fun introOfferPricing(
+        skProduct: SKProduct,
+        basePrice: String,
+        basePriceMicros: Long,
+    ): Pair<String, Long> {
+        val intro = skProduct.introductoryPrice
+        if (intro == null || intro.price.doubleValue <= 0.0) return basePrice to basePriceMicros
+        val introFormatter =
+            NSNumberFormatter().apply {
+                numberStyle = NSNumberFormatterCurrencyStyle
+                locale = intro.priceLocale
+            }
+        val introPrice = introFormatter.stringFromNumber(intro.price) ?: basePrice
+        val introPriceMicros = (intro.price.doubleValue * PRICE_TO_MICROS_FACTOR).roundToLong()
+        return introPrice to introPriceMicros
+    }
 
     private fun logProductFetch(message: String) {
         val prefixedMessage = "$LOG_PREFIX $message"
