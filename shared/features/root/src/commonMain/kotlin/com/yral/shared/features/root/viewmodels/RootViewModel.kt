@@ -31,6 +31,7 @@ import com.yral.shared.features.root.domain.DailyStreakLaunchResult
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
 import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.utils.isProSubscriptionSupported
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
@@ -1086,6 +1087,7 @@ class RootViewModel(
     ) {
         coroutineScope.launch {
             if (!flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription)) return@launch
+            if (!isProSubscriptionSupported()) return@launch
             val userPrincipal = sessionManager.userPrincipal
             if (userPrincipal == null) {
                 withContext(appDispatchers.main) { onError?.invoke() }
