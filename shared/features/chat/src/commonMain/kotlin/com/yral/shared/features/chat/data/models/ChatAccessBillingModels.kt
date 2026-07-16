@@ -16,6 +16,7 @@ data class GrantAppleChatAccessRequestDto(
     @SerialName("transaction_id") val transactionId: String,
     @SerialName("product_id") val productId: String,
     @SerialName("bot_id") val botId: String,
+    @SerialName("environment") val environment: String,
 )
 
 internal expect fun GrantChatAccessRequestDto.toPlatformGrantRequestBody(): Any

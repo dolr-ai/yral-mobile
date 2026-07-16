@@ -55,6 +55,13 @@ internal class PurchaseVerificationService(
             val purchaseToken =
                 purchase.purchaseToken
                     ?: throw IAPError.VerificationFailed(productId, Exception("Missing purchase token"))
+            val verifierEndpoint = getVerifierEndPoint()
+            if (verifierEndpoint.isBlank()) {
+                throw IAPError.VerificationFailed(
+                    productId,
+                    Exception("Purchase verification is not supported on this platform"),
+                )
+            }
             val request =
                 VerifyPurchaseRequest(
                     userId = userId,
@@ -68,7 +75,7 @@ internal class PurchaseVerificationService(
                     expectSuccess = false
                     url {
                         host = billingBaseUrl
-                        path(getVerifierEndPoint())
+                        path(verifierEndpoint)
                     }
                     setBody(request)
                 }
