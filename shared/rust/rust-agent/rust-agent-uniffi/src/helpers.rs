@@ -104,6 +104,7 @@ pub fn delegate_identity_with_max_age_public(
         pubkey: to_identity.public_key().unwrap(),
         expiration: expiry_ns,
         targets: None,
+        permissions: None,
     };
 
     let signed_delegation_signature = existing_delegated
