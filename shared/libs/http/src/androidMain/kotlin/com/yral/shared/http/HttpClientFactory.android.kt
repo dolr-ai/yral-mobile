@@ -5,6 +5,7 @@ import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.chuckerteam.chucker.api.RetentionManager
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineFactory
+import android.content.Context
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.engine.okhttp.OkHttpConfig
 
@@ -15,16 +16,17 @@ actual fun platformApplyEngineConfig(
     config: HttpClientConfig<*>,
     httpEventListener: HTTPEventListener,
 ) {
+    val appContext = context as Context
     val okConfig = config as HttpClientConfig<OkHttpConfig>
     val chuckerCollector =
         ChuckerCollector(
-            context = context,
+            context = appContext,
             showNotification = true,
             retentionPeriod = RetentionManager.Period.ONE_HOUR,
         )
     val chuckerInterceptor =
         ChuckerInterceptor
-            .Builder(context)
+            .Builder(appContext)
             .collector(chuckerCollector)
             .redactHeaders("Authorization", "Bearer")
             .alwaysReadResponseBody(false)
