@@ -11,6 +11,7 @@ import io.ktor.client.engine.okhttp.OkHttpConfig
 
 actual fun platformEngineFactory(): HttpClientEngineFactory<*> = OkHttp
 
+@Suppress("UNCHECKED_CAST")
 actual fun platformApplyEngineConfig(
     context: Any,
     config: HttpClientConfig<*>,
