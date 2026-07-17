@@ -6,8 +6,6 @@ object AppConfigurations {
     const val OAUTH_FALLBACK_BASE_URL = "auth.yral.com"
     const val METADATA_BASE_URL = "metadata.yral.com"
     const val FEED_BASE_URL = "recommendation-service-82502260393.us-central1.run.app"
-    const val AI_FEED_BASE_URL = "recsys-on-premise.fly.dev"
-    const val TOURNAMENT_FEED_BASE_URL = "recsys-on-premise.fly.dev"
     const val INFLUENCER_FEED_BASE_URL = "recsys-influencer-feed.ansuman.yral.com"
     const val OFF_CHAIN_BASE_URL = "offchain.yral.com"
     const val STORAGE_INTERFACE_BASE_URL = "storage-interface.prakash.yral.com"
