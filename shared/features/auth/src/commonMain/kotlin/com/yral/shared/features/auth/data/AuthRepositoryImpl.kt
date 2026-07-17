@@ -16,6 +16,7 @@ import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.rust.service.utils.SignedDelegationPayload
+import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
@@ -28,7 +29,6 @@ class AuthRepositoryImpl(
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authEnv: AuthEnv,
     private val json: Json,
-    private val authHostResolver: SessionAuthHostResolver,
     private val authLoginHintProvider: AuthLoginHintProvider,
 ) : AuthRepository {
     private var verifier: String = ""
@@ -42,7 +42,7 @@ class AuthRepositoryImpl(
         val authUrl =
             URLBuilder(
                 protocol = URLProtocol.HTTPS,
-                host = authHostResolver.currentHost(),
+                host = OAUTH_BASE_URL,
                 pathSegments = listOf("oauth", "auth"),
                 parameters =
                     Parameters.build {

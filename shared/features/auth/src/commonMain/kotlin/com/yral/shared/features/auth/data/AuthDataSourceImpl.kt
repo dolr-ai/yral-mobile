@@ -55,7 +55,6 @@ class AuthDataSourceImpl(
     private val json: Json,
     private val preferences: Preferences,
     private val authEnv: AuthEnv,
-    private val authHostResolver: SessionAuthHostResolver,
     private val httpEventListener: HTTPEventListener,
 ) : AuthDataSource {
     private val logger = Logger.withTag("AuthDataSourceImpl")
@@ -326,33 +325,11 @@ class AuthDataSourceImpl(
 
     @Suppress("TooGenericExceptionCaught")
     private suspend fun <T> executeAuthRequestWithFallback(request: suspend (host: String) -> T): T {
-        val initialHost = authHostResolver.currentHost()
-        return runAuthRequestForHost(
-            host = initialHost,
-            allowFallback = initialHost == OAUTH_BASE_URL,
-            request = request,
-        )
-    }
-
-    @Suppress("TooGenericExceptionCaught")
-    private suspend fun <T> runAuthRequestForHost(
-        host: String,
-        allowFallback: Boolean,
-        request: suspend (host: String) -> T,
-    ): T {
         return try {
-            request(host)
+            request(OAUTH_BASE_URL)
         } catch (exception: Exception) {
             if (exception.isDnsResolutionFailure()) {
-                reportDnsFailureIfNeeded(host, exception)
-                if (allowFallback) {
-                    val fallbackHost = authHostResolver.activateFallback(host)
-                    return runAuthRequestForHost(
-                        host = fallbackHost,
-                        allowFallback = false,
-                        request = request,
-                    )
-                }
+                reportDnsFailureIfNeeded(OAUTH_BASE_URL, exception)
             }
             throw exception
         }

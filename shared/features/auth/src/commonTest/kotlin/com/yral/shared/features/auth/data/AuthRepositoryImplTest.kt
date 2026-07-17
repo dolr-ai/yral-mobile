@@ -1,6 +1,5 @@
 package com.yral.shared.features.auth.data
 
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.CreateAiAccountResponseDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
@@ -27,23 +26,19 @@ class AuthRepositoryImplTest {
         )
 
     @Test
-    fun getOAuthUrl_usesCurrentAuthHost() =
+    fun getOAuthUrl_usesAuthHost() =
         runTest {
-            val resolver = SessionAuthHostResolver(CrashlyticsManager())
-            val repository = createRepository(resolver)
+            val repository = createRepository()
 
-            val initialUrl = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
-            resolver.activateFallback("auth.yral.com")
-            val fallbackUrl = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
 
-            assertEquals("auth.yral.com", initialUrl.host)
-            assertEquals("auth.yral.com", fallbackUrl.host)
+            assertEquals("auth.yral.com", url.host)
         }
 
     @Test
     fun getOAuthUrl_usesAppleEmailScopeAndFormPostModeForApple() =
         runTest {
-            val repository = createRepository(SessionAuthHostResolver(CrashlyticsManager()))
+            val repository = createRepository()
 
             val url = repository.getOAuthUrl(SocialProvider.APPLE, byteArrayOf(1)).first
 
@@ -55,7 +50,7 @@ class AuthRepositoryImplTest {
     @Test
     fun getOAuthUrl_keepsOpenIdQueryModeForGoogle() =
         runTest {
-            val repository = createRepository(SessionAuthHostResolver(CrashlyticsManager()))
+            val repository = createRepository()
 
             val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
 
@@ -64,13 +59,12 @@ class AuthRepositoryImplTest {
             assertEquals("query", url.parameters["response_mode"])
         }
 
-    private fun createRepository(resolver: SessionAuthHostResolver) =
+    private fun createRepository() =
         AuthRepositoryImpl(
             dataSource = FakeAuthDataSource(),
             oAuthUtilsHelper = FakeOAuthUtilsHelper(),
             authEnv = authEnv,
             json = Json,
-            authHostResolver = resolver,
             authLoginHintProvider = FakeAuthLoginHintProvider(),
         )
 

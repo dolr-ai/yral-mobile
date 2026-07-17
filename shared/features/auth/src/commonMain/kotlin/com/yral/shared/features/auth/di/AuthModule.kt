@@ -9,7 +9,6 @@ import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthLoginHintProvider
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
 import com.yral.shared.features.auth.data.DefaultAuthLoginHintProvider
-import com.yral.shared.features.auth.data.SessionAuthHostResolver
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.CreateAiAccountUseCase
@@ -34,7 +33,6 @@ val authModule =
     module {
         factoryOf(::DefaultAuthClientFactory) { bind<AuthClientFactory>() }
         singleOf(::DefaultAuthLoginHintProvider) { bind<AuthLoginHintProvider>() }
-        singleOf(::SessionAuthHostResolver)
         factoryOf(::AuthDataSourceImpl) { bind<AuthDataSource>() }
         singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
         factoryOf(::AuthenticateTokenUseCase)

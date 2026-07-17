@@ -1,6 +1,5 @@
 package com.yral.shared.features.auth.data
 
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.exception.DNSLookupException
@@ -21,62 +20,61 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class AuthDataSourceImplTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
-    fun obtainAnonymousIdentity_retriesOnFallbackAndKeepsUsingIt() =
+    fun obtainAnonymousIdentity_returnsTokenOnSuccess() =
         runTest {
-            val hosts = mutableListOf<String>()
-            val resolver = SessionAuthHostResolver(CrashlyticsManager())
             val dataSource =
                 createDataSource(
-                    resolver = resolver,
                     onRequest = { host ->
-                        hosts += host
-                        when (host) {
-                            PRIMARY_HOST -> {
-                                throw DNSLookupException(
-                                    hostname = host,
-                                    lookupSource = "test_dns",
-                                    cause = RuntimeException("primary dns failed"),
-                                )
-                            }
-
-                            FALLBACK_HOST -> {
-                                tokenResponseJson("fallback-id-token")
-                            }
-
-                            else -> {
-                                error("Unexpected host: $host")
-                            }
-                        }
+                        assertEquals(AUTH_HOST, host)
+                        tokenResponseJson("test-id-token")
                     },
                 )
 
-            val firstResponse = dataSource.obtainAnonymousIdentity()
-            val secondResponse = dataSource.obtainAnonymousIdentity()
+            val response = dataSource.obtainAnonymousIdentity()
 
-            assertEquals(listOf(PRIMARY_HOST, FALLBACK_HOST, FALLBACK_HOST), hosts)
-            assertEquals("fallback-id-token", firstResponse.idToken)
-            assertEquals("fallback-id-token", secondResponse.idToken)
-            assertTrue(resolver.isFallbackActive())
+            assertEquals("test-id-token", response.idToken)
+        }
+
+    @Test
+    fun obtainAnonymousIdentity_reportsDnsFailureToCrashlytics() =
+        runTest {
+            val eventListener = RecordingHttpEventListener()
+            val dataSource =
+                createDataSource(
+                    eventListener = eventListener,
+                    onRequest = { host ->
+                        throw DNSLookupException(
+                            hostname = host,
+                            lookupSource = "test_dns",
+                            cause = RuntimeException("dns failed"),
+                        )
+                    },
+                )
+
+            assertFailsWith<DNSLookupException> {
+                dataSource.obtainAnonymousIdentity()
+            }
+
+            // On Android, platformReportsDnsLookupFailure() == true so the
+            // data layer does not double-report (the platform already does).
+            // On iOS, platformReportsDnsLookupFailure() == false so the data
+            // layer reports via httpEventListener. Since commonTest runs on
+            // Android here, we expect zero calls to the event listener.
+            assertEquals(0, eventListener.exceptions.size)
         }
 
     @Test
     fun obtainAnonymousIdentity_doesNotFallbackOnNonDnsFailure() =
         runTest {
-            val hosts = mutableListOf<String>()
-            val resolver = SessionAuthHostResolver(CrashlyticsManager())
             val dataSource =
                 createDataSource(
-                    resolver = resolver,
-                    onRequest = { host ->
-                        hosts += host
+                    onRequest = { _ ->
                         throw IllegalStateException("boom")
                     },
                 )
@@ -84,38 +82,16 @@ class AuthDataSourceImplTest {
             assertFailsWith<IllegalStateException> {
                 dataSource.obtainAnonymousIdentity()
             }
-
-            assertEquals(listOf(PRIMARY_HOST), hosts)
-            assertFalse(resolver.isFallbackActive())
         }
 
     @Test
-    fun createAiAccount_retriesOnFallbackAndUsesResolvedHost() =
+    fun createAiAccount_returnsDelegatedIdentityOnSuccess() =
         runTest {
-            val hosts = mutableListOf<String>()
-            val resolver = SessionAuthHostResolver(CrashlyticsManager())
             val dataSource =
                 createDataSource(
-                    resolver = resolver,
                     onRequest = { host ->
-                        hosts += host
-                        when (host) {
-                            PRIMARY_HOST -> {
-                                throw DNSLookupException(
-                                    hostname = host,
-                                    lookupSource = "test_dns",
-                                    cause = RuntimeException("primary dns failed"),
-                                )
-                            }
-
-                            FALLBACK_HOST -> {
-                                createAiAccountResponseJson()
-                            }
-
-                            else -> {
-                                error("Unexpected host: $host")
-                            }
-                        }
+                        assertEquals(AUTH_HOST, host)
+                        createAiAccountResponseJson()
                     },
                 )
 
@@ -130,14 +106,11 @@ class AuthDataSourceImplTest {
                     delegations = null,
                 )
 
-            assertEquals(listOf(PRIMARY_HOST, FALLBACK_HOST), hosts)
-            assertTrue(resolver.isFallbackActive())
             assertEquals(listOf(1, 2, 3), response.delegatedIdentity.fromKey)
             assertNotNull(response.delegatedIdentity.toSecret)
         }
 
     private fun createDataSource(
-        resolver: SessionAuthHostResolver = SessionAuthHostResolver(CrashlyticsManager()),
         eventListener: HTTPEventListener = NoOpHttpEventListener(),
         onRequest: suspend (host: String) -> String,
     ): AuthDataSourceImpl {
@@ -163,7 +136,6 @@ class AuthDataSourceImplTest {
             json = json,
             preferences = FakePreferences(),
             authEnv = authEnv(),
-            authHostResolver = resolver,
             httpEventListener = eventListener,
         )
     }
@@ -215,8 +187,14 @@ class AuthDataSourceImplTest {
         override fun logException(e: Exception) = Unit
     }
 
+    private class RecordingHttpEventListener : HTTPEventListener {
+        val exceptions = mutableListOf<Exception>()
+        override fun logException(e: Exception) {
+            exceptions += e
+        }
+    }
+
     private companion object {
-        const val PRIMARY_HOST = "auth.yral.com"
-        const val FALLBACK_HOST = "auth.yral.com"
+        const val AUTH_HOST = "auth.yral.com"
     }
 }
