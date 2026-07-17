@@ -41,31 +41,41 @@ When upgrading dependencies, always target the **latest stable release** — not
 
 ## Commands
 
+Tooling, env vars, and tasks are managed by `mise.toml` (per-app config). When you `cd` into `apps/yral-mobile/`, mise automatically activates the right JDK, Ruby, CocoaPods, SwiftLint, Maestro, kubectl, and Rust. First-time setup: `mise install && mise run setup`.
+
+Prefer mise tasks (`mise run <task>`) over raw gradle commands — they load the correct env vars and tools automatically. Use `mise tasks` to list all available tasks.
+
 ```bash
+# ── Setup ───────────────────────────────────────────────────────────
+mise install            # install all tools pinned in mise.toml
+mise run setup          # bundle install (fastlane) + pod install (CocoaPods)
+
 # ── CI-equivalent full check suite (local = CI — nothing skipped) ──
-./gradlew allChecks      # lint + unit tests + iOS xcodebuild + Android/iOS e2e (Maestro + Kafka)
+mise run checks         # = ./gradlew allChecks (lint + unit tests + iOS xcodebuild + e2e)
                          # Also the default VSCode build task (Cmd+Shift+B)
 
 # ── Build ───────────────────────────────────────────────────────────
-./gradlew :androidApp:assembleDebug
+mise run build          # = ./gradlew :androidApp:assembleDebug
+mise run build-release  # = ./gradlew :androidApp:assembleRelease
 ./gradlew build
 
 # ── Unit tests ──────────────────────────────────────────────────────
-./gradlew test                                        # all unit tests (root)
+mise run test           # = ./gradlew test (all unit tests, root)
+mise run test-auth      # = ./gradlew :shared:features:auth:allTests (per-module example)
 ./gradlew :shared:features:<module>:allTests          # per-module (KMP, includes commonTest)
 
 # ── Code quality ────────────────────────────────────────────────────
-./gradlew ktlintCheck
-./gradlew ktlintFormat
+mise run lint           # = ./gradlew ktlintCheck detekt
+mise run lint-fix       # = ./gradlew ktlintFormat
 ./gradlew detekt
 
 # ── iOS ─────────────────────────────────────────────────────────────
+mise run ios-build      # = ./gradlew :iosSharedUmbrella:assembleXCFramework
+mise run ios-pod-install # = cd iosApp && pod install
 open iosApp/iosApp.xcworkspace
-cd iosApp && pod install
-./gradlew :iosSharedUmbrella:assembleXCFramework
 
 # ── Rust ────────────────────────────────────────────────────────────
-cd rust-agent && cargo build
+cd shared/rust/rust-agent && cargo build
 ```
 
 ## Checks Module (`checks/`)
@@ -81,7 +91,7 @@ All CI checks live as ordered JUnit5 test classes in `checks/src/test/kotlin/com
 
 **When adding a new check**, add it as a test method in `Checks.kt` (with `@Order`) or as a new test class (with `@Order` on the class). Do not add logic to bash scripts, `checks.yml`, or the VSCode task.
 
-**Local prerequisites**: Android emulator (API 35, Google APIs, 12 GB disk) and iOS simulator (iPhone, any recent iOS) must be available. The `android start emulator` test starts the emulator automatically if one isn't running; the iOS simulator is booted by `IosE2eTest.@BeforeAll`. KUBECONFIG is auto-discovered from `ci-e2e-reader.kubeconfig` in the repo root if not set in the environment.
+**Local prerequisites**: Android emulator (API 35, Google APIs, 12 GB disk) and iOS simulator (iPhone, any recent iOS) must be available. The `android start emulator` test starts the emulator automatically if one isn't running; the iOS simulator is booted by `IosE2eTest.@BeforeAll`. KUBECONFIG is inherited from the root `mise.toml` (`~/.kube/config`); the checks module auto-discovers `ci-e2e-reader.kubeconfig` in the repo root as a fallback. Run `mise install` to set up all build tools (JDK, Ruby, CocoaPods, SwiftLint, Maestro, kubectl, Rust).
 
 ## Architecture Rules
 

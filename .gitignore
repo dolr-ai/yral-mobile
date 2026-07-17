@@ -137,8 +137,8 @@ iosApp/rule_docs/
 
 # Local secrets - never commit
 .env
-.envrc
 ci-e2e-reader.kubeconfig
+mise.local.toml
 
 # Compiled class files
 *.class
