@@ -31,16 +31,20 @@ import com.yral.shared.features.chat.data.models.GrantChatAccessRequestDto
 import com.yral.shared.features.chat.data.models.GrantResult
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.models.ChatMessage
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
@@ -1003,6 +1007,25 @@ private class FakeChatRepository : ChatRepository {
         offset: Int,
     ): InfluencersPageResult = throw NotImplementedError()
     override suspend fun getInfluencer(id: String): Influencer = throw NotImplementedError()
+    override suspend fun requestInfluencerImages(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): Collage = throw NotImplementedError()
+    override suspend fun getInfluencerCollage(
+        influencerId: String,
+        isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
+    ): Collage = throw NotImplementedError()
+    override suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): List<DiscoverySearchResult> = throw NotImplementedError()
+    override suspend fun searchInbox(
+        query: String,
+        limit: Int,
+    ): List<InboxSearchResult> = throw NotImplementedError()
+    override suspend fun getSystemPromptPreview(botId: String): SystemPromptPreview = throw NotImplementedError()
     override suspend fun createConversation(influencerId: String): Conversation = throw NotImplementedError()
     override suspend fun createHumanConversation(participantId: String): Conversation = throw NotImplementedError()
     override suspend fun sendHumanMessage(
@@ -1047,6 +1070,7 @@ private class FakeChatRepository : ChatRepository {
 private class FakeChatAccessBillingDataSource : ChatAccessBillingDataSource {
     override val packageName: String = "com.yral.test"
     override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult = throw NotImplementedError()
+    override suspend fun grantBotSubscription(request: GrantChatAccessRequestDto): GrantResult = throw NotImplementedError()
     override suspend fun checkChatAccess(
         userId: String,
         botId: String,
