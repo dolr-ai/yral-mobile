@@ -1,18 +1,13 @@
 package com.yral.shared.http
 
-import android.app.Application
 import com.chuckerteam.chucker.api.ChuckerCollector
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.chuckerteam.chucker.api.RetentionManager
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineFactory
+import android.content.Context
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.engine.okhttp.OkHttpConfig
-import okhttp3.Cache
-import java.io.File
-
-private const val CACHE_SIZE = 10L * 1024 * 1024
-private const val CACHE_FILE = "okhttpcache"
 
 actual fun platformEngineFactory(): HttpClientEngineFactory<*> = OkHttp
 
@@ -22,33 +17,28 @@ actual fun platformApplyEngineConfig(
     config: HttpClientConfig<*>,
     httpEventListener: HTTPEventListener,
 ) {
+    val appContext = context as Context
     val okConfig = config as HttpClientConfig<OkHttpConfig>
-    val appContext = context as Application
     val chuckerCollector =
         ChuckerCollector(
-            context = context,
+            context = appContext,
             showNotification = true,
             retentionPeriod = RetentionManager.Period.ONE_HOUR,
         )
     val chuckerInterceptor =
         ChuckerInterceptor
-            .Builder(context)
+            .Builder(appContext)
             .collector(chuckerCollector)
             .redactHeaders("Authorization", "Bearer")
             .alwaysReadResponseBody(false)
             .build()
     okConfig.engine {
         config {
-            val bootstrap =
-                this
-                    .cache(
-                        Cache(
-                            directory = File(appContext.cacheDir, CACHE_FILE),
-                            maxSize = CACHE_SIZE,
-                        ),
-                    ).build()
-            cache(null)
-            dns(CustomDnsResolver(bootstrap, httpEventListener))
+            // Use system DNS (Dns.SYSTEM) — OkHttp default.
+            // The previous CustomDnsResolver with DoH fallbacks (Google, Cloudflare, Quad9)
+            // was causing 20s+ hangs when Jio blocks DoH endpoints, and was reporting
+            // dns_lookup_failure errors in Crashlytics even when system DNS would have worked.
+            // The OS's built-in DNS resolution handles retries and fallbacks natively.
             addInterceptor(chuckerInterceptor)
         }
     }
