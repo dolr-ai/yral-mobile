@@ -10,9 +10,13 @@ fun delegatedIdentityWireToJson(bytes: ByteArray): String =
     com.yral.shared.uniffi.generated
         .delegatedIdentityWireToJson(bytes)
 
+// yral-common (Rust) still builds the Cloudflare GobGob URL; rewrite it to the
+// self-hosted Hetzner copy here so the shared crate stays untouched.
 fun propicFromPrincipal(principalId: String): String =
-    com.yral.shared.uniffi.generated
-        .propicFromPrincipal(principalId)
+    rewriteGobUrl(
+        com.yral.shared.uniffi.generated
+            .propicFromPrincipal(principalId),
+    )
 
 /**
  * Gets session data from identity without making network calls.
@@ -47,7 +51,8 @@ suspend fun authenticateWithNetwork(data: ByteArray): CanisterData =
             CanisterData(
                 canisterId = wrapper.getCanisterPrincipal(),
                 userPrincipalId = wrapper.getUserPrincipal(),
-                profilePic = wrapper.getProfilePic(),
+                // Rust-computed propic may be the Cloudflare GobGob default — rewrite it.
+                profilePic = rewriteGobUrl(wrapper.getProfilePic()),
                 username = wrapper.getUsername(),
                 isCreatedFromServiceCanister = true,
             )
