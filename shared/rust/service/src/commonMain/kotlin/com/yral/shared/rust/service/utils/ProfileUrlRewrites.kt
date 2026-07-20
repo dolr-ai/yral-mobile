@@ -34,8 +34,11 @@ internal fun rewriteGobUrl(url: String): String {
     if (!url.startsWith(CF_GOB_URL_PREFIX)) return url
     val index = url.removePrefix(CF_GOB_URL_PREFIX).removeSuffix(CF_GOB_URL_SUFFIX)
     // Guard against anything unexpected between the prefix and /public.
-    if (index.isEmpty() || index.any { !it.isDigit() }) return url
-    return "$HETZNER_GOB_URL_PREFIX$index.png"
+    return if (index.isEmpty() || index.any { !it.isDigit() }) {
+        url
+    } else {
+        "$HETZNER_GOB_URL_PREFIX$index.png"
+    }
 }
 
 internal fun rewriteGobUrlOrNull(url: String?): String? = url?.let { rewriteGobUrl(it) }
