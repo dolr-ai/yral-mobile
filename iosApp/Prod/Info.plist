@@ -65,6 +65,8 @@
 	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Your permission lets Yral measure how well our ads perform and show you more relevant ads. Your data will not be sold.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
