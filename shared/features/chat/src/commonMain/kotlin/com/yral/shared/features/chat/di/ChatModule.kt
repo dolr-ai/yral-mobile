@@ -14,6 +14,7 @@ import com.yral.shared.features.chat.data.CollageCache
 import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
+import com.yral.shared.features.chat.domain.UngrantedChatPurchaseSweep
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
@@ -96,6 +97,7 @@ val chatModule =
         factoryOf(::ChatTelemetry)
         singleOf(::ChatErrorMapper)
         singleOf(::ChatUnreadRefreshSignal)
+        singleOf(::UngrantedChatPurchaseSweep)
         // Explicit `single { }` (not `singleOf(::…)`) because the constructor has
         // primitive defaults (Int). `singleOf` would try to resolve Int from the
         // Koin graph and crash with NoDefinitionFoundException.

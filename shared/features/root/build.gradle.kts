@@ -16,6 +16,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
