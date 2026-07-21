@@ -5,6 +5,7 @@ import com.yral.featureflag.ProviderFlags
 import com.yral.featureflag.providers.FirebaseRemoteConfigProvider
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -42,6 +43,7 @@ private class FeatureFlagListener(
         throwable: Throwable,
     ) {
         logger.w(throwable) { "Failed to fetch and activate remote flags provider $provider" }
-        crashlyticsManager.recordException(Exception(throwable))
+        // fetch failures are connectivity-related (offline, DNS, throttling)
+        crashlyticsManager.recordException(Exception(throwable), ExceptionType.NETWORK)
     }
 }
