@@ -23,4 +23,16 @@ object BotSubscriptionCatalog {
         val product = if (usesBotSubscription(botId)) ProductId.BOT_SUB_TARA else ProductId.DAILY_CHAT
         return product
     }
+
+    /**
+     * Reverse mapping used by [UngrantedChatPurchaseSweep]. Only per-bot
+     * subscription products can be mapped back to a bot; [ProductId.DAILY_CHAT]
+     * is a single product shared by every non-subscription bot, so a restored
+     * daily_chat purchase alone cannot identify its bot.
+     */
+    fun botIdFor(productId: ProductId): String? =
+        when (productId) {
+            ProductId.BOT_SUB_TARA -> TARA_BOT_ID
+            else -> null
+        }
 }

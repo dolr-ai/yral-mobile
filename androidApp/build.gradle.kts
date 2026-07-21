@@ -160,6 +160,7 @@ dependencies {
     implementation(projects.shared.features.aiInfluencer)
     implementation(libs.compose.components.resources)
     implementation(projects.shared.features.subscriptions)
+    implementation(projects.shared.features.chat)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.robolectric)

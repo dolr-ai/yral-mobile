@@ -18,6 +18,7 @@ import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.SNOWPLOW_APP_ID
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
+import com.yral.shared.features.chat.domain.UngrantedChatPurchaseSweep
 import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.features.uploadvideo.utils.di.videoWidgetModule
 import com.yral.shared.koin.koinInstance
@@ -66,6 +67,14 @@ class YralApp : Application() {
         setupFirebase()
         checkInstallReferrer()
         observeAndAddDistinctIdToBranch()
+        sweepUngrantedChatPurchases()
+    }
+
+    private fun sweepUngrantedChatPurchases() {
+        // Safety net: re-register Play purchases the billing backend missed
+        // (e.g. app killed between purchase and grant). Runs once per app
+        // start on a background scope after the session is signed in.
+        koinInstance.get<UngrantedChatPurchaseSweep>().start()
     }
 
     private fun checkInstallReferrer() {
