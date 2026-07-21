@@ -549,6 +549,10 @@ class ProfileViewModel(
     }
 
     private fun checkInfluencerSubscription(botPrincipal: String) {
+        if (sessionManager.userPrincipal == null) {
+            // session not restored yet; the use case would throw "User not signed in"
+            return
+        }
         _state.update { it.copy(isInfluencerSubscriptionStateLoading = true) }
         viewModelScope.launch {
             checkChatAccessUseCase(botPrincipal)
