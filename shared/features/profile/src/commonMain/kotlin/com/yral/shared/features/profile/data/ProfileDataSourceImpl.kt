@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.data
 
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
+import com.yral.shared.core.AppConfigurations.STORAGE_INTERFACE_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
@@ -148,7 +149,8 @@ class ProfileDataSourceImpl(
             httpPost<UploadProfileImageResponse>(httpClient, json) {
                 url {
                     protocol = URLProtocol.HTTPS
-                    host = OFF_CHAIN_BASE_URL
+                    // Moved to yral-video-storage-service (same /api/v1/user/profile-image path).
+                    host = STORAGE_INTERFACE_BASE_URL
                     path(UPLOAD_PROFILE_ENDPOINT)
                 }
                 setBody(

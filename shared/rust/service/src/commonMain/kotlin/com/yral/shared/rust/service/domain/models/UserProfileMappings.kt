@@ -1,5 +1,6 @@
 package com.yral.shared.rust.service.domain.models
 
+import com.yral.shared.rust.service.utils.rewriteProfileImageUrl
 import com.yral.shared.uniffi.generated.UisSubscriptionPlan
 import com.yral.shared.uniffi.generated.UisUserAccountType
 import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV7
@@ -12,7 +13,7 @@ fun UisUserProfileDetailsForFrontendV7.toDomain(): UserProfileDetails =
         websiteUrl = websiteUrl,
         followingCount = followingCount,
         userFollowsCaller = userFollowsCaller,
-        profilePictureUrl = profilePicture?.url,
+        profilePictureUrl = rewriteProfileImageUrl(profilePicture?.url),
         principalId = principalId,
         followersCount = followersCount,
         callerFollowsUser = callerFollowsUser,
