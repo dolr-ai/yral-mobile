@@ -177,7 +177,7 @@ class DefaultAuthClient(
                 sessionManager.updateSocialSignInStatus(false)
             }.onFailure {
                 authTelemetry.anonymousAuthFailed(it.message)
-                throw YralAuthException("obtaining anonymous token failed - ${it.message}")
+                throw YralAuthException("obtaining anonymous token failed - ${it.message}", it)
             }
     }
 
