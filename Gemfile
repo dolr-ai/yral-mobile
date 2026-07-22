@@ -6,5 +6,8 @@ source "https://rubygems.org"
 
 gem 'fastlane'
 
+# Security: pin jwt >= 2.10.3 to fix CVE-2026-45363 (empty-key HMAC bypass)
+gem 'jwt', '>= 2.10.3', '< 3.0'
+
 plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')
 eval_gemfile(plugins_path) if File.exist?(plugins_path)
