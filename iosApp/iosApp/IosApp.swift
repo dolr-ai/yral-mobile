@@ -1,4 +1,5 @@
 import SwiftUI
+import AppTrackingTransparency
 import FirebaseCore
 import FirebaseMessaging
 import FBSDKCoreKit
@@ -80,7 +81,33 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       didFinishLaunchingWithOptions: launchOptions
     )
     UNUserNotificationCenter.current().delegate = self
+
+    NotificationCenter.default.addObserver(
+      forName: UIApplication.didBecomeActiveNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.requestTrackingAuthorizationIfNeeded()
+    }
     return true
+  }
+
+  private func requestTrackingAuthorizationIfNeeded() {
+    let status = ATTrackingManager.trackingAuthorizationStatus
+    guard status == .notDetermined else {
+      applyTrackingAuthorization(granted: status == .authorized)
+      return
+    }
+    ATTrackingManager.requestTrackingAuthorization { [weak self] newStatus in
+      DispatchQueue.main.async {
+        self?.applyTrackingAuthorization(granted: newStatus == .authorized)
+      }
+    }
+  }
+
+  private func applyTrackingAuthorization(granted: Bool) {
+    Settings.shared.isAdvertiserTrackingEnabled = granted
+    Settings.shared.isAdvertiserIDCollectionEnabled = granted
   }
 
   func application(

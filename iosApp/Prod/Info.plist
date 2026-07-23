@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>3.4.3</string>
+	<string>3.4.4</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -44,7 +44,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>21</string>
+	<string>23</string>
 	<key>FIREBASE_CLOUD_BASE_URL</key>
 	<string>https://us-central1-yral-mobile.cloudfunctions.net/</string>
 	<key>FacebookAppID</key>
@@ -65,6 +65,8 @@
 	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Your permission lets Yral measure how well our ads perform and show you more relevant ads. Your data will not be sold.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
