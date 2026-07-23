@@ -28,32 +28,25 @@ uniffi = { version = "0.28.3", features = ["cli"] }
 # vendored assets prevents their build script from downloading them in CI.
 utoipa-swagger-ui = { version = "9.0.2", features = ["vendored"] }
 web-time = "1.1.0"
-yral-canisters-client = { git = "https://github.com/dolr-ai/yral-common.git", branch = "main", features = [
+# All yral-* crates are sourced from the monorepo (dolr-ai/yral-bare-metal-kubernetes-cluster).
+# Cargo traverses the git repo tree to find each crate's Cargo.toml, so only the
+# repo URL is needed — no per-crate subpaths. This ensures version consistency
+# (e.g. ic-agent 0.49.0 across yral-common and yral-metadata) and means the
+# relative path deps inside yral-metadata (../yral-common/identity) resolve
+# correctly within the monorepo layout.
+yral-canisters-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/dolr-ai/yral-common.git", branch = "main" }
-yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch = "main", default-features = false, features = [
+yral-canisters-common = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
+yral-identity = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false, features = [
     "ic-git",
     "wasm-bindgen",
     "ic-agent",
 ] }
-yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata.git", branch = "main", default-features = false }
-yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata.git", branch = "main", default-features = false }
-yral-types = { git = "https://github.com/dolr-ai/yral-common.git", branch = "main" }
-yral-username-gen = { git = "https://github.com/dolr-ai/yral-common.git", branch = "main" }
-
-# When building inside the monorepo, override git deps with local paths.
-# Standalone builds (outside the monorepo) fall back to the git URLs above.
-[patch."https://github.com/dolr-ai/yral-common.git"]
-yral-canisters-client = { path = "../../../../../yral-common/canisters-client" }
-yral-canisters-common = { path = "../../../../../yral-common/canisters-common" }
-yral-identity = { path = "../../../../../yral-common/identity" }
-yral-types = { path = "../../../../../yral-common/types" }
-yral-username-gen = { path = "../../../../../yral-common/username-gen" }
-
-[patch."https://github.com/yral-dapp/yral-metadata.git"]
-yral-metadata-client = { path = "../../../../../yral-metadata/client" }
-yral-metadata-types = { path = "../../../../../yral-metadata/types" }
+yral-metadata-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false }
+yral-metadata-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false }
+yral-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
+yral-username-gen = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
 
 
 [build-dependencies]
