@@ -191,10 +191,11 @@ class AuthDataSourceImpl(
             HelperService
                 .unregisterDevice(identity, token)
                 .onFailure { error ->
-                    Logger.e("AuthDataSource") { "Failed to unregister device: ${error.message}" }
-                    throw YralException("Failed to unregister device: ${error.message}")
+                    // Failures here come from the metadata service (e.g. empty/non-JSON
+                    // response bodies) and are not actionable on mobile; don't escalate.
+                    Logger.w("AuthDataSource") { "Failed to unregister device: ${error.message}" }
                 }
-        } ?: throw YralException("Identity not found while deregistering for notifications")
+        } ?: Logger.w("AuthDataSource") { "Identity not found while deregistering for notifications" }
     }
 
     override suspend fun phoneAuthLogin(
@@ -324,8 +325,8 @@ class AuthDataSourceImpl(
         }
 
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun <T> executeAuthRequestWithFallback(request: suspend (host: String) -> T): T {
-        return try {
+    private suspend fun <T> executeAuthRequestWithFallback(request: suspend (host: String) -> T): T =
+        try {
             request(OAUTH_BASE_URL)
         } catch (exception: Exception) {
             if (exception.isDnsResolutionFailure()) {
@@ -333,7 +334,6 @@ class AuthDataSourceImpl(
             }
             throw exception
         }
-    }
 
     private fun reportDnsFailureIfNeeded(
         host: String,

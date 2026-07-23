@@ -467,6 +467,13 @@ class ConversationViewModel(
 
     private fun updateInfluencerSubscriptionProductState(influencerId: String) {
         if (!_viewState.value.isSubscriptionEnabled) return
+        if (sessionManager.userPrincipal == null) {
+            // session not restored yet (e.g. cold-start deep link); the use case
+            // would throw "User not signed in" before reaching the backend
+            Logger.d("SubscriptionX") { "skip checkChatAccess: no signed-in session" }
+            fetchInfluencerSubscriptionProducts()
+            return
+        }
         Logger.d("SubscriptionX") { "checkChatAccess for influencer=$influencerId" }
         _viewState.update { it.copy(isChatAccessLoading = true) }
         viewModelScope.launch {

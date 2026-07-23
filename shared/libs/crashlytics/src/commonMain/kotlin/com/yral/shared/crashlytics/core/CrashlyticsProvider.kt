@@ -22,4 +22,5 @@ enum class ExceptionType {
     CHAT,
     UPLOAD_VIDEO,
     AI_VIDEO,
+    NETWORK,
 }

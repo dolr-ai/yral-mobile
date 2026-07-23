@@ -29,6 +29,7 @@ import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.features.root.domain.DailyStreakLaunchEvaluator
 import com.yral.shared.features.root.domain.DailyStreakLaunchResult
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
+import com.yral.shared.http.exception.hasNetworkCause
 import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.utils.isProSubscriptionSupported
@@ -120,7 +121,9 @@ class RootViewModel(
                 // updateSessionAsRegistered, FirebaseAuth/Coin balance update
                 _state.update { it.copy(error = RootError.TIMEOUT) }
                 Logger.e("Auth error - $e")
-                crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                if (!e.hasNetworkCause()) {
+                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                }
             }
 
     internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
@@ -236,7 +239,11 @@ class RootViewModel(
                     // for async calls before setSession
                     _state.update { it.copy(error = RootError.TIMEOUT) }
                     Logger.e("Auth error - $e")
-                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                    // network-caused failures are already recorded by the use-case
+                    // failure listener as ExceptionType.NETWORK; don't double-report
+                    if (!e.hasNetworkCause()) {
+                        crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                    }
                 }
             }
     }
@@ -325,7 +332,9 @@ class RootViewModel(
                 } catch (e: YralAuthException) {
                     // can be triggered in postFirebaseLogin when getting balance
                     Logger.e("Fetch Balance error - $e")
-                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                    if (!e.hasNetworkCause()) {
+                        crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                    }
                 }
             }
     }
