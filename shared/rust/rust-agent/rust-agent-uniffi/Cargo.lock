@@ -1571,7 +1571,7 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 [[package]]
 name = "global-constants"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "num-bigint",
@@ -1706,7 +1706,7 @@ dependencies = [
 [[package]]
 name = "hon-worker-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "global-constants",
@@ -4139,9 +4139,7 @@ checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
 [[package]]
 name = "rustls-webpki"
 version = "0.103.13"
-version = "0.103.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61c429a8649f110dddef65e2a5ad240f747e85f7758a6bccc7e5777bd33f756e"
 checksum = "61c429a8649f110dddef65e2a5ad240f747e85f7758a6bccc7e5777bd33f756e"
 dependencies = [
  "aws-lc-rs",
@@ -4554,7 +4552,7 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
 [[package]]
 name = "sns-validation"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "humantime",
@@ -5747,7 +5745,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-client"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "anyhow",
  "candid",
@@ -5768,7 +5766,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "async-trait",
  "candid",
@@ -5805,7 +5803,7 @@ dependencies = [
 [[package]]
 name = "yral-identity"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "getrandom 0.2.17",
@@ -5820,7 +5818,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "ic-agent",
  "reqwest 0.12.28",
@@ -5832,7 +5830,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "chrono",
@@ -5875,7 +5873,7 @@ dependencies = [
 [[package]]
 name = "yral-pump-n-dump-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "serde",
@@ -5888,7 +5886,7 @@ dependencies = [
 [[package]]
 name = "yral-types"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "ic-agent",
  "k256",
@@ -5901,7 +5899,7 @@ dependencies = [
 [[package]]
 name = "yral-username-gen"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#289f73d788e746ee4b6ec989be8b13342b21ae9c"
+source = "git+https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git?branch=main#d677c327288aa4f7dbdbd03fb45a3cfb7a89395c"
 dependencies = [
  "candid",
  "rand 0.9.5",
