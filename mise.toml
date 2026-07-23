@@ -10,7 +10,8 @@
 #   - Android emulator (API 35, Google APIs, 12 GB disk)
 #   - iOS simulator (iPhone, any recent iOS)
 #
-# First-time setup:  mise install && mise run setup
+# All tasks are defined in the root monorepo mise.toml with the `yral-mobile-` prefix.
+# First-time setup:  mise install && mise run yral-mobile-setup
 
 [tools]
 # JDK — Gradle 8.14.4 + AGP 8.13.2 require JDK 17+; using JDK 21 LTS.
@@ -37,50 +38,3 @@ KAFKA_BOOTSTRAP = "kafka.yral.com:9092"
 # Gradle — use the project wrapper (./gradlew) for all builds.
 # These improve build performance and reliability.
 GRADLE_OPTS = "-Dorg.gradle.daemon=true -Dorg.gradle.caching=true"
-
-[tasks.setup]
-description = "Install Ruby gems (fastlane) and run CocoaPods install for iOS"
-run = '''
-bundle install
-cd iosApp && pod install
-'''
-
-[tasks.build]
-description = "Assemble Android debug APK"
-run = "./gradlew :androidApp:assembleDebug"
-
-[tasks.build-release]
-description = "Assemble Android release APK"
-run = "./gradlew :androidApp:assembleRelease"
-
-[tasks.test]
-description = "Run all unit tests (root)"
-run = "./gradlew test"
-
-[tasks.test-auth]
-description = "Run auth feature module tests (KMP, includes commonTest)"
-run = "./gradlew :shared:features:auth:allTests"
-
-[tasks.lint]
-description = "Run ktlint + detekt"
-run = "./gradlew ktlintCheck detekt"
-
-[tasks.lint-fix]
-description = "Auto-fix ktlint issues"
-run = "./gradlew ktlintFormat"
-
-[tasks.ios-build]
-description = "Build the iOS XCFramework (shared Kotlin module)"
-run = "./gradlew :iosSharedUmbrella:assembleXCFramework"
-
-[tasks.ios-pod-install]
-description = "Reinstall CocoaPods dependencies (run after adding/changing pods)"
-run = "cd iosApp && pod install"
-
-[tasks.checks]
-description = "CI-equivalent full check suite (lint + unit tests + iOS xcodebuild + Android/iOS e2e)"
-run = "./gradlew allChecks"
-
-[tasks.clean]
-description = "Clean all Gradle build outputs"
-run = "./gradlew clean"

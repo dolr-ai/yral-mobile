@@ -26,7 +26,7 @@ GEM
     aws-sigv4 (1.11.0)
       aws-eventstream (~> 1, >= 1.0.2)
     babosa (1.0.4)
-    base64 (0.2.0)
+    base64 (0.3.0)
     claide (1.1.0)
     colored (1.2)
     colored2 (3.1.2)
@@ -163,7 +163,7 @@ GEM
     httpclient (2.8.3)
     jmespath (1.6.2)
     json (2.7.6)
-    jwt (2.10.1)
+    jwt (2.10.3)
       base64
     mini_magick (4.13.2)
     mini_mime (1.1.5)
@@ -221,11 +221,13 @@ GEM
       xcpretty (~> 0.2, >= 0.0.7)
 
 PLATFORMS
+  arm64-darwin-25
   universal-darwin-24
 
 DEPENDENCIES
   fastlane
   fastlane-plugin-firebase_app_distribution
+  jwt (>= 2.10.3, < 3.0)
 
 BUNDLED WITH
-   2.2.27
+   2.6.9

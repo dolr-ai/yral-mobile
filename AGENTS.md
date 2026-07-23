@@ -41,37 +41,37 @@ When upgrading dependencies, always target the **latest stable release** — not
 
 ## Commands
 
-Tooling, env vars, and tasks are managed by `mise.toml` (per-app config). When you `cd` into `apps/yral-mobile/`, mise automatically activates the right JDK, Ruby, CocoaPods, SwiftLint, Maestro, kubectl, and Rust. First-time setup: `mise install && mise run setup`.
+Tooling, env vars, and tasks are managed by `mise.toml`. Per-app `[tools]` and `[env]` live in `apps/yral-mobile/mise.toml`; all tasks are defined in the root `mise.toml` with the `yral-mobile-` prefix. When you `cd` into `apps/yral-mobile/`, mise automatically activates the right JDK, Ruby, CocoaPods, SwiftLint, Maestro, kubectl, and Rust. First-time setup: `mise install && mise run yral-mobile-setup`.
 
-Prefer mise tasks (`mise run <task>`) over raw gradle commands — they load the correct env vars and tools automatically. Use `mise tasks` to list all available tasks.
+Prefer mise tasks (`mise run yral-mobile-<task>`) over raw gradle commands — they load the correct env vars and tools automatically. Use `mise tasks` to list all available tasks.
 
 ```bash
 # ── Setup ───────────────────────────────────────────────────────────
-mise install            # install all tools pinned in mise.toml
-mise run setup          # bundle install (fastlane) + pod install (CocoaPods)
+mise install                   # install all tools pinned in mise.toml
+mise run yral-mobile-setup     # bundle install (fastlane) + pod install (CocoaPods)
 
 # ── CI-equivalent full check suite (local = CI — nothing skipped) ──
-mise run checks         # = ./gradlew allChecks (lint + unit tests + iOS xcodebuild + e2e)
-                         # Also the default VSCode build task (Cmd+Shift+B)
+mise run yral-mobile-checks    # = ./gradlew allChecks (lint + unit tests + iOS xcodebuild + e2e)
+                                # Also the default VSCode build task (Cmd+Shift+B)
 
 # ── Build ───────────────────────────────────────────────────────────
-mise run build          # = ./gradlew :androidApp:assembleDebug
-mise run build-release  # = ./gradlew :androidApp:assembleRelease
+mise run yral-mobile-build          # = ./gradlew :androidApp:assembleDebug
+mise run yral-mobile-build-release  # = ./gradlew :androidApp:assembleRelease
 ./gradlew build
 
 # ── Unit tests ──────────────────────────────────────────────────────
-mise run test           # = ./gradlew test (all unit tests, root)
-mise run test-auth      # = ./gradlew :shared:features:auth:allTests (per-module example)
+mise run yral-mobile-test       # = ./gradlew test (all unit tests, root)
+mise run yral-mobile-test-auth  # = ./gradlew :shared:features:auth:allTests (per-module example)
 ./gradlew :shared:features:<module>:allTests          # per-module (KMP, includes commonTest)
 
 # ── Code quality ────────────────────────────────────────────────────
-mise run lint           # = ./gradlew ktlintCheck detekt
-mise run lint-fix       # = ./gradlew ktlintFormat
+mise run yral-mobile-lint       # = ./gradlew ktlintCheck detekt
+mise run yral-mobile-lint-fix   # = ./gradlew ktlintFormat
 ./gradlew detekt
 
 # ── iOS ─────────────────────────────────────────────────────────────
-mise run ios-build      # = ./gradlew :iosSharedUmbrella:assembleXCFramework
-mise run ios-pod-install # = cd iosApp && pod install
+mise run yral-mobile-ios-build       # = ./gradlew :iosSharedUmbrella:assembleXCFramework
+mise run yral-mobile-ios-pod-install # = cd iosApp && pod install
 open iosApp/iosApp.xcworkspace
 
 # ── Rust ────────────────────────────────────────────────────────────

@@ -8,41 +8,45 @@ crate-type = ["cdylib", "staticlib"]
 name = "yral_mobile_uniffi"
 
 [dependencies]
-uniffi = { version = "0.28.3", features = ["cli"] }
-tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
-ic-agent = "0.41.0"
-lazy_static = "1.4"
 candid = "0.10.10"
-serde = "=1.0.219"
-serde_json = "1.0.132"
-serde_bytes = "0.11.15"
+cfg-if = "1.0"
+ic-agent = "0.49.0"
 k256 = { version = "0.13.4", default-features = false, features = [
     "std",
     "jwk",
 ] }
+lazy_static = "1.4"
+log = "0.4.27"
+once_cell = "1.21.3"
 openssl = { version = "0.10.81", features = ["vendored"] }
+serde = "=1.0.219"
+serde_bytes = "0.11.15"
+serde_json = "1.0.132"
+tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
+uniffi = { version = "0.28.3", features = ["cli"] }
+# Upstream type crates depend on Swagger UI unconditionally. Enabling the
+# vendored assets prevents their build script from downloading them in CI.
+utoipa-swagger-ui = { version = "9.0.2", features = ["vendored"] }
 web-time = "1.1.0"
-
-yral-types = { git = "https://github.com/dolr-ai/yral-common.git", branch = "master" }
-yral-canisters-client = { git = "https://github.com/dolr-ai/yral-common.git", branch = "master", features = [
+# All yral-* crates are sourced from the monorepo (dolr-ai/yral-bare-metal-kubernetes-cluster).
+# Cargo traverses the git repo tree to find each crate's Cargo.toml, so only the
+# repo URL is needed — no per-crate subpaths. This ensures version consistency
+# (e.g. ic-agent 0.49.0 across yral-common and yral-metadata) and means the
+# relative path deps inside yral-metadata (../yral-common/identity) resolve
+# correctly within the monorepo layout.
+yral-canisters-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/dolr-ai/yral-common.git", branch = "master" }
-yral-username-gen = { git = "https://github.com/dolr-ai/yral-common.git", branch = "master" }
-yral-metadata-client = { git = "https://github.com/yral-dapp/yral-metadata", branch = "master", default-features = false }
-yral-metadata-types = { git = "https://github.com/yral-dapp/yral-metadata", branch = "master", default-features = false }
-yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch = "master", default-features = false, features = [
+yral-canisters-common = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
+yral-identity = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false, features = [
     "ic-git",
     "wasm-bindgen",
     "ic-agent",
 ] }
-# Upstream type crates depend on Swagger UI unconditionally. Enabling the
-# vendored assets prevents their build script from downloading them in CI.
-utoipa-swagger-ui = { version = "9.0.2", features = ["vendored"] }
-
-log = "0.4.27"
-cfg-if = "1.0"
-once_cell = "1.21.3"
+yral-metadata-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false }
+yral-metadata-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false }
+yral-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
+yral-username-gen = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
 
 
 [build-dependencies]
