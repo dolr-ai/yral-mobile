@@ -5,11 +5,8 @@ import com.yral.shared.features.uploadvideo.data.UploadRepositoryImpl
 import com.yral.shared.features.uploadvideo.data.remote.UploadVideoRemoteDataSource
 import com.yral.shared.features.uploadvideo.domain.DefaultPollingConfigProvider
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
-import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
-import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
-import com.yral.shared.features.uploadvideo.domain.PollGenerationStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.PollingConfigProvider
 import com.yral.shared.features.uploadvideo.domain.PublishDraftVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.UpdateMetaUseCase
@@ -49,10 +46,7 @@ val uploadVideoModule =
         factoryOf(::GetProvidersUseCase)
         factoryOf(::GenerateVideoUseCase)
         factoryOf(::DefaultPollingConfigProvider) bind PollingConfigProvider::class
-        factoryOf(::PollGenerationStatusUseCase)
         factoryOf(::UploadAiVideoFromUrlUseCase)
-        factoryOf(::GetFreeCreditsStatusUseCase)
-        factoryOf(::GetPropertyRateLimitConfigUseCase)
         factoryOf(::AiRequiredUseCases)
         viewModelOf(::AiVideoGenViewModel)
         singleOf(::BotVideoGenCoordinator) bind BotVideoGenManager::class

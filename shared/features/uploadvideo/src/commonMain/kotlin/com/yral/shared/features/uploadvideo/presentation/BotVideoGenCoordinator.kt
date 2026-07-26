@@ -51,8 +51,7 @@ internal class BotVideoGenCoordinator(
                 VideoGenerationTracker.startGenerating()
                 videoDraftPollingManager.onGenerationSubmitted(botPrincipal)
                 logger.d {
-                    "bot_video_gen: server draft generation submitted for $botPrincipal " +
-                        "requestKey=${result.requestKey}"
+                    "bot_video_gen: server draft generation submitted for $botPrincipal"
                 }
             }.onFailure { error ->
                 crashlyticsManager.recordException(
