@@ -53,7 +53,7 @@ import kotlin.time.Instant
 class AiVideoGenViewModel internal constructor(
     private val requiredUseCases: RequiredUseCases,
     private val sessionManager: SessionManager,
-    private val preferences: Preferences,
+    @Suppress("UnusedPrivateProperty") private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val subscriptionTelemetry: SubscriptionTelemetry,
     private val videoDraftPollingManager: VideoDraftPollingManager,

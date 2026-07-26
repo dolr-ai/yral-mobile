@@ -16,8 +16,6 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
-import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
-import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
@@ -34,11 +32,6 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
-import com.yral.shared.rust.service.domain.RateLimitRepository
-import com.yral.shared.rust.service.domain.models.PropertyRateLimitConfig
-import com.yral.shared.rust.service.domain.models.RateLimitStatus
-import com.yral.shared.rust.service.domain.models.Result2
-import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import com.yral.shared.testsupport.preferences.FakePreferences
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +62,6 @@ class AiVideoGenViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var sessionManager: SessionManager
     private lateinit var fakeUploadRepository: FakeUploadRepository
-    private lateinit var fakeRateLimitRepository: FakeRateLimitRepository
     private lateinit var fakePreferences: FakePreferences
     private lateinit var fakeCrashlyticsProvider: FakeCrashlyticsProvider
 
@@ -78,7 +70,6 @@ class AiVideoGenViewModelTest {
         Dispatchers.setMain(testDispatcher)
         sessionManager = SessionManager()
         fakeUploadRepository = FakeUploadRepository()
-        fakeRateLimitRepository = FakeRateLimitRepository()
         fakePreferences = FakePreferences()
         fakeCrashlyticsProvider = FakeCrashlyticsProvider()
         VideoGenerationTracker.clearPendingGenerations()
@@ -104,10 +95,6 @@ class AiVideoGenViewModelTest {
             requiredUseCases =
                 AiVideoGenViewModel.RequiredUseCases(
                     getProviders = GetProvidersUseCase(appDispatchers, failureListener, fakeUploadRepository),
-                    getFreeCreditsStatus =
-                        GetFreeCreditsStatusUseCase(appDispatchers, failureListener, fakeRateLimitRepository),
-                    getPropertyRateLimitConfig =
-                        GetPropertyRateLimitConfigUseCase(appDispatchers, failureListener, fakeRateLimitRepository),
                     generateVideo = GenerateVideoUseCase(appDispatchers, failureListener, fakeUploadRepository),
                 ),
             sessionManager = sessionManager,
@@ -177,8 +164,6 @@ class AiVideoGenViewModelTest {
         val state =
             AiVideoGenViewModel.ViewState(
                 selectedProvider = TEST_PROVIDER,
-                usedCredits = 0,
-                totalCredits = 1,
                 prompt = "A cinematic sunset",
                 generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
                 isSubscriptionEnabled = false,
@@ -205,8 +190,6 @@ class AiVideoGenViewModelTest {
         val state =
             AiVideoGenViewModel.ViewState(
                 selectedProvider = TEST_PROVIDER,
-                usedCredits = 0,
-                totalCredits = 1,
                 prompt = " ",
                 generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
                 isSubscriptionEnabled = false,
@@ -654,7 +637,6 @@ class AiVideoGenViewModelTest {
             GenerateVideoResult(
                 operationId = "op-1",
                 provider = "test-provider",
-                requestKey = null,
                 providerError = null,
             )
 
@@ -662,7 +644,6 @@ class AiVideoGenViewModelTest {
             GenerateVideoResult(
                 operationId = "op-1",
                 provider = "test-provider",
-                requestKey = null,
                 providerError = "Content policy violation",
                 errorType = GenerateVideoErrorType.PROVIDER_ERROR,
             )
@@ -715,23 +696,6 @@ internal class FakeUploadRepository : UploadRepository {
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String = "video-id"
 
     override suspend fun markPostAsPublished(postId: String) {}
-}
-
-internal class FakeRateLimitRepository : RateLimitRepository {
-    override suspend fun fetchVideoGenerationStatus(
-        userPrincipal: String,
-        requestKey: VideoGenRequestKey,
-    ): Result2 = Result2.Err("Not configured")
-
-    override suspend fun getVideoGenFreeCreditsStatus(
-        userPrincipal: String,
-        isRegistered: Boolean,
-    ): RateLimitStatus? = null
-
-    override suspend fun getPropertyRateLimitConfig(
-        userPrincipal: String,
-        property: String,
-    ): PropertyRateLimitConfig? = null
 }
 
 internal class FakeCrashlyticsProvider : CrashlyticsProvider {

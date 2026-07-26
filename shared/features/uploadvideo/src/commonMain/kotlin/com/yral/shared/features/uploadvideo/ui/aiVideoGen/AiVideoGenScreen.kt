@@ -43,8 +43,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
-import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
-import com.yral.shared.features.subscriptions.ui.components.BoltIcon
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
@@ -117,18 +115,6 @@ fun AiVideoGenScreen(
     LaunchedEffect(Unit) {
         viewModel.aiVideoGenEvents.collect { event ->
             when (event) {
-                is AiVideoGenViewModel.AiVideoGenEvent.ShowSubscriptionNudge -> {
-                    component.subscriptionCoordinator.showSubscriptionNudge(
-                        content =
-                            SubscriptionNudgeContent(
-                                title = event.title,
-                                description = event.description,
-                                topContent = { BoltIcon() },
-                                entryPoint = event.entryPoint,
-                            ),
-                    )
-                }
-
                 is AiVideoGenViewModel.AiVideoGenEvent.RefreshProDetails -> {
                     component.subscriptionCoordinator.refreshCreditBalances()
                 }
@@ -281,7 +267,6 @@ private fun PromptScreen(
                 onValueChange = { viewModel.updatePromptText(it) },
                 onHeightChange = {},
             )
-            CreditsDetails(viewState = viewState)
             YralGradientButton(
                 text = stringResource(Res.string.generate_video),
                 buttonState = buttonState,
@@ -295,7 +280,7 @@ private fun PromptScreen(
                 },
             )
         }
-        if (!viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
+        if (viewState.isBalanceLow()) {
             Spacer(Modifier.height(16.dp))
             PlayGameText(goToHome)
         }
