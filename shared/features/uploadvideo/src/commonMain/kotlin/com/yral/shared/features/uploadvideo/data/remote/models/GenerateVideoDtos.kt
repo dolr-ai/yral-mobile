@@ -5,7 +5,6 @@ import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.features.uploadvideo.domain.models.ImageData
-import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
@@ -69,13 +68,6 @@ enum class TokenType {
 internal data class GenerateVideoSuccessDto(
     @SerialName("operation_id") val operationId: String,
     @SerialName("provider") val provider: String,
-    @SerialName("request_key") val requestKey: RequestKeyDto,
-)
-
-@Serializable
-internal data class RequestKeyDto(
-    @SerialName("counter") val counter: Long,
-    @SerialName("principal") val principal: String,
 )
 
 @Serializable(with = VideoGenErrorDtoSerializer::class)
@@ -202,11 +194,6 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
         GenerateVideoResult(
             operationId = dto.operationId,
             provider = dto.provider,
-            requestKey =
-                VideoGenRequestKey(
-                    counter = dto.requestKey.counter.toULong(),
-                    principal = dto.requestKey.principal,
-                ),
             providerError = null,
             errorType = null,
         )
@@ -218,7 +205,6 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
         GenerateVideoResult(
             operationId = null,
             provider = null,
-            requestKey = null,
             providerError = error?.errorMessage ?: text,
             errorType = status.toGenerateVideoErrorType(),
         )

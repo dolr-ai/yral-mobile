@@ -125,7 +125,6 @@ object HelperService {
     }
 
     fun initServiceFactories(identityData: ByteArray) {
-        koinInstance.get<RateLimitServiceFactory>().initialize(identityData)
         koinInstance.get<UserPostServiceFactory>().initialize(identityData)
         koinInstance.get<UserInfoServiceFactory>().initialize(identityData)
         koinInstance.get<SnsLedgerServiceFactory>().initialize(identityData)

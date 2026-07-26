@@ -1,6 +1,5 @@
 pub mod helpers;
 pub mod sns_ledger;
-pub mod rate_limits;
 pub mod user_post_service;
 pub mod user_info_service;
 pub mod ledger;
