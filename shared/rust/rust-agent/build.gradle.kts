@@ -41,6 +41,17 @@ uniffi {
     generateFromLibrary()
 }
 
+// aws-lc-sys (pulled in transitively via rustls) compiles C/assembly against the
+// current Xcode SDK, which defaults to the latest iOS (e.g. 26.5). The Rust
+// aarch64-apple-ios target spec links at iOS 10.0 by default, so symbols like
+// ___chkstk_darwin (iOS 12.0+) become undefined. Setting
+// IPHONEOS_DEPLOYMENT_TARGET aligns the C build and the Rust linker at the same
+// deployment target (matching the KMP/ CocoaPods deployment target of 15.6).
+tasks.matching { it.name.startsWith("cargoBuild") && it.name.contains("Ios") }.configureEach {
+    val cargoBuildTask = this as gobley.gradle.cargo.tasks.CargoBuildTask
+    cargoBuildTask.additionalEnvironment.put("IPHONEOS_DEPLOYMENT_TARGET", "15.6")
+}
+
 tasks
     .matching {
         it.name.startsWith("runKtlintCheckOver") && it.name.endsWith("MainSourceSet")

@@ -15,15 +15,15 @@
 
 [tools]
 # JDK — Gradle 8.14.4 + AGP 8.13.2 require JDK 17+; using JDK 21 LTS.
-java = "temurin-21.0.11+10.0.LTS"
-# Ruby — fastlane + CocoaPods need Ruby 3.x (macOS system Ruby 2.6 is too old).
-ruby = "3.4.10"
+java = "latest"
+# Ruby — fastlane + CocoaPods need Ruby 3.x+ (macOS system Ruby 2.6 is too old).
+ruby = "latest"
 # CocoaPods — iOS dependency manager (installed via gem, managed by mise).
 cocoapods = "latest"
 # SwiftLint — iOS lint (pre-commit hook + checks module).
-swiftlint = "0.65.0"
+swiftlint = "latest"
 # Maestro — mobile e2e test framework (Android + iOS flows).
-maestro = "cli-2.6.1"
+maestro = "latest"
 # kubectl and rust are inherited from the root monorepo mise.toml.
 
 [env]

@@ -46,7 +46,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.0"
+          ruby-version: "4.0.6"
 
       - name: Restore Gradle and Rust caches
         id: restore-tooling-cache
