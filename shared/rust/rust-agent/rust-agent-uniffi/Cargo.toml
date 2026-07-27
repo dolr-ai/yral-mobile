@@ -34,18 +34,18 @@ web-time = "1.1.0"
 # (e.g. ic-agent 0.49.0 across yral-common and yral-metadata) and means the
 # relative path deps inside yral-metadata (../yral-common/identity) resolve
 # correctly within the monorepo layout.
-yral-canisters-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", features = [
+yral-canisters-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c", features = [
     "full",
 ] }
-yral-canisters-common = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
-yral-identity = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false, features = [
+yral-canisters-common = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c" }
+yral-identity = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c", default-features = false, features = [
     "wasm-bindgen",
     "ic-agent",
 ] }
-yral-metadata-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false }
-yral-metadata-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main", default-features = false }
-yral-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
-yral-username-gen = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", branch = "main" }
+yral-metadata-client = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c", default-features = false }
+yral-metadata-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c", default-features = false }
+yral-types = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c" }
+yral-username-gen = { git = "https://github.com/dolr-ai/yral-bare-metal-kubernetes-cluster.git", rev = "d677c327288aa4f7dbdbd03fb45a3cfb7a89395c" }
 
 
 [build-dependencies]
