@@ -3,8 +3,6 @@ use std::sync::Arc;
 
 use crate::uni_ffi_helpers::*;
 use crate::RUNTIME;
-use candid::de;
-use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
 use ic_agent::identity::DelegatedIdentity;
