@@ -30,6 +30,7 @@ import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.features.wallet.di.walletModule
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.di.networkModule
+import com.yral.shared.http.spacetime.di.spacetimeModule
 import com.yral.shared.iap.core.di.iapCoreModule
 import com.yral.shared.iap.di.iapModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
@@ -75,6 +76,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             loggerModule,
             httpListenerModule,
             commonDataModule,
+            spacetimeModule,
         )
 
         modules(
@@ -117,6 +119,8 @@ internal val featureUrlsModule =
         single<String>(CHAT_SERVER_BASE_URL) { AppConfigurations.CHAT_BASE_URL }
         single<String>(COACH_SERVER_BASE_URL) { AppConfigurations.COACH_BASE_URL }
         single<String>(INFLUENCER_FEED_SERVER_BASE_URL) { AppConfigurations.INFLUENCER_FEED_BASE_URL }
+        single<String>(SPACETIMEDB_BASE_URL) { AppConfigurations.SPACETIMEDB_BASE_URL }
+        single<String>(SPACETIMEDB_DB_NAME) { AppConfigurations.SPACETIMEDB_DB_NAME }
     }
 
 internal val dispatchersModule = module { single { AppDispatchers() } }
