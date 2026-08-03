@@ -270,7 +270,7 @@ private data class CollageDisplayInfo(
 private fun ConversationMessageItem.collageDisplayInfoOrNull(fallbackBotId: String?): CollageDisplayInfo? {
     val info =
         when (this) {
-            is ConversationMessageItem.Remote ->
+            is ConversationMessageItem.Remote -> {
                 message
                     .takeIf { it.messageType == ChatMessageType.COLLAGE }
                     ?.let {
@@ -281,8 +281,9 @@ private fun ConversationMessageItem.collageDisplayInfoOrNull(fallbackBotId: Stri
                             collageId = it.collageId,
                         )
                     }
+            }
 
-            is ConversationMessageItem.Local ->
+            is ConversationMessageItem.Local -> {
                 message
                     .takeIf { it.messageType == ChatMessageType.COLLAGE }
                     ?.let {
@@ -293,6 +294,7 @@ private fun ConversationMessageItem.collageDisplayInfoOrNull(fallbackBotId: Stri
                             collageId = it.collageId,
                         )
                     }
+            }
         } ?: return null
     val missingReference = !info.isGenerating && (info.botId == null || info.date == null)
     return if (missingReference) null else info
@@ -335,7 +337,7 @@ private fun ConversationMessageItem.toRenderParams(
     onRetry: (localId: String) -> Unit,
 ): MessageRenderParams =
     when (this) {
-        is ConversationMessageItem.Remote ->
+        is ConversationMessageItem.Remote -> {
             MessageRenderParams(
                 content = message.content,
                 mediaUrls = message.mediaUrls,
@@ -350,6 +352,7 @@ private fun ConversationMessageItem.toRenderParams(
                 isBlurred = message.isBlur,
                 onUnlockClick = { onUnlockImage(message.id) },
             )
+        }
 
         is ConversationMessageItem.Local -> {
             val streamingBuffer = message.streamingBuffer

@@ -389,7 +389,9 @@ private fun ChatMessageImage(
                     // Locked image: no full-screen preview — tapping anywhere
                     // routes to the unlock flow instead.
                     isBlurred -> baseModifier.clickable { onUnlockClick?.invoke() }
+
                     onImageClick != null -> baseModifier.clickable { onImageClick(imageUrl) }
+
                     else -> baseModifier
                 }
             }

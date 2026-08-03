@@ -2,9 +2,6 @@ package com.yral.shared.app.ui.screens.home.nav
 
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
-import com.yral.featureflag.AppFeatureFlags
-import com.yral.featureflag.ChatFeatureFlags
-import com.yral.featureflag.FeatureFlagManager
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.slot.activate
@@ -16,6 +13,9 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
@@ -88,8 +88,11 @@ internal class DefaultHomeComponent(
             source = navigation,
             serializer = Config.serializer(),
             initialConfiguration =
-                if (landOnChatInitially) Config.Chat(initialTab = InitialTab.DISCOVER)
-                else Config.Feed,
+                if (landOnChatInitially) {
+                    Config.Chat(initialTab = InitialTab.DISCOVER)
+                } else {
+                    Config.Feed
+                },
             handleBackButton = true,
             childFactory = ::child,
         ).also { stackValue ->

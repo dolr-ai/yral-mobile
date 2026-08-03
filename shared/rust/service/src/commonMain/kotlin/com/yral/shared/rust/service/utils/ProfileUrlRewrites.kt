@@ -6,9 +6,9 @@ package com.yral.shared.rust.service.utils
  * legacy locations. Doing this here avoids changing the shared `yral-common` crate.
  *
  * Anything that doesn't match a legacy pattern passes through untouched.
+ *
+ * --- Uploaded profile pictures: standalone yral-profile bucket -> prakash-yral/yral-profile/
  */
-
-// --- Uploaded profile pictures: standalone yral-profile bucket -> prakash-yral/yral-profile/
 internal const val LEGACY_PROFILE_URL_BASE = "https://yral-profile.hel1.your-objectstorage.com/"
 internal const val NEW_PROFILE_URL_BASE =
     "https://prakash-yral.hel1.your-objectstorage.com/yral-profile/"

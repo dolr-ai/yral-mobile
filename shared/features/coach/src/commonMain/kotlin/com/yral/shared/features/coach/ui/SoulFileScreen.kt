@@ -30,10 +30,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.yral.shared.features.chat.domain.models.EnabledSkill
 import com.yral.shared.features.chat.domain.models.EngagementSchedule
 import com.yral.shared.features.chat.domain.models.FirstTurnNudge
@@ -54,18 +54,6 @@ import yral_mobile.shared.features.coach.generated.resources.coach_back
 import yral_mobile.shared.features.coach.generated.resources.soul_file_archetype_label
 import yral_mobile.shared.features.coach.generated.resources.soul_file_as_of_label
 import yral_mobile.shared.features.coach.generated.resources.soul_file_empty_subtitle
-import yral_mobile.shared.features.coach.generated.resources.soul_file_header_hint
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_empty
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l1
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l2_empty
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l2
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l3_flat
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l3_sections
-import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l4
-import yral_mobile.shared.features.coach.generated.resources.soul_file_load_failed
-import yral_mobile.shared.features.coach.generated.resources.soul_file_load_retry
-import yral_mobile.shared.features.coach.generated.resources.soul_file_loading
-import yral_mobile.shared.features.coach.generated.resources.soul_file_overrides_empty
 import yral_mobile.shared.features.coach.generated.resources.soul_file_engagement_cadence_hours
 import yral_mobile.shared.features.coach.generated.resources.soul_file_engagement_enabled_no
 import yral_mobile.shared.features.coach.generated.resources.soul_file_engagement_enabled_yes
@@ -80,6 +68,18 @@ import yral_mobile.shared.features.coach.generated.resources.soul_file_engagemen
 import yral_mobile.shared.features.coach.generated.resources.soul_file_engagement_skill_checkins_header
 import yral_mobile.shared.features.coach.generated.resources.soul_file_engagement_source
 import yral_mobile.shared.features.coach.generated.resources.soul_file_engagement_threshold_hours
+import yral_mobile.shared.features.coach.generated.resources.soul_file_header_hint
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_empty
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l1
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l2
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l2_empty
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l3_flat
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l3_sections
+import yral_mobile.shared.features.coach.generated.resources.soul_file_layer_l4
+import yral_mobile.shared.features.coach.generated.resources.soul_file_load_failed
+import yral_mobile.shared.features.coach.generated.resources.soul_file_load_retry
+import yral_mobile.shared.features.coach.generated.resources.soul_file_loading
+import yral_mobile.shared.features.coach.generated.resources.soul_file_overrides_empty
 import yral_mobile.shared.features.coach.generated.resources.soul_file_overrides_section
 import yral_mobile.shared.features.coach.generated.resources.soul_file_screen_title
 import yral_mobile.shared.features.coach.generated.resources.soul_file_skills_empty
@@ -328,6 +328,7 @@ private fun buildRowList(preview: SystemPromptPreview): List<SoulFileRow> {
                     body = { SectionListBody(preview.layers.l3PersonalitySections) },
                 )
         }
+
         !preview.layers.l3FlatFallback.isNullOrBlank() -> {
             rows +=
                 SoulFileRow(
@@ -336,6 +337,7 @@ private fun buildRowList(preview: SystemPromptPreview): List<SoulFileRow> {
                     body = { PlainTextBody(preview.layers.l3FlatFallback ?: "") },
                 )
         }
+
         else -> {
             rows +=
                 SoulFileRow(
@@ -559,8 +561,11 @@ private fun InactivityProactiveBody(ip: InactivityProactive) {
             Text(
                 text =
                     stringResource(
-                        if (it) Res.string.soul_file_engagement_enabled_yes
-                        else Res.string.soul_file_engagement_enabled_no,
+                        if (it) {
+                            Res.string.soul_file_engagement_enabled_yes
+                        } else {
+                            Res.string.soul_file_engagement_enabled_no
+                        },
                     ),
                 style = LocalAppTopography.current.baseRegular,
                 color = YralColors.NeutralTextPrimary,
@@ -611,8 +616,11 @@ private fun SkillCheckinsBody(sc: SkillCheckins) {
             Text(
                 text =
                     stringResource(
-                        if (honoured) Res.string.soul_file_engagement_per_user_preferred_times_yes
-                        else Res.string.soul_file_engagement_per_user_preferred_times_no,
+                        if (honoured) {
+                            Res.string.soul_file_engagement_per_user_preferred_times_yes
+                        } else {
+                            Res.string.soul_file_engagement_per_user_preferred_times_no
+                        },
                     ),
                 style = LocalAppTopography.current.baseRegular,
                 color = YralColors.NeutralTextSecondary,
@@ -635,8 +643,11 @@ private fun FirstTurnNudgeBody(ftn: FirstTurnNudge) {
             Text(
                 text =
                     stringResource(
-                        if (it) Res.string.soul_file_engagement_enabled_yes
-                        else Res.string.soul_file_engagement_enabled_no,
+                        if (it) {
+                            Res.string.soul_file_engagement_enabled_yes
+                        } else {
+                            Res.string.soul_file_engagement_enabled_no
+                        },
                     ),
                 style = LocalAppTopography.current.baseRegular,
                 color = YralColors.NeutralTextPrimary,

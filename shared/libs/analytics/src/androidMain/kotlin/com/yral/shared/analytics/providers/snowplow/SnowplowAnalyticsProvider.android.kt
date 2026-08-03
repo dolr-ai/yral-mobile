@@ -54,11 +54,20 @@ actual class SnowplowAnalyticsProvider actual constructor(
     override fun trackEvent(event: EventData) {
         val properties = mapConverter.toMap(event)
         val propertyJson = JSONObject(properties.mapValues { it.value.toString() }).toString()
+        // Snowplow atomic event schema limits se_property to maxLength=1000.
+        // Truncate to prevent atomic_field_length_exceeded bad rows.
+        // The full event data is preserved in the raw topic (snowplow-raw) for reprocessing.
+        val truncatedProperty =
+            if (propertyJson.length <= MAX_SE_PROPERTY_LENGTH) {
+                propertyJson
+            } else {
+                propertyJson.substring(0, MAX_SE_PROPERTY_LENGTH - TRUNCATION_SUFFIX.length) + TRUNCATION_SUFFIX
+            }
         val snowplowEvent =
             Structured(
                 category = event.featureName,
                 action = event.event,
-            ).property(propertyJson)
+            ).property(truncatedProperty)
         tracker.track(snowplowEvent)
     }
 
@@ -71,4 +80,10 @@ actual class SnowplowAnalyticsProvider actual constructor(
     }
 
     override fun toValidKeyName(key: String): String = key
+
+    private companion object {
+        // Snowplow atomic event schema: se_property maxLength = 1000
+        const val MAX_SE_PROPERTY_LENGTH = 1000
+        const val TRUNCATION_SUFFIX = "..."
+    }
 }

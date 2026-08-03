@@ -40,11 +40,15 @@ class CollageCache(
         val key = key(botId, date, isSubscribed)
         val value = cache[key]
         return when {
-            value == null -> null
+            value == null -> {
+                null
+            }
+
             nowMs - value.storedAtMs >= COLLAGE_URL_TTL_MS -> {
                 cache.remove(key)
                 null
             }
+
             else -> {
                 // Bump recency by removing + re-inserting at the tail.
                 cache.remove(key)

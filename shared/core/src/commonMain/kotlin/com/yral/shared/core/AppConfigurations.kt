@@ -17,6 +17,8 @@ object AppConfigurations {
     const val BILLING_BASE_URL = "billing.sarvesh.yral.com"
     const val DAILY_STREAK_BASE_URL = "daily-streaks.naitik.yral.com"
     const val SNOWPLOW_COLLECTOR_URL = "snowplow-collector.yral.com"
+    const val SPACETIMEDB_BASE_URL = "maincloud.spacetimedb.com"
+    const val SPACETIMEDB_DB_NAME = "yral-database-spacetime-4lbo7"
     const val FIREBASE_APP_NAME = "yral"
     const val FIREBASE_COULD_URL = "cloudfunctions.net"
     const val FIREBASE_COULD_FUN_REGION = "us-central1"

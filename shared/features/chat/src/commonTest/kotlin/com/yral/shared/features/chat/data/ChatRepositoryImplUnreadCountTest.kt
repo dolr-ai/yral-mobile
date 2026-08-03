@@ -3,15 +3,14 @@ package com.yral.shared.features.chat.data
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.data.models.ChatMessageDto
 import com.yral.shared.features.chat.data.models.CollageResponseDto
-import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
-import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
-import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationInfluencerDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
+import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
 import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
+import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
@@ -19,6 +18,7 @@ import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestD
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
@@ -222,9 +222,7 @@ class ChatRepositoryImplUnreadCountTest {
             date: String?,
         ): CollageResponseDto = error("unused")
 
-        override suspend fun getSystemPromptPreview(
-            botId: String,
-        ): SystemPromptPreviewResponseDto = error("unused")
+        override suspend fun getSystemPromptPreview(botId: String): SystemPromptPreviewResponseDto = error("unused")
 
         override suspend fun createConversation(influencerId: String): ConversationDto = error("unused")
 

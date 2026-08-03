@@ -79,7 +79,7 @@ internal fun CollageBubble(
 ) {
     LaunchedEffect(botId, date) { onLoad() }
     when (state) {
-        is CollageUiState.Ready ->
+        is CollageUiState.Ready -> {
             CollageGrid(
                 images = state.collage.images,
                 isBlurred = state.collage.isBlurred,
@@ -88,8 +88,9 @@ internal fun CollageBubble(
                 onSubscribeClick = onSubscribeClick,
                 maxWidth = maxWidth,
             )
+        }
 
-        CollageUiState.Unavailable ->
+        CollageUiState.Unavailable -> {
             MessageInBubble {
                 Text(
                     text = stringResource(Res.string.collage_unavailable),
@@ -98,8 +99,11 @@ internal fun CollageBubble(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
+        }
 
-        CollageUiState.Loading, null -> CollageLoadingGrid(maxWidth = maxWidth)
+        CollageUiState.Loading, null -> {
+            CollageLoadingGrid(maxWidth = maxWidth)
+        }
     }
 }
 

@@ -13,3 +13,7 @@ naming:
   FunctionNaming:
     functionPattern: '[a-z][a-zA-Z0-9]*'
     ignoreAnnotated: ['Composable']
+
+style:
+  MaxLineLength:
+    maxLineLength: 140

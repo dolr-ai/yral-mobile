@@ -5,7 +5,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import co.touchlab.kermit.Logger
-import com.yral.featureflag.FeatureFlagManager
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -24,6 +23,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState

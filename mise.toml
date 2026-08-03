@@ -1,40 +1,21 @@
-#:schema https://mise.jdx.dev/schema/mise.json
-
-# Per-app mise config for yral-mobile (Kotlin Multiplatform — Android + iOS).
-# Inherits tools from the root monorepo mise.toml — only app-specific tools and env go here.
-# When you cd into apps/yral-mobile/, mise automatically activates these tools and env vars.
+# yral-mobile mise configuration.
+# Replicates the mobile-relevant tools from the monorepo root mise.toml so
+# that `cd apps/yral-mobile/` activates the correct JDK (21 LTS), Rust, Ruby,
+# CocoaPods, SwiftLint, and Maestro without depending on parent traversal.
 #
-# Prerequisites (not managed by mise — system-level):
-#   - Android SDK (set ANDROID_HOME or sdk.dir in local.properties)
-#   - Xcode + Command Line Tools (macOS only, for iOS targets)
-#   - Android emulator (API 35, Google APIs, 12 GB disk)
-#   - iOS simulator (iPhone, any recent iOS)
-#
-# All tasks are defined in the root monorepo mise.toml with the `yral-mobile-` prefix.
-# First-time setup:  mise install && mise run yral-mobile-setup
+# JDK 21 LTS is pinned (not "latest"): Gradle 8.14.4's bundled Kotlin compiler
+# (Kotlin 2.0.21) cannot parse newer JDK version strings and throws
+# IllegalArgumentException during script compilation. Bump only after
+# upgrading the Gradle wrapper to a version whose embedded Kotlin supports
+# the new JDK.
 
 [tools]
-# JDK — Gradle 8.14.4 + AGP 8.13.2 require JDK 17+; using JDK 21 LTS.
-java = "latest"
-# Ruby — fastlane + CocoaPods need Ruby 3.x+ (macOS system Ruby 2.6 is too old).
-ruby = "latest"
-# CocoaPods — iOS dependency manager (installed via gem, managed by mise).
-cocoapods = "latest"
-# SwiftLint — iOS lint (pre-commit hook + checks module).
-swiftlint = "latest"
-# Maestro — mobile e2e test framework (Android + iOS flows).
-maestro = "latest"
-# kubectl and rust are inherited from the root monorepo mise.toml.
-
-[env]
-# KUBECONFIG — inherited from the root mise.toml (~/.kube/config).
-# The checks module (KafkaExt.kt) auto-discovers ci-e2e-reader.kubeconfig
-# in the repo root as a fallback if KUBECONFIG is not set.
-# Override in mise.local.toml if needed.
-
-# Kafka bootstrap server for e2e test assertions (checks module).
-KAFKA_BOOTSTRAP = "kafka.yral.com:9092"
-
-# Gradle — use the project wrapper (./gradlew) for all builds.
-# These improve build performance and reliability.
-GRADLE_OPTS = "-Dorg.gradle.daemon=true -Dorg.gradle.caching=true"
+cargo-binstall = "latest"
+java = { version = "21", os = ["macos"] }
+ruby = { version = "latest", os = ["macos"] }
+cocoapods = { version = "latest", os = ["macos"] }
+swiftlint = { version = "latest", os = ["macos"] }
+maestro = { version = "latest", os = ["macos"] }
+node = "latest"
+protobuf = "latest"
+rust = "latest"

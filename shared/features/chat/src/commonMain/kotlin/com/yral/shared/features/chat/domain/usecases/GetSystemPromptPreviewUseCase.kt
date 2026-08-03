@@ -17,8 +17,7 @@ class GetSystemPromptPreviewUseCase(
     ) {
     override val exceptionType: String = ExceptionType.CHAT.name
 
-    override suspend fun execute(parameter: Params): SystemPromptPreview =
-        chatRepository.getSystemPromptPreview(botId = parameter.botId)
+    override suspend fun execute(parameter: Params): SystemPromptPreview = chatRepository.getSystemPromptPreview(botId = parameter.botId)
 
     data class Params(
         val botId: String,

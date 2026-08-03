@@ -432,7 +432,6 @@ class ProfileViewModelTest {
                 GenerateVideoResult(
                     operationId = null,
                     provider = "provider",
-                    requestKey = null,
                     providerError = "Provider rejected request",
                 )
             val vm = createViewModel()
@@ -850,7 +849,6 @@ private class FakeUploadRepository : UploadRepository {
         GenerateVideoResult(
             operationId = "operation-1",
             provider = "provider",
-            requestKey = null,
             providerError = null,
         )
     var generatedParams: GenerateVideoParams? = null
