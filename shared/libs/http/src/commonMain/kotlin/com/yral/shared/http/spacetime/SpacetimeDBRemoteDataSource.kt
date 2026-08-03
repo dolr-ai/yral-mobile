@@ -6,13 +6,13 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.PrefKeys
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.path
-import io.ktor.http.url
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
@@ -90,7 +90,7 @@ class SpacetimeDBRemoteDataSource(
             }
             return response.bodyAsText()
         } catch (e: Exception) {
-            throw NetworkException("SpacetimeDB $name call failed: ${e.message}", e)
+            throw NetworkException(e)
         }
     }
 
@@ -103,18 +103,18 @@ class SpacetimeDBRemoteDataSource(
      */
     private fun parseOptionPostDetails(responseBody: String): SpacetimePostDetails? {
         val outerArray = json.parseToJsonElement(responseBody) as? JsonArray
-            ?: throw NetworkException("SpacetimeDB: expected JSON array, got: $responseBody")
+            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected JSON array, got: $responseBody"))
 
         val innerArray = outerArray.firstOrNull() as? JsonArray
-            ?: throw NetworkException("SpacetimeDB: expected nested array, got: $responseBody")
+            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected nested array, got: $responseBody"))
 
         val variantIndex = (innerArray.getOrNull(0) as? JsonPrimitive)?.content?.toIntOrNull()
-            ?: throw NetworkException("SpacetimeDB: expected variant index, got: $responseBody")
+            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected variant index, got: $responseBody"))
 
         if (variantIndex != 0) return null // None
 
         val postJson = innerArray.getOrNull(1)
-            ?: throw NetworkException("SpacetimeDB: expected post payload, got: $responseBody")
+            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected post payload, got: $responseBody"))
 
         return json.decodeFromString(SpacetimePostDetails.serializer(), postJson.toString())
     }

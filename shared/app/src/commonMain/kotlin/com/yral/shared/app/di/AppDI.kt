@@ -13,6 +13,8 @@ import com.yral.shared.core.di.BILLING_SERVER_BASE_URL
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.core.di.COACH_SERVER_BASE_URL
 import com.yral.shared.core.di.INFLUENCER_FEED_SERVER_BASE_URL
+import com.yral.shared.core.di.SPACETIMEDB_BASE_URL
+import com.yral.shared.core.di.SPACETIMEDB_DB_NAME
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
