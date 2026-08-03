@@ -1,0 +1,21 @@
+# yral-mobile mise configuration.
+# Replicates the mobile-relevant tools from the monorepo root mise.toml so
+# that `cd apps/yral-mobile/` activates the correct JDK (21 LTS), Rust, Ruby,
+# CocoaPods, SwiftLint, and Maestro without depending on parent traversal.
+#
+# JDK 21 LTS is pinned (not "latest"): Gradle 8.14.4's bundled Kotlin compiler
+# (Kotlin 2.0.21) cannot parse newer JDK version strings and throws
+# IllegalArgumentException during script compilation. Bump only after
+# upgrading the Gradle wrapper to a version whose embedded Kotlin supports
+# the new JDK.
+
+[tools]
+cargo-binstall = "latest"
+java = { version = "21", os = ["macos"] }
+ruby = { version = "latest", os = ["macos"] }
+cocoapods = { version = "latest", os = ["macos"] }
+swiftlint = { version = "latest", os = ["macos"] }
+maestro = { version = "latest", os = ["macos"] }
+node = "latest"
+protobuf = "latest"
+rust = "stable"
