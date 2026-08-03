@@ -7,8 +7,8 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.usecases.SearchDiscoveryUseCase
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +52,10 @@ class DiscoverySearchViewModel(
             .debounce { if (cache.containsKey(it.cacheKey())) 0L else DEBOUNCE_MS }
             .flatMapLatest { trimmed ->
                 when {
-                    trimmed.isEmpty() -> flowOf(DiscoverySearchState(query = trimmed))
+                    trimmed.isEmpty() -> {
+                        flowOf(DiscoverySearchState(query = trimmed))
+                    }
+
                     else -> {
                         val cached = cacheGet(trimmed.cacheKey())
                         if (cached != null) {

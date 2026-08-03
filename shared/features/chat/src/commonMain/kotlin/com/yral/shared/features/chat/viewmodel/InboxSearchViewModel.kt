@@ -52,7 +52,10 @@ class InboxSearchViewModel(
             .debounce { if (cache.containsKey(it.cacheKey())) 0L else DEBOUNCE_MS }
             .flatMapLatest { trimmed ->
                 when {
-                    trimmed.isEmpty() -> flowOf(InboxSearchState(query = trimmed))
+                    trimmed.isEmpty() -> {
+                        flowOf(InboxSearchState(query = trimmed))
+                    }
+
                     else -> {
                         val cached = cacheGet(trimmed.cacheKey())
                         if (cached != null) {

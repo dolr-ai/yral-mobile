@@ -52,19 +52,21 @@ fun DiscoverySearchResults(
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when {
-            error != null && results.isEmpty() ->
+            error != null && results.isEmpty() -> {
                 CenteredMessage(
                     title = stringResource(Res.string.discovery_search_failed),
                     subtitle = error,
                 )
+            }
 
-            !isLoading && results.isEmpty() && query.isNotBlank() ->
+            !isLoading && results.isEmpty() && query.isNotBlank() -> {
                 CenteredMessage(
                     title = stringResource(Res.string.discovery_search_empty_title, query),
                     subtitle = stringResource(Res.string.discovery_search_empty_subtitle),
                 )
+            }
 
-            else ->
+            else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 8.dp),
@@ -76,6 +78,7 @@ fun DiscoverySearchResults(
                         )
                     }
                 }
+            }
         }
     }
 }

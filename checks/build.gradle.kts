@@ -14,13 +14,15 @@ fun org.gradle.api.tasks.testing.Test.applyCommonConfig() {
     // Always re-run: tests hit live devices and infrastructure, so caching is meaningless.
     outputs.upToDateWhen { false }
     // Augment PATH with Android SDK tools so adb/emulator are available regardless of launch context.
-    val androidSdk = (System.getenv("ANDROID_HOME")?.takeIf { it.isNotBlank() }
-        ?: System.getenv("ANDROID_SDK_ROOT")?.takeIf { it.isNotBlank() }
-        ?: "${System.getProperty("user.home")}/Library/Android/sdk")
-    val sdkAdditions = listOf("platform-tools", "emulator")
-        .map { file("$androidSdk/$it") }
-        .filter { it.exists() }
-        .joinToString(":") { it.absolutePath }
+    val androidSdk =
+        System.getenv("ANDROID_HOME")?.takeIf { it.isNotBlank() }
+            ?: System.getenv("ANDROID_SDK_ROOT")?.takeIf { it.isNotBlank() }
+            ?: "${System.getProperty("user.home")}/Library/Android/sdk"
+    val sdkAdditions =
+        listOf("platform-tools", "emulator")
+            .map { file("$androidSdk/$it") }
+            .filter { it.exists() }
+            .joinToString(":") { it.absolutePath }
     if (sdkAdditions.isNotEmpty()) {
         environment("PATH", "$sdkAdditions:${System.getenv("PATH") ?: ""}")
     }

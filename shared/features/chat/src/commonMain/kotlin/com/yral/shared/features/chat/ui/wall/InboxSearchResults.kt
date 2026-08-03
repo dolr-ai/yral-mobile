@@ -50,19 +50,21 @@ fun InboxSearchResults(
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when {
-            error != null && results.isEmpty() ->
+            error != null && results.isEmpty() -> {
                 CenteredInboxMessage(
                     title = stringResource(Res.string.inbox_search_failed),
                     subtitle = error,
                 )
+            }
 
-            !isLoading && results.isEmpty() && query.isNotBlank() ->
+            !isLoading && results.isEmpty() && query.isNotBlank() -> {
                 CenteredInboxMessage(
                     title = stringResource(Res.string.inbox_search_empty_title, query),
                     subtitle = stringResource(Res.string.inbox_search_empty_subtitle),
                 )
+            }
 
-            else ->
+            else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 8.dp),
@@ -74,6 +76,7 @@ fun InboxSearchResults(
                         )
                     }
                 }
+            }
         }
     }
 }

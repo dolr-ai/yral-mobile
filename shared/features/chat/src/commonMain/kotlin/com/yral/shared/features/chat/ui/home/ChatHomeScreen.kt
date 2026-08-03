@@ -25,14 +25,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.domain.models.formatChatUnreadBadgeCount
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.Child
-import com.yral.featureflag.ChatFeatureFlags
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.shared.data.domain.models.ConversationInfluencerSource
-import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.ui.inbox.InboxScreen
 import com.yral.shared.features.chat.ui.wall.ChatWallScreen
 import com.yral.shared.features.chat.ui.wall.DiscoverySearchBar
@@ -205,18 +205,27 @@ private fun ChatHomeSearchHeader(
     val activeQuery = if (isDiscoverSelected) discoveryQuery else inboxQuery
     val activePlaceholder =
         stringResource(
-            if (isDiscoverSelected) Res.string.discovery_search_placeholder
-            else Res.string.inbox_search_placeholder,
+            if (isDiscoverSelected) {
+                Res.string.discovery_search_placeholder
+            } else {
+                Res.string.inbox_search_placeholder
+            },
         )
     val onActiveQueryChange: (String) -> Unit =
         remember(isDiscoverSelected) {
-            if (isDiscoverSelected) discoverySearchViewModel::setQuery
-            else inboxSearchViewModel::setQuery
+            if (isDiscoverSelected) {
+                discoverySearchViewModel::setQuery
+            } else {
+                inboxSearchViewModel::setQuery
+            }
         }
     val onActiveClear: () -> Unit =
         remember(isDiscoverSelected) {
-            if (isDiscoverSelected) discoverySearchViewModel::clearQuery
-            else inboxSearchViewModel::clearQuery
+            if (isDiscoverSelected) {
+                discoverySearchViewModel::clearQuery
+            } else {
+                inboxSearchViewModel::clearQuery
+            }
         }
     Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
         DiscoverySearchBar(

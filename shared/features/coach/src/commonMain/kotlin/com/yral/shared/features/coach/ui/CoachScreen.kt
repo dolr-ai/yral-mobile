@@ -65,18 +65,18 @@ import yral_mobile.shared.features.coach.generated.resources.coach_apply_confirm
 import yral_mobile.shared.features.coach.generated.resources.coach_apply_confirm_title
 import yral_mobile.shared.features.coach.generated.resources.coach_apply_failed
 import yral_mobile.shared.features.coach.generated.resources.coach_back
+import yral_mobile.shared.features.coach.generated.resources.coach_continue_coaching
 import yral_mobile.shared.features.coach.generated.resources.coach_empty_state_subtitle
 import yral_mobile.shared.features.coach.generated.resources.coach_empty_state_title
 import yral_mobile.shared.features.coach.generated.resources.coach_header_hint
+import yral_mobile.shared.features.coach.generated.resources.coach_im_done_for_now
 import yral_mobile.shared.features.coach.generated.resources.coach_input_placeholder
 import yral_mobile.shared.features.coach.generated.resources.coach_loading_session
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_applied
-import yral_mobile.shared.features.coach.generated.resources.coach_continue_coaching
-import yral_mobile.shared.features.coach.generated.resources.coach_im_done_for_now
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_apply_cta
+import yral_mobile.shared.features.coach.generated.resources.coach_proposal_card_title
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_discarded_apply
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_superseded_subtitle
-import yral_mobile.shared.features.coach.generated.resources.coach_proposal_card_title
 import yral_mobile.shared.features.coach.generated.resources.coach_screen_title
 import yral_mobile.shared.features.coach.generated.resources.coach_send
 import yral_mobile.shared.features.coach.generated.resources.coach_send_failed
@@ -570,6 +570,7 @@ private fun CoachProposalCard(
                     )
                 }
             }
+
             ProposalStatus.APPLIED -> {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -578,6 +579,7 @@ private fun CoachProposalCard(
                     color = YralColors.NeutralTextSecondary,
                 )
             }
+
             ProposalStatus.SUPERSEDED -> {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -586,6 +588,7 @@ private fun CoachProposalCard(
                     color = YralColors.NeutralTextSecondary,
                 )
             }
+
             ProposalStatus.DISCARDED -> {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -594,6 +597,7 @@ private fun CoachProposalCard(
                     color = YralColors.NeutralTextSecondary,
                 )
             }
+
             ProposalStatus.NA -> {
                 // Shouldn't reach for a real proposal card; no
                 // footer rendered. The card just shows title +
@@ -653,7 +657,6 @@ private fun CoachPostApplyCtaRow(
         }
     }
 }
-
 
 @Composable
 private fun CoachInputArea(

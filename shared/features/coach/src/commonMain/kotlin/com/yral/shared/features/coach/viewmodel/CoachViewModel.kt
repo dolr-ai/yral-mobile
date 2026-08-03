@@ -277,61 +277,61 @@ class CoachViewModel(
                     proposalId = proposalId,
                 ),
             ).onSuccess { result ->
-                    _viewState.update { state ->
-                        // Mark latest proposal as applied (ProposalCard becomes
-                        // inert), then append the backend-issued receipt
-                        // message so the creator sees a "✅ Saved" record
-                        // without needing to re-list.
-                        // Mark the proposal we just applied as APPLIED
-                        // status (post-PR-3 the lifecycle is the source
-                        // of truth) and keep the legacy `applied` bool
-                        // synced for any callers still reading it.
-                        // Append the backend-issued receipt as the most
-                        // recent message — flagged `isReceipt=true` so
-                        // the screen renders it distinctly and shows
-                        // the post-apply CTA pair below it.
-                        val updatedPending =
-                            state.pending
-                                .map { msg ->
-                                    if (msg.id == proposalId) {
-                                        msg.copy(
-                                            status = ProposalStatus.APPLIED,
-                                            applied = true,
-                                        )
-                                    } else {
-                                        msg
-                                    }
-                                }.let { withApplied ->
-                                    result.receiptMessage
-                                        ?.copy(isReceipt = true)
-                                        ?.let { receipt -> withApplied + receipt }
-                                        ?: withApplied
+                _viewState.update { state ->
+                    // Mark latest proposal as applied (ProposalCard becomes
+                    // inert), then append the backend-issued receipt
+                    // message so the creator sees a "✅ Saved" record
+                    // without needing to re-list.
+                    // Mark the proposal we just applied as APPLIED
+                    // status (post-PR-3 the lifecycle is the source
+                    // of truth) and keep the legacy `applied` bool
+                    // synced for any callers still reading it.
+                    // Append the backend-issued receipt as the most
+                    // recent message — flagged `isReceipt=true` so
+                    // the screen renders it distinctly and shows
+                    // the post-apply CTA pair below it.
+                    val updatedPending =
+                        state.pending
+                            .map { msg ->
+                                if (msg.id == proposalId) {
+                                    msg.copy(
+                                        status = ProposalStatus.APPLIED,
+                                        applied = true,
+                                    )
+                                } else {
+                                    msg
                                 }
-                        state.copy(
-                            pending = updatedPending,
-                            isApplying = false,
-                            lastAppliedToastMessage = "Updated ${state.botName ?: "your AI Influencer"}'s personality.",
-                            // PR-4 — apply succeeded, no more pending
-                            // proposal until the creator chats more.
-                            pendingProposalExists = false,
-                            // Correction C — fresh receipt + dismiss
-                            // flag reset, so the CTA pair shows below
-                            // it until the user taps Continue.
-                            postApplyCtasDismissed = false,
-                            // Apply was just done — the lock is moot
-                            // because there's nothing pending anyway.
-                            activeProposalLockedBySend = false,
-                        )
-                    }
-                }.onFailure { error ->
-                    Logger.e(error) { "Coach applyProposal failed convId=$convId" }
-                    _viewState.update {
-                        it.copy(
-                            isApplying = false,
-                            error = CoachError.ApplyFailed(error.message ?: "Could not apply the proposal"),
-                        )
-                    }
+                            }.let { withApplied ->
+                                result.receiptMessage
+                                    ?.copy(isReceipt = true)
+                                    ?.let { receipt -> withApplied + receipt }
+                                    ?: withApplied
+                            }
+                    state.copy(
+                        pending = updatedPending,
+                        isApplying = false,
+                        lastAppliedToastMessage = "Updated ${state.botName ?: "your AI Influencer"}'s personality.",
+                        // PR-4 — apply succeeded, no more pending
+                        // proposal until the creator chats more.
+                        pendingProposalExists = false,
+                        // Correction C — fresh receipt + dismiss
+                        // flag reset, so the CTA pair shows below
+                        // it until the user taps Continue.
+                        postApplyCtasDismissed = false,
+                        // Apply was just done — the lock is moot
+                        // because there's nothing pending anyway.
+                        activeProposalLockedBySend = false,
+                    )
                 }
+            }.onFailure { error ->
+                Logger.e(error) { "Coach applyProposal failed convId=$convId" }
+                _viewState.update {
+                    it.copy(
+                        isApplying = false,
+                        error = CoachError.ApplyFailed(error.message ?: "Could not apply the proposal"),
+                    )
+                }
+            }
         }
     }
 
@@ -436,7 +436,6 @@ data class CoachViewState(
             val firstCoach = pending.firstOrNull { it.role == CoachMessageRole.COACH }
             return firstCoach?.suggestions.orEmpty()
         }
-
 }
 
 sealed class CoachError {

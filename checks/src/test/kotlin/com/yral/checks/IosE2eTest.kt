@@ -1,8 +1,8 @@
 package com.yral.checks
 
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Order
@@ -18,9 +18,10 @@ import java.io.File
 class IosE2eTest {
     @BeforeEach
     fun requireLiveDevice() {
-        val booted = runCatching {
-            captureOutput("xcrun", "simctl", "list", "devices").contains("(Booted)")
-        }.getOrDefault(false)
+        val booted =
+            runCatching {
+                captureOutput("xcrun", "simctl", "list", "devices").contains("(Booted)")
+            }.getOrDefault(false)
         assertTrue(booted, "iOS E2E requires a booted simulator")
     }
 
@@ -44,17 +45,21 @@ class IosE2eTest {
     private fun runMaestroFlow() {
         exec("pkill", "-f", "maestro") // stop any lingering Maestro daemon from a previous run
         Thread.sleep(1_000)
-        val exit = ProcessBuilder(
-            "maestro", "test",
-            "--device", Checks.firstIphoneSimulatorUdid(),
-            "-e", "APP_ID=$appId",
-            "maestro/flows/feed-scroll.yaml",
-        ).directory(repoRoot).inheritIO().start().waitFor()
+        val exit =
+            ProcessBuilder(
+                "maestro",
+                "test",
+                "--device",
+                Checks.firstIphoneSimulatorUdid(),
+                "-e",
+                "APP_ID=$APP_ID",
+                "maestro/flows/feed-scroll.yaml",
+            ).directory(repoRoot).inheritIO().start().waitFor()
         assertEquals(0, exit) { "Maestro flow failed with exit code $exit" }
     }
 
     companion object {
-        private const val appId = "com.yral.iosApp.staging"
+        private const val APP_ID = "com.yral.iosApp.staging"
 
         @AfterAll
         @JvmStatic
@@ -70,9 +75,12 @@ class IosE2eTest {
             execOrFail("xcrun", "simctl", "bootstatus", udid, "-b")
             exec("open", "-a", "Simulator") // bring the Simulator window up so it's visible locally
             // Clean install: uninstall first to wipe retained app state, then fresh install.
-            exec("xcrun", "simctl", "uninstall", "booted", appId) // ignore failure if not installed
+            exec("xcrun", "simctl", "uninstall", "booted", APP_ID) // ignore failure if not installed
             execOrFail(
-                "xcrun", "simctl", "install", "booted",
+                "xcrun",
+                "simctl",
+                "install",
+                "booted",
                 File(repoRoot, "build/DerivedData/Build/Products/Debug-iphonesimulator/Yral-Staging.app").absolutePath,
             )
         }

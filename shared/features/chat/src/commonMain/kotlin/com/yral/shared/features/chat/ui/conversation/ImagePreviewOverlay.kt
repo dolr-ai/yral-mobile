@@ -63,15 +63,18 @@ internal fun ImagePreviewOverlay(
                 .clickable {},
     ) {
         when (previewSource) {
-            is ChatImagePreviewSource.Draft ->
+            is ChatImagePreviewSource.Draft -> {
                 YralAsyncImage(
                     imageUrl = rememberChatImageModel(previewSource.imageAttachment.filePath),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit,
                     shape = RectangleShape,
                 )
+            }
 
-            is ChatImagePreviewSource.Message -> MessageImagePager(previewSource)
+            is ChatImagePreviewSource.Message -> {
+                MessageImagePager(previewSource)
+            }
         }
         if (draftAttachment != null && onSend != null) {
             Column(modifier = Modifier.align(BottomCenter)) {

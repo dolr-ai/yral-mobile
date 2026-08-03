@@ -52,7 +52,9 @@ data class CoachMessage(
  * backend string. Unknown slugs (forward-compat additions) collapse to
  * NA so we never crash on a new lifecycle state.
  */
-enum class ProposalStatus(val apiValue: String) {
+enum class ProposalStatus(
+    val apiValue: String,
+) {
     PENDING("pending"),
     APPLIED("applied"),
     SUPERSEDED("superseded"),
@@ -61,7 +63,6 @@ enum class ProposalStatus(val apiValue: String) {
     ;
 
     companion object {
-        fun fromApi(value: String?): ProposalStatus =
-            entries.firstOrNull { it.apiValue == value } ?: NA
+        fun fromApi(value: String?): ProposalStatus = entries.firstOrNull { it.apiValue == value } ?: NA
     }
 }

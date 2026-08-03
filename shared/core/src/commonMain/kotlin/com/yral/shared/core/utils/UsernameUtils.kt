@@ -83,9 +83,18 @@ private fun List<String>.randomDistinctOrDefault(
 ): String {
     val excludedIndex = indexOf(excluded)
     return when {
-        isEmpty() -> fallback
-        size == 1 -> first()
-        excludedIndex == -1 -> randomOrDefault(generator, fallback)
+        isEmpty() -> {
+            fallback
+        }
+
+        size == 1 -> {
+            first()
+        }
+
+        excludedIndex == -1 -> {
+            randomOrDefault(generator, fallback)
+        }
+
         else -> {
             val randomIndex = generator.nextInt(size - 1)
             val adjustedIndex = if (randomIndex >= excludedIndex) randomIndex + 1 else randomIndex

@@ -1,8 +1,8 @@
 package com.yral.checks
 
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Order
@@ -15,9 +15,10 @@ import java.util.concurrent.TimeUnit
 class AndroidE2eTest {
     @BeforeEach
     fun requireLiveDevice() {
-        val connected = runCatching {
-            captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0
-        }.getOrDefault(false)
+        val connected =
+            runCatching {
+                captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0
+            }.getOrDefault(false)
         assertTrue(connected, "Android E2E requires a connected emulator/device")
     }
 
@@ -41,26 +42,44 @@ class AndroidE2eTest {
     private fun runMaestroFlow() {
         exec("pkill", "-f", "maestro") // stop any lingering Maestro daemon from a previous run
         Thread.sleep(1_000)
-        val serial = captureOutput("adb", "devices").lines()
-            .first { it.contains("\tdevice") }.split("\t").first()
-        val exit = ProcessBuilder(
-            "maestro", "test",
-            "--device", serial,
-            "-e", "APP_ID=$appId",
-            "maestro/flows/feed-scroll.yaml",
-        ).directory(repoRoot).inheritIO().start().waitFor()
+        val serial =
+            captureOutput("adb", "devices")
+                .lines()
+                .first { it.contains("\tdevice") }
+                .split("\t")
+                .first()
+        val exit =
+            ProcessBuilder(
+                "maestro",
+                "test",
+                "--device",
+                serial,
+                "-e",
+                "APP_ID=$APP_ID",
+                "maestro/flows/feed-scroll.yaml",
+            ).directory(repoRoot).inheritIO().start().waitFor()
 
         if (exit != 0) {
             println("--- adb logcat (last 300 lines) ---")
-            exec("adb", "logcat", "-d", "-t", "300",
-                "-s", "AndroidRuntime:E", "ActivityThread:E", "ActivityManager:W", "*:F")
+            exec(
+                "adb",
+                "logcat",
+                "-d",
+                "-t",
+                "300",
+                "-s",
+                "AndroidRuntime:E",
+                "ActivityThread:E",
+                "ActivityManager:W",
+                "*:F",
+            )
             println("--- end logcat ---")
             assertEquals(0, exit) { "Maestro flow failed with exit code $exit" }
         }
     }
 
     companion object {
-        private const val appId = "com.yral.android"
+        private const val APP_ID = "com.yral.android"
 
         @AfterAll
         @JvmStatic
@@ -73,35 +92,40 @@ class AndroidE2eTest {
         fun setup() {
             startEmulator()
             // Clean install: uninstall first to wipe any retained app state, then fresh install.
-            exec("adb", "uninstall", appId) // ignore failure — app may not be installed yet
+            exec("adb", "uninstall", APP_ID) // ignore failure — app may not be installed yet
             execOrFail(
-                "adb", "install",
+                "adb",
+                "install",
                 "androidApp/build/outputs/apk/staging/debug/androidApp-staging-debug.apk",
             )
             // Warm-up: launch via explicit component so the app enters the recent-tasks list.
             // Maestro's launchApp uses package-only am-start which fails on a cold install on
             // API 35+; after the app has been launched once it can be reliably re-launched.
-            exec("adb", "shell", "am", "start", "-n", "$appId/.MainActivity")
+            exec("adb", "shell", "am", "start", "-n", "$APP_ID/.MainActivity")
             Thread.sleep(3_000)
-            exec("adb", "shell", "am", "force-stop", appId)
+            exec("adb", "shell", "am", "force-stop", APP_ID)
         }
 
         private fun startEmulator() {
             // Wait up to 30s for any existing device (handles the case where the developer
             // already has an emulator running before invoking the e2e task).
             exec("adb", "reconnect")
-            val alreadyRunning = ProcessBuilder("adb", "wait-for-device")
-                .directory(repoRoot)
-                .inheritIO()
-                .start()
-                .waitFor(30, TimeUnit.SECONDS)
+            val alreadyRunning =
+                ProcessBuilder("adb", "wait-for-device")
+                    .directory(repoRoot)
+                    .inheritIO()
+                    .start()
+                    .waitFor(30, TimeUnit.SECONDS)
             if (alreadyRunning && captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
                 println("Android device already available — skipping emulator start.")
                 return
             }
 
-            val avd = captureOutput("emulator", "-list-avds").trim().lines()
-                .firstOrNull { it.isNotBlank() }
+            val avd =
+                captureOutput("emulator", "-list-avds")
+                    .trim()
+                    .lines()
+                    .firstOrNull { it.isNotBlank() }
             checkNotNull(avd) { "No AVDs found — create one in Android Studio first." }
 
             println("Starting emulator: $avd")

@@ -2,8 +2,8 @@ package com.yral.shared.http.spacetime
 
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.http.exception.NetworkException
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -70,24 +70,27 @@ class SpacetimeDBRemoteDataSource(
      *              anonymous (SpacetimeDB sets `sender = Identity::ZERO`).
      * @return The raw response body as a string.
      */
+    @Suppress("TooGenericExceptionCaught")
     private suspend fun callProcedure(
         name: String,
         args: List<String>,
         token: String?,
     ): String {
         try {
-            val response = httpClient.post {
-                url {
-                    host = baseUrl
-                    path("v1", "database", dbName, "call", name)
+            val response =
+                httpClient.post {
+                    url {
+                        host = baseUrl
+                        path("v1", "database", dbName, "call", name)
+                    }
+                    contentType(ContentType.Application.Json)
+                    if (token != null) {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                    }
+                    // SpacetimeDB expects a JSON array of positional arguments.
+                    val jsonArgs = JsonArray(args.map { JsonPrimitive(it) })
+                    setBody(json.encodeToString(JsonArray.serializer(), jsonArgs))
                 }
-                contentType(ContentType.Application.Json)
-                if (token != null) {
-                    header(HttpHeaders.Authorization, "Bearer $token")
-                }
-                // SpacetimeDB expects a JSON array of positional arguments.
-                setBody(json.encodeToString(JsonArray.serializer(), JsonArray(args.map { JsonPrimitive(it) })))
-            }
             return response.bodyAsText()
         } catch (e: Exception) {
             throw NetworkException(e)
@@ -101,29 +104,41 @@ class SpacetimeDBRemoteDataSource(
      * - `[[0, {post JSON}]]` → Some(post)
      * - `[[1, []]]` → None
      */
+    @Suppress("ThrowsCount")
     private fun parseOptionPostDetails(responseBody: String): SpacetimePostDetails? {
-        val outerArray = json.parseToJsonElement(responseBody) as? JsonArray
-            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected JSON array, got: $responseBody"))
+        val outerArray =
+            json.parseToJsonElement(responseBody) as? JsonArray
+                ?: throw parseError("expected JSON array", responseBody)
 
-        val innerArray = outerArray.firstOrNull() as? JsonArray
-            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected nested array, got: $responseBody"))
+        val innerArray =
+            outerArray.firstOrNull() as? JsonArray
+                ?: throw parseError("expected nested array", responseBody)
 
-        val variantIndex = (innerArray.getOrNull(0) as? JsonPrimitive)?.content?.toIntOrNull()
-            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected variant index, got: $responseBody"))
+        val variantIndex =
+            (innerArray.getOrNull(0) as? JsonPrimitive)?.content?.toIntOrNull()
+                ?: throw parseError("expected variant index", responseBody)
 
         if (variantIndex != 0) return null // None
 
-        val postJson = innerArray.getOrNull(1)
-            ?: throw NetworkException(IllegalArgumentException("SpacetimeDB: expected post payload, got: $responseBody"))
+        val postJson =
+            innerArray.getOrNull(1)
+                ?: throw parseError("expected post payload", responseBody)
 
         return json.decodeFromString(SpacetimePostDetails.serializer(), postJson.toString())
     }
+
+    private fun parseError(
+        expected: String,
+        responseBody: String,
+    ): NetworkException =
+        NetworkException(
+            IllegalArgumentException("SpacetimeDB: $expected, got: $responseBody"),
+        )
 
     /**
      * Read the yral-auth JWT from preferences. Returns null if not authenticated.
      * SpacetimeDB accepts any OIDC-compliant JWT — anonymous calls use
      * `Identity::ZERO` as the sender.
      */
-    private suspend fun getIdTokenOrNull(): String? =
-        preferences.getString(PrefKeys.ID_TOKEN.name)
+    private suspend fun getIdTokenOrNull(): String? = preferences.getString(PrefKeys.ID_TOKEN.name)
 }
