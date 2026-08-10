@@ -9,7 +9,6 @@ import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
-import com.yral.shared.uniffi.generated.PostDetailsWithUserInfo
 import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.UpsPostStatus
 
@@ -46,28 +45,6 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
         isDraft = status == UpsPostStatus.DRAFT,
     )
 }
-
-internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails =
-    FeedDetails(
-        postID = postId,
-        videoID = uid,
-        canisterID = canisterId,
-        principalID = posterPrincipal,
-        url = videoUrl(uid, posterPrincipal),
-        hashtags = hashtags,
-        thumbnail = thumbnailUrl(uid, posterPrincipal),
-        viewCount = views,
-        bulkViewCount = views,
-        displayName = displayName ?: username ?: "",
-        postDescription = description,
-        profileImageURL = propicUrl,
-        likeCount = likes,
-        isLiked = likedByUser ?: false,
-        nsfwProbability = nsfwProbability.toDouble(),
-        isFollowing = userFollowsCreator ?: false,
-        isFromServiceCanister = canisterId == getUserInfoServiceCanister(),
-        userName = username,
-    )
 
 fun FeedDetails.toCanisterData(): CanisterData =
     CanisterData(
