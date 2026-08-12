@@ -26,4 +26,5 @@ data class OpenConversationParams(
 enum class ConversationInfluencerSource {
     CARD,
     PROFILE,
+    DEEP_LINK,
 }

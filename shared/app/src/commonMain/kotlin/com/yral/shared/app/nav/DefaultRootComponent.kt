@@ -23,6 +23,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
@@ -33,6 +34,7 @@ import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.auth.ui.LoginInfo
@@ -47,6 +49,7 @@ import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.ConversationRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.rust.service.utils.CanisterData
@@ -370,6 +373,10 @@ class DefaultRootComponent(
                 handleUserProfileRoute(appRoute)
             }
 
+            is ConversationRoute -> {
+                handleConversationRoute(appRoute)
+            }
+
             else -> {
                 homeComponent?.onNavigationRequest(appRoute) ?: run {
                     pendingNavRoute = appRoute
@@ -377,6 +384,22 @@ class DefaultRootComponent(
                 }
             }
         }
+    }
+
+    // Paid-UA landing: an ad link opens one influencer's chat directly. When chat
+    // is off the deep link degrades to Home rather than opening a screen the rest
+    // of the app is hiding.
+    private fun handleConversationRoute(route: ConversationRoute) {
+        if (!featureFlagManager.isEnabled(ChatFeatureFlags.Chat.Enabled)) {
+            navigateToHome()
+            return
+        }
+        openConversation(
+            OpenConversationParams(
+                influencerId = route.influencerId,
+                influencerSource = ConversationInfluencerSource.DEEP_LINK,
+            ),
+        )
     }
 
     private fun handleUserProfileRoute(route: UserProfileRoute) {

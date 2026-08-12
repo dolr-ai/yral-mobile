@@ -94,6 +94,16 @@ data class PostDetailsRoute(
 }
 
 @Serializable
+data class ConversationRoute(
+    val influencerId: String,
+) : AppRoute,
+    ExternallyExposedRoute {
+    companion object {
+        const val PATH = "chat/conversation/{influencerId}"
+    }
+}
+
+@Serializable
 data class RewardsReceived(
     val token: String,
     @SerialName("reward_on")
