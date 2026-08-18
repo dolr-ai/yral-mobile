@@ -18,6 +18,7 @@ import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.data.di.commonDataModule
+import com.yral.shared.rust.service.di.rustModule
 import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.aiinfluencer.di.aiInfluencerModule
 import com.yral.shared.features.auth.di.authModule
@@ -73,6 +74,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             loggerModule,
             httpListenerModule,
             commonDataModule,
+            rustModule,
             spacetimeModule,
         )
 

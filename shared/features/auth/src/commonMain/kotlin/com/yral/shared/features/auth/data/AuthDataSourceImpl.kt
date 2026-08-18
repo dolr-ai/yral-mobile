@@ -170,7 +170,7 @@ class AuthDataSourceImpl(
             Logger.d("AuthDataSource") {
                 "registerForNotifications: identity present (len=${identity.size}), token=$token"
             }
-        } ?: throw YralException("Identity not found while registering for notifications")
+        } ?: Logger.w("AuthDataSource") { "Identity not found while registering for notifications" }
     }
 
     override suspend fun deregisterForNotifications(token: String) {

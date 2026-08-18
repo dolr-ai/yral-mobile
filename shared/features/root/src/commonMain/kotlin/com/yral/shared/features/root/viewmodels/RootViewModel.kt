@@ -280,7 +280,7 @@ class RootViewModel(
 
     private suspend fun checkLoginAndInitialize(isSessionPrincipalSame: Boolean) {
         delay(initialDelayForSetup)
-        sessionManager.identity?.let {
+        sessionManager.userPrincipal?.let {
             sessionManager.updateSocialSignInStatus(
                 isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
             )
