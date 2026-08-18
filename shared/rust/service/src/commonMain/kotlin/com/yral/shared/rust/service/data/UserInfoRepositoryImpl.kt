@@ -10,7 +10,6 @@ import com.yral.shared.rust.service.domain.models.FollowersPageResult
 import com.yral.shared.rust.service.domain.models.FollowingPageResult
 import com.yral.shared.rust.service.domain.models.ProfileUpdateDetailsV2
 import com.yral.shared.rust.service.domain.models.UserProfileDetails
-import com.yral.shared.rust.service.domain.models.toDomain
 import com.yral.shared.rust.service.domain.models.toFollowerPageResult
 import com.yral.shared.rust.service.domain.models.toFollowingPageResult
 import com.yral.shared.rust.service.domain.performance.RustApiPerformanceTracer
@@ -45,9 +44,7 @@ class UserInfoRepositoryImpl(
         targetPrincipal: Principal,
     ): UserProfileDetails =
         traceApiCall(performanceTracer, "getUserProfileDetailsV7") {
-            dataSource
-                .getUserProfileDetailsV7(principal, targetPrincipal)
-                .toDomain()
+            dataSource.getUserProfileDetailsV7(principal, targetPrincipal)
         }
 
     override suspend fun getUsersProfileDetails(
@@ -57,7 +54,6 @@ class UserInfoRepositoryImpl(
         traceApiCall(performanceTracer, "getUserProfileDetailsV7Bulk") {
             dataSource
                 .getUsersProfileDetails(principal, targetPrincipalIds)
-                .map { it.toDomain() }
                 .associateBy { it.principalId }
         }
 
@@ -82,7 +78,7 @@ class UserInfoRepositoryImpl(
                 runSuspendCatching {
                     val principalTexts =
                         response.followers
-                            .map { it.principalId }
+                            .map { it.principalText }
                             .filter { it.isNotBlank() }
                             .distinct()
                     followersMetadataDataSource.fetchUsernames(principalTexts)
@@ -113,7 +109,7 @@ class UserInfoRepositoryImpl(
                 runSuspendCatching {
                     val principalTexts =
                         response.following
-                            .map { it.principalId }
+                            .map { it.principalText }
                             .filter { it.isNotBlank() }
                             .distinct()
                     followersMetadataDataSource.fetchUsernames(principalTexts)

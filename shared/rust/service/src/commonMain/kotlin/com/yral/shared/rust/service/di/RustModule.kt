@@ -17,9 +17,7 @@ import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCa
 import com.yral.shared.rust.service.domain.usecases.GetUsersProfileDetailsUseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
-import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.LogForwardingService
-import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserInfoServiceFactory
 import com.yral.shared.rust.service.services.UserPostServiceFactory
 import org.koin.core.module.Module
@@ -42,8 +40,6 @@ val rustModule: Module =
         // Service Factories
         single { UserPostServiceFactory() }
         single { UserInfoServiceFactory() }
-        single { SnsLedgerServiceFactory() }
-        single { ICPLedgerServiceFactory() }
 
         // User Info Use Cases
         factoryOf(::FollowUserUseCase)

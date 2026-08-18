@@ -6,7 +6,6 @@ import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.data.removedFirebaseCloudFunctionsException
 import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.CreateAiAccountRequestDto
@@ -32,7 +31,6 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.utils.SignedDelegationPayload
-import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.HttpRequestBuilder
@@ -153,23 +151,17 @@ class AuthDataSourceImpl(
     ): ExchangePrincipalResponseDto = throw removedFirebaseCloudFunctionsException("exchangePrincipalId")
 
     override suspend fun deleteAccount(): String {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        return identityWire?.let {
-            val identityWireJson = delegatedIdentityWireToJson(identityWire)
-            val delegatedIdentity =
-                json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-            val params =
-                DeleteAccountRequestDto(
-                    delegatedIdentity = delegatedIdentity,
-                )
-            httpDelete(client) {
-                url {
-                    host = OFF_CHAIN_BASE_URL
-                    path(DELETE_ACCOUNT)
-                }
-                setBody(params)
+        val idToken =
+            preferences.getString(PrefKeys.ID_TOKEN.name)
+                ?: throw YralException("ID token not found while deleting account")
+        return httpDelete(client) {
+            url {
+                host = OFF_CHAIN_BASE_URL
+                path(DELETE_ACCOUNT)
             }
-        } ?: throw YralException("Identity not found while deleting account")
+            headers { append("authorization", "Bearer $idToken") }
+            setBody(DeleteAccountRequestDto())
+        }
     }
 
     override suspend fun registerForNotifications(token: String) {

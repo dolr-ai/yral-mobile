@@ -3,10 +3,8 @@ package com.yral.shared.rust.service.data
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
 import com.yral.shared.data.domain.models.toDTO
-import com.yral.shared.rust.service.data.models.toPosts
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.models.Posts
-import com.yral.shared.rust.service.domain.models.toFeedDetails
 import com.yral.shared.rust.service.domain.performance.RustApiPerformanceTracer
 import com.yral.shared.rust.service.domain.performance.traceApiCall
 
@@ -16,13 +14,7 @@ internal class IndividualUserRepositoryImpl(
 ) : IndividualUserRepository {
     override suspend fun fetchFeedDetails(post: Post): FeedDetails =
         traceApiCall(performanceTracer, "fetchFeedDetails") {
-            dataSource
-                .fetchSCFeedDetails(post.toDTO())
-                .toFeedDetails(
-                    postId = post.postID,
-                    canisterId = post.canisterID,
-                    nsfwProbability = post.nsfwProbability,
-                )
+            dataSource.fetchSCFeedDetails(post.toDTO())
         }
 
     override suspend fun getPostsOfThisUserProfileWithPaginationCursor(
@@ -32,12 +24,11 @@ internal class IndividualUserRepositoryImpl(
         pageSize: ULong,
     ): Posts =
         traceApiCall(performanceTracer, "getPostsOfThisUserProfile") {
-            dataSource
-                .getSCPostsOfThisUserProfileWithPaginationCursor(
-                    principalId = principalId,
-                    startIndex = startIndex,
-                    pageSize = pageSize,
-                ).toPosts(canisterId)
+            dataSource.getSCPostsOfThisUserProfileWithPaginationCursor(
+                principalId = principalId,
+                startIndex = startIndex,
+                pageSize = pageSize,
+            )
         }
 
     override suspend fun getDraftPostsWithPagination(
@@ -46,24 +37,6 @@ internal class IndividualUserRepositoryImpl(
         pageSize: ULong,
     ): Posts =
         traceApiCall(performanceTracer, "getDraftPostsWithPagination") {
-            dataSource
-                .getDraftPostsWithPagination(startIndex, pageSize)
-                .toPosts(canisterId)
-        }
-
-    override suspend fun getUserBitcoinBalance(
-        canisterId: String,
-        principalId: String,
-    ): String =
-        traceApiCall(performanceTracer, "getUserBitcoinBalance") {
-            dataSource.getUserBitcoinBalance(canisterId, principalId)
-        }
-
-    override suspend fun getUserDolrBalance(
-        canisterId: String,
-        principalId: String,
-    ): String =
-        traceApiCall(performanceTracer, "getUserDolrBalance") {
-            dataSource.getUserDolrBalance(canisterId, principalId)
+            dataSource.getDraftPostsWithPagination(startIndex, pageSize)
         }
 }

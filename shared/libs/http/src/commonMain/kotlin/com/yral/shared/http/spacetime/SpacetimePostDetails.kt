@@ -25,7 +25,23 @@ data class SpacetimePostDetails(
     @SerialName("totalViewCount") val totalViewCount: ULong = 0u,
     @SerialName("likeCount") val likeCount: ULong = 0u,
     @SerialName("likedByMe") val likedByMe: Boolean = false,
+    val status: SpacetimePostStatus = SpacetimePostStatus.Uploaded,
 )
+
+/**
+ * SpacetimeDB `PostStatus` enum — unit variants serialized as plain strings.
+ */
+@Serializable
+enum class SpacetimePostStatus {
+    Uploaded,
+    Transcoding,
+    CheckingExplicitness,
+    BannedForExplicitness,
+    ReadyToView,
+    BannedDueToUserReporting,
+    Deleted,
+    Draft,
+}
 
 /**
  * Wraps the `Option<PostDetailsForFrontend>` REST response.

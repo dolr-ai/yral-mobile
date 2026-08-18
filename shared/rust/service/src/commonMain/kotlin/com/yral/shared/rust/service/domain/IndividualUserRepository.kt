@@ -17,12 +17,4 @@ interface IndividualUserRepository {
         startIndex: ULong,
         pageSize: ULong,
     ): Posts
-    suspend fun getUserBitcoinBalance(
-        canisterId: String,
-        principalId: String,
-    ): String
-    suspend fun getUserDolrBalance(
-        canisterId: String,
-        principalId: String,
-    ): String
 }

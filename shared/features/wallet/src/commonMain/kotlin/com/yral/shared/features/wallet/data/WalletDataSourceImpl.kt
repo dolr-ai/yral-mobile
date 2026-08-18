@@ -11,7 +11,6 @@ import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
 import com.yral.shared.features.wallet.data.models.DolrPriceResponseDto
 import com.yral.shared.features.wallet.data.models.GetBalanceResponseDto
 import com.yral.shared.http.httpGet
-import com.yral.shared.rust.service.domain.IndividualUserRepository
 import io.ktor.client.HttpClient
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
@@ -19,7 +18,6 @@ import kotlinx.serialization.json.Json
 class WalletDataSourceImpl(
     private val httpClient: HttpClient,
     private val json: Json,
-    private val individualUserRepository: IndividualUserRepository,
 ) : WalletDataSource {
     override suspend fun getBtcConversionRate(
         idToken: String,
@@ -29,16 +27,12 @@ class WalletDataSourceImpl(
     override suspend fun getUserBtcBalance(
         canisterId: String,
         userPrincipal: String,
-    ): String =
-        individualUserRepository
-            .getUserBitcoinBalance(canisterId, userPrincipal)
+    ): String = throw removedFirebaseCloudFunctionsException("getUserBtcBalance")
 
     override suspend fun getUserDolrBalance(
         canisterId: String,
         userPrincipal: String,
-    ): String =
-        individualUserRepository
-            .getUserDolrBalance(canisterId, userPrincipal)
+    ): String = throw removedFirebaseCloudFunctionsException("getUserDolrBalance")
 
     override suspend fun getBtcRewardConfig(): BtcRewardConfigResponseDto =
         httpGet(

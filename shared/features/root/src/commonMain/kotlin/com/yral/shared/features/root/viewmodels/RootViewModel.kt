@@ -48,8 +48,6 @@ import com.yral.shared.rust.service.domain.models.UserAccountType
 import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
-import com.yral.shared.rust.service.services.HelperService
-import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
@@ -703,25 +701,15 @@ class RootViewModel(
         fallbackUsername: String?,
     ): AccountUi? {
         if (principal == null) return null
-        val details =
-            runCatching {
-                identityBytes?.let { authenticateWithNetwork(it) }
-            }.onFailure {
-                crashlyticsManager.recordException(
-                    YralException("authenticateWithNetwork failed for $principal", it),
-                )
-                Logger.d("RootViewModel") {
-                    "authenticateWithNetwork failed for $principal: ${it.message}"
-                }
-            }.getOrNull()
+        // IC authenticateWithNetwork removed — profile info is derived from the
+        // principal directly. Username comes from the metadata service or fallback.
         val resolvedUsername =
-            resolveUsername(details?.username, principal)
-                ?: fallbackUsername?.takeUnless { username -> username.isBlank() }
+            fallbackUsername?.takeUnless { username -> username.isBlank() }
                 ?: principal
         return AccountUi(
             principal = principal,
             name = resolvedUsername,
-            avatarUrl = details?.profilePic ?: propicFromPrincipal(principal),
+            avatarUrl = propicFromPrincipal(principal),
             isBot = isBot,
             isActive = principal == activePrincipal,
         )
@@ -868,23 +856,21 @@ class RootViewModel(
                     botUsername = match.username
                 }
 
-                val canisterData = authenticateWithNetwork(identityBytes)
-                requireAuthenticatedPrincipalMatches(
-                    authenticatedPrincipal = canisterData.userPrincipalId,
-                    requestedPrincipal = principal,
-                )
+                // IC authenticateWithNetwork removed — build session directly
+                // from the principal. The canisterId field uses the principal
+                // as an identifier (no per-user canister in SpacetimeDB).
+                val profilePic = propicFromPrincipal(principal)
                 val resolvedUsername =
-                    resolveUsername(canisterData.username ?: botUsername, principal)
-                HelperService.initServiceFactories(identityBytes)
+                    resolveUsername(botUsername, principal)
                 val session =
                     Session(
                         identity = identityBytes,
-                        canisterId = canisterData.canisterId,
-                        userPrincipal = canisterData.userPrincipalId,
-                        profilePic = canisterData.profilePic,
+                        canisterId = principal,
+                        userPrincipal = principal,
+                        profilePic = profilePic,
                         username = resolvedUsername,
                         bio = null,
-                        isCreatedFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                        isCreatedFromServiceCanister = true,
                         isBotAccount = isBot,
                     )
                 sessionManager.updateState(SessionState.SignedIn(session = session))
@@ -904,7 +890,7 @@ class RootViewModel(
                     principal = principal,
                     isBot = isBot,
                     username = resolvedUsername ?: principal,
-                    avatarUrl = canisterData.profilePic,
+                    avatarUrl = propicFromPrincipal(principal),
                 )
                 switched = true
                 Logger.d("BotDeleteFlow") {

@@ -10,7 +10,6 @@ import com.yral.shared.analytics.events.BotCreationErrorStage
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -41,14 +40,14 @@ import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.services.MetadataUpdateError
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.SignedMessage
-import com.yral.shared.rust.service.utils.authenticateWithNetwork
-import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import com.yral.shared.rust.service.utils.signMessageWithIdentity
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.get
+import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.URLProtocol
@@ -530,11 +529,19 @@ class AiInfluencerViewModel(
     ): Result<com.yral.shared.rust.service.utils.CanisterData> =
         runCatching {
             logger.d { "bot_setup: start for bot=$botPrincipal" }
-            // Authenticate with network using bot identity to get canister info
+            // IC authenticateWithNetwork removed — build CanisterData locally
+            // from the bot principal (propic is derived deterministically).
             val canisterData =
                 progress.canisterData
-                    ?: authenticateWithNetwork(botIdentity).also {
-                        logger.d { "bot_setup: authenticate_with_network success canister=${it.canisterId}" }
+                    ?: com.yral.shared.rust.service.utils.CanisterData(
+                        canisterId = botPrincipal,
+                        userPrincipalId = botPrincipal,
+                        profilePic = propicFromPrincipal(botPrincipal),
+                        username = null,
+                        isCreatedFromServiceCanister = true,
+                        isFollowing = false,
+                    ).also {
+                        logger.d { "bot_setup: built canister data for bot=$botPrincipal" }
                         progress.canisterData = it
                     }
             // Update username via set_user_metadata
@@ -574,22 +581,18 @@ class AiInfluencerViewModel(
 
             // Update bio and profile picture
             if (!progress.profileUpdated) {
-                val originalIdentity = sessionManager.identity
-                HelperService.initServiceFactories(botIdentity)
-                try {
-                    updateProfileDetailsUseCase(
-                        UpdateProfileDetailsParams(
-                            principal = botPrincipal,
-                            bio = profileDetails.description,
-                            profilePictureUrl = uploadedAvatarUrl,
-                        ),
-                    ).also {
-                        logger.d { "bot_setup: update_profile_details_v2 success" }
-                    }
-                    progress.profileUpdated = true
-                } finally {
-                    originalIdentity?.let { HelperService.initServiceFactories(it) }
+                // IC initServiceFactories removed — SpacetimeDB uses JWT auth,
+                // not IC identity-based service factories.
+                updateProfileDetailsUseCase(
+                    UpdateProfileDetailsParams(
+                        principal = botPrincipal,
+                        bio = profileDetails.description,
+                        profilePictureUrl = uploadedAvatarUrl,
+                    ),
+                ).also {
+                    logger.d { "bot_setup: update_profile_details_v2 success" }
                 }
+                progress.profileUpdated = true
             }
 
             // Create influencer record in backend
@@ -714,8 +717,9 @@ class AiInfluencerViewModel(
         imageBase64: String,
         identityBase64: String,
     ): String {
-        val identityWireJson = delegatedIdentityWireToJson(Base64.decode(identityBase64))
-        val delegatedIdentityWire = json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+        val idToken =
+            preferences.getString(PrefKeys.ID_TOKEN.name)
+                ?: throw YralException("No ID token found")
 
         val response =
             httpPost<UploadProfileImageResponse>(httpClient, json) {
@@ -724,9 +728,9 @@ class AiInfluencerViewModel(
                     host = OFF_CHAIN_BASE_URL
                     path(UPLOAD_PROFILE_ENDPOINT)
                 }
+                headers { append("authorization", "Bearer $idToken") }
                 setBody(
                     UploadProfileImageRequestBody(
-                        delegatedIdentityWire = delegatedIdentityWire,
                         imageData = imageBase64,
                     ),
                 )
@@ -789,8 +793,7 @@ class AiInfluencerViewModel(
         val mainIdentitySnapshot = sessionManager.identity
         val mainPrincipalSnapshot = sessionManager.userPrincipal
         val resolvedUsername = resolveUsername(displayUsername, botPrincipal)
-        // Switch in-memory session to bot for immediate use
-        HelperService.initServiceFactories(botIdentity)
+        // IC initServiceFactories removed — SpacetimeDB uses JWT auth.
         val botSession =
             Session(
                 identity = botIdentity,
@@ -878,8 +881,6 @@ class BotIdentityStorage(
 
 @Serializable
 private data class UploadProfileImageRequestBody(
-    @SerialName("delegated_identity_wire")
-    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
     @SerialName("image_data")
     val imageData: String,
 )

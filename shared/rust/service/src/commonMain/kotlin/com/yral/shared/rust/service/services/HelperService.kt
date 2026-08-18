@@ -127,8 +127,6 @@ object HelperService {
     fun initServiceFactories(identityData: ByteArray) {
         koinInstance.get<UserPostServiceFactory>().initialize(identityData)
         koinInstance.get<UserInfoServiceFactory>().initialize(identityData)
-        koinInstance.get<SnsLedgerServiceFactory>().initialize(identityData)
-        koinInstance.get<ICPLedgerServiceFactory>().initialize(identityData)
     }
 
     fun signMessage(
