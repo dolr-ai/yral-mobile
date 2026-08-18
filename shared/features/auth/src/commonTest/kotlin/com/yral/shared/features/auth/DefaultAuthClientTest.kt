@@ -38,7 +38,7 @@ import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.testsupport.preferences.FakePreferences
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import io.ktor.http.Url

@@ -46,7 +46,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.utils.propicFromPrincipal
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -489,7 +489,7 @@ private fun TransactionHistoryScreen(
                         onClick = {
                             onOpenProfile(
                                 CanisterData(
-                                    canisterId = getUserInfoServiceCanister(),
+                                    canisterId = SERVICE_CANISTER_ID,
                                     userPrincipalId = tx.userId,
                                     profilePic = propicFromPrincipal(tx.userId),
                                     username = tx.username,

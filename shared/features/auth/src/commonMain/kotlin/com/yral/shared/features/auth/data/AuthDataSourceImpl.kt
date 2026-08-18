@@ -28,7 +28,7 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.HttpRequestBuilder

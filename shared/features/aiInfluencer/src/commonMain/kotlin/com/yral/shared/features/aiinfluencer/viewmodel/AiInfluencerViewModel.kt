@@ -36,7 +36,6 @@ import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2P
 import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
-import com.yral.shared.rust.service.services.MetadataUpdateError
 import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.client.HttpClient
@@ -751,7 +750,9 @@ class AiInfluencerViewModel(
         return normalizeBotUsername(sourceUsername = prefix + suffix, principal = principal)
     }
 
-    private fun isUsernameTakenError(throwable: Throwable): Boolean = throwable is MetadataUpdateError.UsernameTaken
+    private fun isUsernameTakenError(throwable: Throwable): Boolean =
+        throwable.message?.contains("username", ignoreCase = true) == true ||
+            throwable.message?.contains("DuplicateUsername", ignoreCase = true) == true
 
     private suspend fun downloadAvatar(url: String): ByteArray = httpClient.get(url).body()
 

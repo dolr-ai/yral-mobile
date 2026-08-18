@@ -43,7 +43,6 @@ import com.yral.shared.reportVideo.di.reportVideoModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.includes
@@ -95,7 +94,6 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 
 internal val loggerModule =
     module {
-        single<LogWriter>(named("rustLogWriter")) { platformLogWriter() }
         single {
             val writers = mutableListOf<LogWriter>()
             if (get(IS_DEBUG)) {

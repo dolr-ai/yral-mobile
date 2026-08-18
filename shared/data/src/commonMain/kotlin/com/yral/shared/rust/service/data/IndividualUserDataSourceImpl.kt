@@ -8,10 +8,8 @@ import com.yral.shared.http.spacetime.SpacetimeDBRemoteDataSource
 import com.yral.shared.rust.service.domain.models.Posts
 import com.yral.shared.rust.service.domain.models.toFeedDetails
 import com.yral.shared.rust.service.domain.models.toPosts
-import com.yral.shared.rust.service.services.UserPostServiceFactory
 
 internal class IndividualUserDataSourceImpl(
-    private val userPostServiceFactory: UserPostServiceFactory,
     private val sessionManager: SessionManager,
     private val spacetimeDBRemoteDataSource: SpacetimeDBRemoteDataSource,
 ) : IndividualUserDataSource {

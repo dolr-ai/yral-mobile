@@ -73,7 +73,7 @@ import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1200,7 +1200,7 @@ class ConversationViewModel(
         if (principal.isBlank()) return
 
         viewModelScope.launch {
-            val canisterId = getUserInfoServiceCanister()
+            val canisterId = SERVICE_CANISTER_ID
             val route =
                 UserProfileRoute(
                     canisterId = canisterId,

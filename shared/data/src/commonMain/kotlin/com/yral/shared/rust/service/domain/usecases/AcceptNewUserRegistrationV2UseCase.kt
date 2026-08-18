@@ -4,7 +4,6 @@ import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.service.domain.UserInfoRepository
-import com.yral.shared.uniffi.generated.Principal
 
 class AcceptNewUserRegistrationV2UseCase(
     appDispatchers: AppDispatchers,
@@ -25,8 +24,8 @@ class AcceptNewUserRegistrationV2UseCase(
 }
 
 data class AcceptNewUserRegistrationV2Params(
-    val principal: Principal,
-    val newPrincipal: Principal,
+    val principal: String,
+    val newPrincipal: String,
     val authenticated: Boolean,
-    val mainAccount: Principal?,
+    val mainAccount: String?,
 )

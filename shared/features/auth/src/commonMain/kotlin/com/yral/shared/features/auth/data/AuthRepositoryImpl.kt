@@ -16,7 +16,7 @@ import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol

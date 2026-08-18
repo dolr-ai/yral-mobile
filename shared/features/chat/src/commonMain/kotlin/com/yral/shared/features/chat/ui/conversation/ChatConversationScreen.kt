@@ -62,7 +62,7 @@ import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.core.session.CanisterData
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -513,7 +513,7 @@ fun ChatConversationScreen(
                         )
                     val canisterData =
                         CanisterData(
-                            canisterId = getUserInfoServiceCanister(),
+                            canisterId = SERVICE_CANISTER_ID,
                             userPrincipalId = userPrincipal,
                             profilePic = component.openConversationParams.avatarUrl.orEmpty(),
                             username = component.openConversationParams.username.orEmpty(),

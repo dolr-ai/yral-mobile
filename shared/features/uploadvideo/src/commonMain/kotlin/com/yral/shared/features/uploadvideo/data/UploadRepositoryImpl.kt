@@ -90,7 +90,7 @@ internal class UploadRepositoryImpl(
         )
     }
 
-    private fun currentIdToken(): String =
+    private suspend fun currentIdToken(): String =
         preferences.getString(PrefKeys.ID_TOKEN.name)
             ?: throw YralException("ID token not found while calling upload service")
 }

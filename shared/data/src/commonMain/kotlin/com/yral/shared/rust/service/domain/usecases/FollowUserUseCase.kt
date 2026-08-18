@@ -3,7 +3,6 @@ package com.yral.shared.rust.service.domain.usecases
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.uniffi.generated.Principal
 
 class FollowUserUseCase(
     appDispatchers: AppDispatchers,
@@ -19,6 +18,6 @@ class FollowUserUseCase(
 }
 
 data class FollowUserParams(
-    val principal: Principal,
-    val targetPrincipal: Principal,
+    val principal: String,
+    val targetPrincipal: String,
 )

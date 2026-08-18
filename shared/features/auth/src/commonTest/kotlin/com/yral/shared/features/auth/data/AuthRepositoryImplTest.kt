@@ -12,7 +12,7 @@ import com.yral.shared.features.auth.domain.models.TokenClaims
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test

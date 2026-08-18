@@ -14,7 +14,6 @@ import com.yral.shared.rust.service.domain.models.toFollowerPageResult
 import com.yral.shared.rust.service.domain.models.toFollowingPageResult
 import com.yral.shared.rust.service.domain.performance.RustApiPerformanceTracer
 import com.yral.shared.rust.service.domain.performance.traceApiCall
-import com.yral.shared.uniffi.generated.Principal
 
 class UserInfoRepositoryImpl(
     private val dataSource: UserInfoDataSource,
@@ -24,31 +23,31 @@ class UserInfoRepositoryImpl(
     private val logger = Logger.withTag("UserInfoRepository")
 
     override suspend fun followUser(
-        principal: Principal,
-        targetPrincipal: Principal,
+        principal: String,
+        targetPrincipal: String,
     ): Unit =
         traceApiCall(performanceTracer, "followUser") {
             dataSource.followUser(principal, targetPrincipal)
         }
 
     override suspend fun unfollowUser(
-        principal: Principal,
-        targetPrincipal: Principal,
+        principal: String,
+        targetPrincipal: String,
     ): Unit =
         traceApiCall(performanceTracer, "unfollowUser") {
             dataSource.unfollowUser(principal, targetPrincipal)
         }
 
     override suspend fun getUserProfileDetailsV7(
-        principal: Principal,
-        targetPrincipal: Principal,
+        principal: String,
+        targetPrincipal: String,
     ): UserProfileDetails =
         traceApiCall(performanceTracer, "getUserProfileDetailsV7") {
             dataSource.getUserProfileDetailsV7(principal, targetPrincipal)
         }
 
     override suspend fun getUsersProfileDetails(
-        principal: Principal,
+        principal: String,
         targetPrincipalIds: List<String>,
     ): Map<String, UserProfileDetails> =
         traceApiCall(performanceTracer, "getUserProfileDetailsV7Bulk") {
@@ -58,9 +57,9 @@ class UserInfoRepositoryImpl(
         }
 
     override suspend fun getFollowers(
-        principal: Principal,
-        targetPrincipal: Principal,
-        cursorPrincipal: Principal?,
+        principal: String,
+        targetPrincipal: String,
+        cursorPrincipal: String?,
         limit: ULong,
         withCallerFollows: Boolean?,
     ): FollowersPageResult =
@@ -89,9 +88,9 @@ class UserInfoRepositoryImpl(
         }
 
     override suspend fun getFollowing(
-        principal: Principal,
-        targetPrincipal: Principal,
-        cursorPrincipal: Principal?,
+        principal: String,
+        targetPrincipal: String,
+        cursorPrincipal: String?,
         limit: ULong,
         withCallerFollows: Boolean?,
     ): FollowingPageResult =
@@ -120,17 +119,17 @@ class UserInfoRepositoryImpl(
         }
 
     override suspend fun updateProfileDetailsV2(
-        principal: Principal,
+        principal: String,
         details: ProfileUpdateDetailsV2,
     ) = traceApiCall(performanceTracer, "updateProfileDetailsV2") {
         dataSource.updateProfileDetailsV2(principal, details)
     }
 
     override suspend fun acceptNewUserRegistrationV2(
-        principal: Principal,
-        newPrincipal: Principal,
+        principal: String,
+        newPrincipal: String,
         authenticated: Boolean,
-        mainAccount: Principal?,
+        mainAccount: String?,
     ) = traceApiCall(performanceTracer, "acceptNewUserRegistrationV2") {
         dataSource.acceptNewUserRegistrationV2(
             principal = principal,

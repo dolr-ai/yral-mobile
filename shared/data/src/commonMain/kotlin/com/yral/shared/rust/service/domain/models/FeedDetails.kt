@@ -1,50 +1,12 @@
 package com.yral.shared.rust.service.domain.models
 
-import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.thumbnailUrl
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.videoUrl
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import com.yral.shared.rust.service.utils.propicFromPrincipal
-import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
-import com.yral.shared.uniffi.generated.UpsPostStatus
-
-internal fun UpsPostDetailsForFrontend.toFeedDetails(
-    postId: String,
-    canisterId: String,
-    nsfwProbability: Double?,
-): FeedDetails {
-    if (status == UpsPostStatus.BANNED_DUE_TO_USER_REPORTING ||
-        status == UpsPostStatus.BANNED_FOR_EXPLICITNESS
-    ) {
-        throw YralException("Post is banned $postId")
-    }
-    val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
-    return FeedDetails(
-        postID = postId,
-        videoID = videoUid,
-        canisterID = canisterId,
-        principalID = createdByUserPrincipalId,
-        url = videoUrl(videoUid, createdByUserPrincipalId),
-        hashtags = hashtags,
-        thumbnail = thumbnailUrl(videoUid, createdByUserPrincipalId),
-        viewCount = totalViewCount,
-        bulkViewCount = totalViewCount,
-        displayName = "",
-        postDescription = description,
-        profileImageURL = profileImageUrl,
-        likeCount = likeCount,
-        isLiked = likedByMe,
-        nsfwProbability = nsfwProbability,
-        isFollowing = false,
-        isFromServiceCanister = true,
-        userName = null,
-        isDraft = status == UpsPostStatus.DRAFT,
-    )
-}
 
 fun FeedDetails.toCanisterData(): CanisterData =
     CanisterData(
@@ -57,7 +19,7 @@ fun FeedDetails.toCanisterData(): CanisterData =
     )
 
 fun Post.toPartialFeedDetails(
-    isFromServiceCanister: Boolean = canisterID == getUserInfoServiceCanister(),
+    isFromServiceCanister: Boolean = true,
     profileImageUrlFallback: String = propicFromPrincipal(publisherUserId),
 ): FeedDetails =
     FeedDetails(

@@ -7,7 +7,7 @@ import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 
 interface AuthDataSource {
     suspend fun obtainAnonymousIdentity(): TokenResponseDto
