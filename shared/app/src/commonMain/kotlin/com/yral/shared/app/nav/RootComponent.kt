@@ -29,7 +29,7 @@ import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 
 @Suppress("TooManyFunctions")
 interface RootComponent {

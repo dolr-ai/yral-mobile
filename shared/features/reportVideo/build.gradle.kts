@@ -26,7 +26,6 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.designsystem)
-            implementation(projects.shared.rust.service)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

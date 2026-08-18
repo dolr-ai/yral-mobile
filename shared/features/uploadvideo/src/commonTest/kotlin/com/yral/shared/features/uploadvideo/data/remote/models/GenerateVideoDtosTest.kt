@@ -1,7 +1,5 @@
 package com.yral.shared.features.uploadvideo.data.remote.models
 
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
-import com.yral.shared.core.rust.KotlinJwkEcKey
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.ImageData
 import com.yral.shared.features.uploadvideo.domain.models.ImageInput
@@ -18,7 +16,7 @@ class GenerateVideoDtosTest {
             GenerateVideoParams(
                 providerId = "provider",
                 prompt = "prompt",
-            ).toRequestDto(TEST_DELEGATED_IDENTITY)
+            ).toRequestDto()
 
         assertNull(dto.request.image)
     }
@@ -36,28 +34,12 @@ class GenerateVideoDtosTest {
                             mimeType = "image/png",
                         ),
                     ),
-            ).toRequestDto(TEST_DELEGATED_IDENTITY)
+            ).toRequestDto()
 
         val image = dto.request.image?.jsonObject
         val value = image?.get("value")?.jsonObject
         assertEquals("Base64", image?.get("type")?.jsonPrimitive?.content)
         assertEquals("base64-data", value?.get("data")?.jsonPrimitive?.content)
         assertEquals("image/png", value?.get("mime_type")?.jsonPrimitive?.content)
-    }
-
-    private companion object {
-        val TEST_DELEGATED_IDENTITY =
-            KotlinDelegatedIdentityWire(
-                fromKey = emptyList(),
-                toSecret =
-                    KotlinJwkEcKey(
-                        kty = "EC",
-                        crv = "P-256",
-                        x = "x",
-                        y = "y",
-                        d = null,
-                    ),
-                delegationChain = emptyList(),
-            )
     }
 }

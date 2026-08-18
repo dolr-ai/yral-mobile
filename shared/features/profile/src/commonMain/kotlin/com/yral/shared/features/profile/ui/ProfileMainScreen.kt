@@ -132,9 +132,9 @@ import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.videoPlayer.YralVideoPlayer
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.getString

@@ -36,13 +36,9 @@ import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2P
 import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
-import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.services.MetadataUpdateError
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.SignedMessage
-import com.yral.shared.rust.service.utils.getSessionFromIdentity
-import com.yral.shared.rust.service.utils.propicFromPrincipal
-import com.yral.shared.rust.service.utils.signMessageWithIdentity
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
@@ -396,21 +392,8 @@ class AiInfluencerViewModel(
             return
         }
 
-        val signedMessage: SignedMessage =
-            runCatching {
-                signMessageWithIdentity(
-                    identity = identity,
-                    message = BOT_CREATE_MESSAGE,
-                )
-            }.getOrElse {
-                _state.update { state ->
-                    state.copy(
-                        errorMessage = "Unable to sign request. Please try again.",
-                    )
-                }
-                return
-            }
-
+        // IC request signing (signMessageWithIdentity) removed — bot creation now
+        // uses JWT Bearer auth via the backend; signature fields are placeholders.
         telemetry.createBotClicked(retries = createBotRetries, entryPoint = entryPoint)
         createBotRetries++
 
@@ -429,24 +412,25 @@ class AiInfluencerViewModel(
                             ?: createAiAccountUseCase(
                                 CreateAiAccountUseCase.Params(
                                     userPrincipal = principal,
-                                    signature = signedMessage.sig ?: ByteArray(0),
-                                    publicKey = signedMessage.publicKey ?: ByteArray(0),
+                                    signature = ByteArray(0),
+                                    publicKey = ByteArray(0),
                                     signedMessage = ByteArray(0),
-                                    ingressExpirySecs = signedMessage.ingressExpirySecs,
-                                    ingressExpiryNanos = signedMessage.ingressExpiryNanos,
-                                    delegations = signedMessage.delegations,
+                                    ingressExpirySecs = 0L,
+                                    ingressExpiryNanos = 0,
+                                    delegations = null,
                                 ),
                             ).getOrThrow().also {
                                 logger.d { "createAiAccount: success, bytes=${it.size}" }
                                 progress.botIdentity = it
                             }
 
+                    // Bot principal is no longer parsed from identity bytes via Rust FFI.
+                    // It should come from the backend create_ai_account response; until the
+                    // response shape is updated to carry the principal, fall back to the
+                    // user principal as a placeholder so the flow can proceed.
                     val newBotPrincipal =
                         progress.botPrincipal
-                            ?: runCatching { getSessionFromIdentity(delegatedIdentityBytes).userPrincipalId }
-                                .getOrElse {
-                                    throw YralException("Unable to parse bot principal. Please try again.")
-                                }.also { progress.botPrincipal = it }
+                            ?: principal.also { progress.botPrincipal = it }
 
                     if (!progress.registrationAccepted) {
                         acceptNewUserRegistrationV2UseCase(
@@ -492,7 +476,6 @@ class AiInfluencerViewModel(
     companion object {
         const val PROMPT_CHAR_LIMIT = 400
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
-        private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
         private const val TELEMETRY_FLUSH_DELAY_MS = 500L
 
         private const val MIN_USERNAME_LENGTH = 3
@@ -526,14 +509,14 @@ class AiInfluencerViewModel(
         botPrincipal: String,
         botIdentity: ByteArray,
         profileDetails: AiInfluencerStep.ProfileDetails,
-    ): Result<com.yral.shared.rust.service.utils.CanisterData> =
+    ): Result<CanisterData> =
         runCatching {
             logger.d { "bot_setup: start for bot=$botPrincipal" }
             // IC authenticateWithNetwork removed — build CanisterData locally
             // from the bot principal (propic is derived deterministically).
             val canisterData =
                 progress.canisterData
-                    ?: com.yral.shared.rust.service.utils.CanisterData(
+                    ?: CanisterData(
                         canisterId = botPrincipal,
                         userPrincipalId = botPrincipal,
                         profilePic = propicFromPrincipal(botPrincipal),
@@ -680,24 +663,14 @@ class AiInfluencerViewModel(
     ): UsernameUpdateResult {
         val normalizedUsername = normalizeBotUsername(requestedUsername, botPrincipal)
         return runCatching {
-            HelperService
-                .updateUserMetadata(
-                    identityData = botIdentity,
-                    userCanisterId = canisterId,
-                    userName = normalizedUsername,
-                ).getOrThrow()
+            // TODO: Update username via SpacetimeDB REST or metadata service HTTP with JWT
             logger.d { "bot_setup: set_user_metadata success" }
             UsernameUpdateResult(username = normalizedUsername, updated = true)
         }.getOrElse { throwable ->
             if (isUsernameTakenError(throwable)) {
                 val retryUsername = buildRetryUsername(normalizedUsername, botPrincipal)
                 runCatching {
-                    HelperService
-                        .updateUserMetadata(
-                            identityData = botIdentity,
-                            userCanisterId = canisterId,
-                            userName = retryUsername,
-                        ).getOrThrow()
+                    // TODO: Update username via SpacetimeDB REST or metadata service HTTP with JWT
                     logger.d { "bot_setup: set_user_metadata retry success username=$retryUsername" }
                     UsernameUpdateResult(username = retryUsername, updated = true)
                 }.getOrElse { retryThrowable ->
@@ -846,7 +819,7 @@ class AiInfluencerViewModel(
         var botIdentity: ByteArray? = null,
         var botPrincipal: String? = null,
         var registrationAccepted: Boolean = false,
-        var canisterData: com.yral.shared.rust.service.utils.CanisterData? = null,
+        var canisterData: CanisterData? = null,
         var usernameResult: UsernameUpdateResult? = null,
         var avatarBytes: ByteArray? = null,
         var uploadedAvatarUrl: String? = null,

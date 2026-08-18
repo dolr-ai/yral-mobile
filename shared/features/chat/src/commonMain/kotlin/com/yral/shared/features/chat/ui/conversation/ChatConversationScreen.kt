@@ -61,7 +61,7 @@ import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource

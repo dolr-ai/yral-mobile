@@ -24,7 +24,7 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 
 abstract class HomeComponent {
     abstract val requestLoginFactory: RequestLoginFactory

@@ -93,7 +93,7 @@ import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceF
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.testsupport.analytics.RecordingAnalyticsProvider
 import com.yral.shared.testsupport.metadata.FakeFollowersMetadataDataSource
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener

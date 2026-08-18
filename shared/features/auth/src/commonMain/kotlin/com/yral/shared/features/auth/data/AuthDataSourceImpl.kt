@@ -1,7 +1,6 @@
 package com.yral.shared.features.auth.data
 
 import co.touchlab.kermit.Logger
-import com.github.michaelbull.result.onFailure
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
@@ -29,7 +28,6 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
@@ -168,25 +166,20 @@ class AuthDataSourceImpl(
         val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
         identityWire?.let { identity ->
             Logger.d("AuthDataSource") { "registerForNotifications: token $token" }
-            HelperService
-                .registerDevice(identity, token)
-                .onFailure { error ->
-                    Logger.e("AuthDataSource") { "Failed to register device: ${error.message}" }
-                    throw YralException("Failed to register device: ${error.message}")
-                }
+            // TODO: Register device via SpacetimeDB REST or backend HTTP with JWT
+            Logger.d("AuthDataSource") {
+                "registerForNotifications: identity present (len=${identity.size}), token=$token"
+            }
         } ?: throw YralException("Identity not found while registering for notifications")
     }
 
     override suspend fun deregisterForNotifications(token: String) {
         val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
         identityWire?.let { identity ->
-            HelperService
-                .unregisterDevice(identity, token)
-                .onFailure { error ->
-                    // Failures here come from the metadata service (e.g. empty/non-JSON
-                    // response bodies) and are not actionable on mobile; don't escalate.
-                    Logger.w("AuthDataSource") { "Failed to unregister device: ${error.message}" }
-                }
+            // TODO: Unregister device via SpacetimeDB REST or backend HTTP with JWT
+            Logger.d("AuthDataSource") {
+                "deregisterForNotifications: identity present (len=${identity.size}), token=$token"
+            }
         } ?: Logger.w("AuthDataSource") { "Identity not found while deregistering for notifications" }
     }
 

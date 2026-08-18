@@ -2,7 +2,7 @@ package com.yral.shared.features.wallet.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import org.koin.core.component.KoinComponent
 
 internal class DefaultWalletComponent(

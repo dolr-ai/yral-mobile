@@ -35,7 +35,7 @@ kotlin {
             implementation(projects.shared.libs.fileDownloader)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
-            implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
             implementation(projects.shared.libs.routing.deeplinkEngine)
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.crashlytics)

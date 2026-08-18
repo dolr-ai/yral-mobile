@@ -11,7 +11,6 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.rust.service.services.HelperService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -70,6 +69,5 @@ class DefaultAuthClientFactory(
                             }
                         }
                     },
-            initRustFactories = { identity -> HelperService.initServiceFactories(identity) },
         )
 }

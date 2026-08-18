@@ -52,7 +52,7 @@ kotlin {
             implementation(projects.shared.features.subscriptions)
             implementation(projects.shared.features.aiInfluencer)
 
-            implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
 
             implementation(libs.coil.compose)
             implementation(libs.coil.ktor3)

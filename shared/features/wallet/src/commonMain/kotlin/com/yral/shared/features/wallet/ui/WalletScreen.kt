@@ -44,9 +44,9 @@ import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import com.yral.shared.rust.service.utils.propicFromPrincipal
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

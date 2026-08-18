@@ -7,7 +7,7 @@ import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
 

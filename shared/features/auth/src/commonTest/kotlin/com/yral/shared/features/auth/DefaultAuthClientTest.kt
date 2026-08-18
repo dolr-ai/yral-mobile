@@ -182,7 +182,6 @@ class DefaultAuthClientTest {
             oAuthUtilsHelper = oAuthUtilsHelper,
             scope = backgroundScope,
             authTelemetry = AuthTelemetry(AnalyticsManager(), AffiliateAttributionStore(MapSettings())),
-            initRustFactories = {},
             deregisterNotificationToken = {},
         )
     }

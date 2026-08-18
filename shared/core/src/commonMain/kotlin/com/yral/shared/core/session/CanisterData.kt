@@ -1,4 +1,4 @@
-package com.yral.shared.rust.service.utils
+package com.yral.shared.core.session
 
 import kotlinx.serialization.Serializable
 

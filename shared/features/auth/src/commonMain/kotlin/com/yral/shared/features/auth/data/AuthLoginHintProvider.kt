@@ -1,11 +1,11 @@
 package com.yral.shared.features.auth.data
 
-import com.yral.shared.rust.service.utils.yralAuthLoginHint
-
 interface AuthLoginHintProvider {
     fun build(identity: ByteArray): String
 }
 
 class DefaultAuthLoginHintProvider : AuthLoginHintProvider {
-    override fun build(identity: ByteArray): String = yralAuthLoginHint(identity)
+    // yralAuthLoginHint (Rust FFI) removed — login hint is no longer derived from
+    // the identity bytes. The backend JWT flow does not require a login hint.
+    override fun build(identity: ByteArray): String = ""
 }

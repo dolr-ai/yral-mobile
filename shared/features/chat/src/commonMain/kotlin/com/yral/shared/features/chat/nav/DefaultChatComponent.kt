@@ -13,7 +13,7 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 

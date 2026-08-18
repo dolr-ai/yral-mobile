@@ -74,7 +74,7 @@ import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import com.yral.shared.rust.service.utils.propicFromPrincipal
+import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview

@@ -33,7 +33,6 @@ firebase-bom = "33.15.0"
 firebase-ios-sdk = "11.14.0"
 firebaseCrashlyticsPlugin = "3.0.4"
 firebasePerfPlugin = "1.4.2"
-gobley = "0.2.0"
 haze = "1.6.10"
 inAppUpdate = "2.1.0"
 koinBom = "4.1.0"
@@ -262,8 +261,6 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerfPlugin" }
 gms = { id = "com.google.gms.google-services", version.ref = "play-services" }
-gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
-gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -288,4 +285,3 @@ yral-shared-library = { id = "yral.shared.library" }
 yral-shared-library-compose = { id = "yral.shared.library.compose" }
 yral-shared-feature = { id = "yral.shared.feature" }
 yral-style-enforcer = { id = "yral.style.enforcer" }
-yral-shared-rust-agent = { id = "yral.shared.rust.agent" }

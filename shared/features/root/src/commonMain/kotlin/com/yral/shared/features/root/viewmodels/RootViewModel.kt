@@ -48,8 +48,7 @@ import com.yral.shared.rust.service.domain.models.UserAccountType
 import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
-import com.yral.shared.rust.service.utils.getSessionFromIdentity
-import com.yral.shared.rust.service.utils.propicFromPrincipal
+import com.yral.shared.core.utils.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -1230,8 +1229,15 @@ class RootViewModel(
                     val identityBytes =
                         decodeBase64Flexible(raw)
                             ?: raw.encodeToByteArray()
-                    val principal = getSessionFromIdentity(identityBytes).userPrincipalId
-                    BotIdentityEntry(principal = principal, identity = Base64.encode(identityBytes))
+                    // Bot principals are no longer resolved from identity bytes via Rust FFI.
+                    // The backend JWT should carry bot principals directly in its claims;
+                    // until then we skip entries we cannot resolve to a principal.
+                    val principal = ""
+                    if (principal.isBlank()) {
+                        null
+                    } else {
+                        BotIdentityEntry(principal = principal, identity = Base64.encode(identityBytes))
+                    }
                 }.onFailure { error ->
                     Logger.e("RootViewModel") {
                         "parseBotsFromToken: failed to decode one entry: ${error.message}"

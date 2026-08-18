@@ -43,9 +43,8 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.getSessionFromIdentity
-import com.yral.shared.rust.service.utils.propicFromPrincipal
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -71,7 +70,6 @@ class DefaultAuthClient(
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val scope: CoroutineScope,
     private val authTelemetry: AuthTelemetry,
-    private val initRustFactories: (identity: ByteArray) -> Unit,
     private val deregisterNotificationToken: suspend () -> Unit = {
         requiredUseCases.deregisterNotificationTokenUseCase()
     },
@@ -800,7 +798,10 @@ class DefaultAuthClient(
             val result =
                 botIdentitiesStore.mergeFromOAuthTokenRawIdentities(
                     rawPayloads = botIdentities,
-                    principalFromIdentityBytes = { encoded -> getSessionFromIdentity(encoded).userPrincipalId },
+                    // Bot principals are no longer resolved from identity bytes via Rust FFI.
+                    // The backend JWT carries bot principals directly; principal resolution here
+                    // is a placeholder until the backend supplies the principal in the token claims.
+                    principalFromIdentityBytes = { _ -> "" },
                     onEntryParseFailure = { _, error ->
                         Logger.e("DefaultAuthClient") {
                             "Failed to persist bot identity from token: ${error.message}"

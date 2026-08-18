@@ -1,8 +1,6 @@
 package com.yral.shared.features.profile.data
 
 import com.yral.shared.analytics.events.VideoDeleteCTA
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
-import com.yral.shared.core.rust.KotlinJwkEcKey
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import kotlin.test.Test
@@ -37,25 +35,10 @@ class DeleteVideoRequestBodyTest {
                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
             ).toDeleteVideoRequestBody(
                 principal = "publisher-principal",
-                delegatedIdentityWire = delegatedIdentityWire(),
             )
 
         assertEquals("publisher-principal", body.principal)
         assertEquals("post-123", body.postId)
         assertEquals("video-456", body.videoId)
     }
-
-    private fun delegatedIdentityWire() =
-        KotlinDelegatedIdentityWire(
-            fromKey = emptyList(),
-            toSecret =
-                KotlinJwkEcKey(
-                    kty = "EC",
-                    crv = "P-256",
-                    x = "x",
-                    y = "y",
-                    d = null,
-                ),
-            delegationChain = emptyList(),
-        )
 }

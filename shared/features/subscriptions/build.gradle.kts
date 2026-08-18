@@ -27,7 +27,7 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.iap.main)
-            implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

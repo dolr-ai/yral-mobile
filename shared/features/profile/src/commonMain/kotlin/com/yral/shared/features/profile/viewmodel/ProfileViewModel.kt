@@ -85,8 +85,8 @@ import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Param
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.propicFromPrincipal
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.propicFromPrincipal
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

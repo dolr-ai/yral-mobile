@@ -19,7 +19,7 @@ import com.yral.shared.features.profile.videoideas.domain.usecases.MarkVideoIdea
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf

@@ -19,8 +19,6 @@ plugins {
     alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.firebase.perf) apply false
     alias(libs.plugins.kotlinAndroid).apply(false)
-    alias(libs.plugins.gobleyCargo).apply(false)
-    alias(libs.plugins.gobleyUniffi).apply(false)
     alias(libs.plugins.kotlinAtomicfu).apply(false)
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }

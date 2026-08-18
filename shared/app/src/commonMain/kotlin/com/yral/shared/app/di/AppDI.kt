@@ -5,7 +5,6 @@ import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.analyticsModule
 import com.yral.shared.app.config.AppHTTPEventListener
-import com.yral.shared.app.config.AppRustLogForwardingListener
 import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
 import com.yral.shared.core.AppConfigurations
@@ -41,8 +40,6 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.filedownloader.di.fileDownloaderModule
 import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.reportVideo.di.reportVideoModule
-import com.yral.shared.rust.service.di.rustModule
-import com.yral.shared.rust.service.services.RustLogForwardingListener
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -68,7 +65,6 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             iapModule,
             networkModule,
             fileDownloaderModule,
-            rustModule,
             dispatchersModule,
             archModule,
             featureFlagModule,
@@ -107,12 +103,6 @@ internal val loggerModule =
             }
             YralLogger(writers)
         }
-        single {
-            AppRustLogForwardingListener(
-                get(),
-                get(named("rustLogWriter")),
-            )
-        } bind RustLogForwardingListener::class
     }
 
 internal val featureUrlsModule =

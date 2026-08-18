@@ -49,7 +49,7 @@ import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.flow.Flow
 

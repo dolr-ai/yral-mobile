@@ -27,7 +27,7 @@ kotlin {
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.features.aiInfluencer)
 
-            implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
 
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.subscriptions)

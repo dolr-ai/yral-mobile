@@ -47,7 +47,7 @@ import com.yral.shared.libs.routing.routes.api.RewardOn
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions", "LongParameterList")

@@ -5,7 +5,7 @@ import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.coach.nav.OpenSoulFileParams
-import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.core.session.CanisterData
 import kotlinx.serialization.Serializable
 
 @Serializable
