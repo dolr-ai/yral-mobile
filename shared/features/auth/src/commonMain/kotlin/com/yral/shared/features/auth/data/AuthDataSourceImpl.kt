@@ -163,24 +163,13 @@ class AuthDataSourceImpl(
     }
 
     override suspend fun registerForNotifications(token: String) {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        identityWire?.let { identity ->
-            Logger.d("AuthDataSource") { "registerForNotifications: token $token" }
-            // TODO: Register device via SpacetimeDB REST or backend HTTP with JWT
-            Logger.d("AuthDataSource") {
-                "registerForNotifications: identity present (len=${identity.size}), token=$token"
-            }
-        } ?: Logger.w("AuthDataSource") { "Identity not found while registering for notifications" }
+        // TODO: Register device via SpacetimeDB REST or backend HTTP with JWT
+        Logger.d("AuthDataSource") { "registerForNotifications: token=$token" }
     }
 
     override suspend fun deregisterForNotifications(token: String) {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        identityWire?.let { identity ->
-            // TODO: Unregister device via SpacetimeDB REST or backend HTTP with JWT
-            Logger.d("AuthDataSource") {
-                "deregisterForNotifications: identity present (len=${identity.size}), token=$token"
-            }
-        } ?: Logger.w("AuthDataSource") { "Identity not found while deregistering for notifications" }
+        // TODO: Unregister device via SpacetimeDB REST or backend HTTP with JWT
+        Logger.d("AuthDataSource") { "deregisterForNotifications: token=$token" }
     }
 
     override suspend fun phoneAuthLogin(

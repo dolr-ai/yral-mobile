@@ -11,7 +11,6 @@ import io.ktor.http.Url
 interface AuthRepository {
     suspend fun getOAuthUrl(
         provider: SocialProvider,
-        identity: ByteArray,
     ): Pair<Url, String>
 
     suspend fun obtainAnonymousIdentity(): TokenResponse
@@ -31,7 +30,6 @@ interface AuthRepository {
     suspend fun deregisterForNotifications(token: String)
     suspend fun phoneAuthLogin(
         phoneNumber: String,
-        identity: ByteArray,
     ): PhoneAuthLoginResponse
     suspend fun verifyPhoneAuth(
         phoneNumber: String,

@@ -30,7 +30,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repository = createRepository()
 
-            val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.GOOGLE).first
 
             assertEquals("auth.yral.com", url.host)
         }
@@ -40,7 +40,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repository = createRepository()
 
-            val url = repository.getOAuthUrl(SocialProvider.APPLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.APPLE).first
 
             assertEquals("apple", url.parameters["provider"])
             assertEquals("name email", url.parameters["scope"])
@@ -52,7 +52,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repository = createRepository()
 
-            val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.GOOGLE).first
 
             assertEquals("google", url.parameters["provider"])
             assertEquals("openid", url.parameters["scope"])
@@ -69,7 +69,7 @@ class AuthRepositoryImplTest {
         )
 
     private class FakeAuthLoginHintProvider : AuthLoginHintProvider {
-        override fun build(identity: ByteArray): String = "login-hint"
+        override fun build(): String = "login-hint"
     }
 
     private class FakeOAuthUtilsHelper : OAuthUtilsHelper {

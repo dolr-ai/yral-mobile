@@ -439,17 +439,11 @@ class RootViewModel(
                 ?: preferences
                     .getString(PrefKeys.USER_PRINCIPAL.name)
                     ?.takeIf { sessionManager.isBotAccount != true }
-        val mainIdentity =
-            accountSessionPreferences.getMainIdentity()
-                ?: preferences
-                    .getBytes(PrefKeys.IDENTITY.name)
-                    ?.takeIf { activePrincipal == mainPrincipal }
         val botEntries = loadBotEntries().filter { it.principal != mainPrincipal }
         val (mainAccount, botAccounts) =
             resolveAllAccounts(
                 activePrincipal = activePrincipal,
                 mainPrincipal = mainPrincipal,
-                mainIdentity = mainIdentity,
                 botEntries = botEntries,
             )
 
@@ -493,16 +487,10 @@ class RootViewModel(
         sessionManager.updateBotCount(reconciledBots.size)
 
         val activePrincipal = sessionManager.userPrincipal
-        val mainIdentity =
-            accountSessionPreferences.getMainIdentity()
-                ?: preferences
-                    .getBytes(PrefKeys.IDENTITY.name)
-                    ?.takeIf { activePrincipal == source.mainPrincipal }
         val (mainAccount, botAccounts) =
             resolveAllAccounts(
                 activePrincipal = activePrincipal,
                 mainPrincipal = source.mainPrincipal,
-                mainIdentity = mainIdentity,
                 botEntries = reconciledBots,
             )
         val directory =
@@ -613,7 +601,6 @@ class RootViewModel(
     private suspend fun resolveAllAccounts(
         activePrincipal: String?,
         mainPrincipal: String?,
-        mainIdentity: ByteArray?,
         botEntries: List<BotIdentityEntry>,
     ): Pair<AccountUi?, List<AccountUi>> {
         val mainFallbackUsername: String? = null
@@ -622,7 +609,6 @@ class RootViewModel(
                 async {
                     resolveAccountUi(
                         principal = mainPrincipal,
-                        identityBytes = mainIdentity,
                         isBot = false,
                         activePrincipal = activePrincipal,
                         fallbackUsername = mainFallbackUsername,
@@ -633,7 +619,6 @@ class RootViewModel(
                     async {
                         resolveAccountUi(
                             principal = entry.principal,
-                            identityBytes = decodeBotIdentity(entry),
                             isBot = true,
                             activePrincipal = activePrincipal,
                             fallbackUsername = entry.username,
@@ -643,17 +628,6 @@ class RootViewModel(
             mainDeferred.await() to botDeferred.awaitAll().filterNotNull()
         }
     }
-
-    private fun decodeBotIdentity(entry: BotIdentityEntry): ByteArray? =
-        runCatching { Base64.decode(entry.identity) }
-            .onFailure {
-                crashlyticsManager.recordException(
-                    YralException("Base64 decode failed for bot ${entry.principal}", it),
-                )
-                Logger.d("RootViewModel") {
-                    "Base64 decode failed for bot ${entry.principal}: ${it.message}"
-                }
-            }.getOrNull()
 
     private fun buildAccountDirectory(
         mainPrincipal: String?,
@@ -694,7 +668,6 @@ class RootViewModel(
 
     private suspend fun resolveAccountUi(
         principal: String?,
-        identityBytes: ByteArray?,
         isBot: Boolean,
         activePrincipal: String?,
         fallbackUsername: String?,
@@ -835,14 +808,10 @@ class RootViewModel(
                     return@runCatching
                 }
                 sessionManager.updateState(SessionState.Loading)
-                val identityBytes: ByteArray
                 val isBot: Boolean
                 val botUsername: String?
                 val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
                 if (principal == storedMainPrincipal) {
-                    identityBytes =
-                        accountSessionPreferences.getMainIdentity()
-                            ?: throw YralException("Main identity missing")
                     isBot = false
                     botUsername = null
                 } else {
@@ -850,7 +819,6 @@ class RootViewModel(
                     val match =
                         storedBots.firstOrNull { it.principal == principal }
                             ?: throw YralException("Bot identity not found")
-                    identityBytes = Base64.decode(match.identity)
                     isBot = true
                     botUsername = match.username
                 }
@@ -863,7 +831,6 @@ class RootViewModel(
                     resolveUsername(botUsername, principal)
                 val session =
                     Session(
-                        identity = identityBytes,
                         canisterId = principal,
                         userPrincipal = principal,
                         profilePic = profilePic,
@@ -873,7 +840,7 @@ class RootViewModel(
                         isBotAccount = isBot,
                     )
                 sessionManager.updateState(SessionState.SignedIn(session = session))
-                cacheSession(identityBytes, session)
+                cacheSession(session)
                 accountSessionPreferences.setLastActivePrincipal(principal)
                 // Refresh tokens and notification registration similar to post-login
                 if (isBot) {
@@ -936,11 +903,9 @@ class RootViewModel(
     fun switchToMainAccount(onComplete: (Boolean) -> Unit = {}) {
         coroutineScope.launch {
             val mainPrincipal = accountSessionPreferences.getMainPrincipal()
-            val mainIdentity = accountSessionPreferences.getMainIdentity()
-            if (mainPrincipal == null || mainIdentity == null) {
+            if (mainPrincipal == null) {
                 Logger.w("BotDeleteFlow") {
-                    "switchToMainAccount skipped: main session missing principal=${mainPrincipal != null} " +
-                        "identity=${mainIdentity != null}"
+                    "switchToMainAccount skipped: main session missing principal"
                 }
                 onComplete(false)
                 return@launch
@@ -1012,10 +977,8 @@ class RootViewModel(
     }
 
     private suspend fun cacheSession(
-        identity: ByteArray,
         session: Session,
     ) {
-        preferences.putBytes(PrefKeys.IDENTITY.name, identity)
         session.canisterId?.let { preferences.putString(PrefKeys.CANISTER_ID.name, it) }
         session.userPrincipal?.let { preferences.putString(PrefKeys.USER_PRINCIPAL.name, it) }
         session.profilePic?.let { preferences.putString(PrefKeys.PROFILE_PIC.name, it) }
@@ -1033,7 +996,6 @@ class RootViewModel(
         if (!session.isBotAccount) {
             val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
             if (session.userPrincipal != null && session.userPrincipal == storedMainPrincipal) {
-                accountSessionPreferences.setMainIdentity(identity)
                 accountSessionPreferences.setMainPrincipal(session.userPrincipal)
             } else {
                 Logger.w("BotDeleteFlow") {
@@ -1236,7 +1198,7 @@ class RootViewModel(
                     if (principal.isBlank()) {
                         null
                     } else {
-                        BotIdentityEntry(principal = principal, identity = Base64.encode(identityBytes))
+                        BotIdentityEntry(principal = principal)
                     }
                 }.onFailure { error ->
                     Logger.e("RootViewModel") {

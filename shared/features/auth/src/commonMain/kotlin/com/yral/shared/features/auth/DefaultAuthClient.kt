@@ -341,7 +341,6 @@ class DefaultAuthClient(
             val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
             val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
             val principal = tokenClaim.principal
-            val delegatedIdentity = tokenClaim.delegatedIdentity
 
             if (
                 storedMainPrincipal != null &&
@@ -363,7 +362,7 @@ class DefaultAuthClient(
             val profilePic = propicFromPrincipal(principal)
             val canisterData =
                 CanisterData(
-                    canisterId = principal, // No per-user canister in SpacetimeDB; use principal as identifier
+                    canisterId = principal,
                     userPrincipalId = principal,
                     profilePic = profilePic,
                     username = null,
@@ -371,13 +370,10 @@ class DefaultAuthClient(
                     isFollowing = false,
                 )
 
-            if (delegatedIdentity != null) {
-                cacheSession(delegatedIdentity, canisterData)
-            }
+            cacheSession(canisterData)
 
             val session =
                 Session(
-                    identity = delegatedIdentity,
                     canisterId = canisterData.canisterId,
                     userPrincipal = canisterData.userPrincipalId,
                     profilePic = canisterData.profilePic,
@@ -467,14 +463,12 @@ class DefaultAuthClient(
         context: Any,
         provider: SocialProvider,
     ) {
-        sessionManager.identity?.let { identity ->
-            val authUrl = authRepository.getOAuthUrl(provider, identity)
-            currentState = authUrl.second
-            oAuthUtils.openOAuth(
-                authUrl = authUrl.first,
-                context = context,
-            ) { result -> scope.launch { handleOAuthCallback(result) } }
-        }
+        val authUrl = authRepository.getOAuthUrl(provider)
+        currentState = authUrl.second
+        oAuthUtils.openOAuth(
+            authUrl = authUrl.first,
+            context = context,
+        ) { result -> scope.launch { handleOAuthCallback(result) } }
     }
 
     private suspend fun handleOAuthCallback(result: OAuthResult) {
@@ -588,20 +582,14 @@ class DefaultAuthClient(
     )
 
     private suspend fun getCachedSession(): Session? {
-        // Prefer explicitly stored main identity/principal when available
-        val mainIdentity = accountSessionPreferences.getMainIdentity()
         val mainPrincipal = accountSessionPreferences.getMainPrincipal()
         val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
 
-        // If last active was a bot (or non-main), try using the generic identity/principal first
-        val preferredIdentity = preferences.getBytes(PrefKeys.IDENTITY.name)
         val preferredPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val usePreferred =
             lastActivePrincipal != null &&
-                preferredPrincipal == lastActivePrincipal &&
-                preferredIdentity != null
+                preferredPrincipal == lastActivePrincipal
 
-        val identity = if (usePreferred) preferredIdentity else mainIdentity ?: preferredIdentity
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = if (usePreferred) preferredPrincipal else mainPrincipal ?: preferredPrincipal
         val profilePic = getCachedProfilePic(userPrincipal, preferredPrincipal)
@@ -609,12 +597,11 @@ class DefaultAuthClient(
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         val resolvedIsBotAccount =
             mainPrincipal?.let { main -> userPrincipal != null && userPrincipal != main } ?: false
-        return listOf(identity, canisterId, userPrincipal, profilePic)
+        return listOf(canisterId, userPrincipal, profilePic)
             .all { it != null }
             .let { allPresent ->
                 if (allPresent) {
                     Session(
-                        identity = identity!!,
                         canisterId = canisterId!!,
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
@@ -658,12 +645,10 @@ class DefaultAuthClient(
             ?.takeIf { preferredPrincipal == userPrincipal }
 
     private suspend fun cacheSession(
-        identity: ByteArray,
         canisterWrapper: CanisterData,
         isBotAccount: Boolean = false,
     ) {
         with(canisterWrapper) {
-            preferences.putBytes(PrefKeys.IDENTITY.name, identity)
             preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
             preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
             preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
@@ -674,16 +659,15 @@ class DefaultAuthClient(
                 preferences.remove(PrefKeys.USERNAME.name)
             }
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
-            // Always persist a main identity when the session is not a bot account
+            // Always persist main principal when the session is not a bot account
             if (!isBotAccount) {
                 val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
                 if (storedMainPrincipal == null || storedMainPrincipal == userPrincipalId) {
-                    accountSessionPreferences.setMainIdentity(identity)
                     accountSessionPreferences.setMainPrincipal(userPrincipalId)
                     accountSessionPreferences.setLastActivePrincipal(userPrincipalId)
                 } else {
                     Logger.w("DefaultAuthClient") {
-                        "Skipped main identity overwrite for principal=$userPrincipalId storedMain=$storedMainPrincipal"
+                        "Skipped main principal overwrite for principal=$userPrincipalId storedMain=$storedMainPrincipal"
                     }
                 }
             }
@@ -691,13 +675,11 @@ class DefaultAuthClient(
     }
 
     private suspend fun resetCachedCanisterData() {
-        preferences.remove(PrefKeys.IDENTITY.name)
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
         preferences.remove(PrefKeys.PROFILE_PIC.name)
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
-        accountSessionPreferences.setMainIdentity(null)
         accountSessionPreferences.setMainPrincipal(null)
         accountSessionPreferences.setLastActivePrincipal(null)
         botIdentitiesStore.remove()
@@ -705,14 +687,10 @@ class DefaultAuthClient(
     }
 
     override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
-        val identity =
-            sessionManager.identity
-                ?: throw YralAuthException("Phone auth login failed - identity not available")
         return requiredUseCases.phoneAuthLoginUseCase
             .invoke(
                 PhoneAuthLoginUseCase.Params(
                     phoneNumber = phoneNumber,
-                    identity = identity,
                 ),
             ).onSuccess { result ->
                 Logger.d("DefaultAuthClient") { "Phone auth login initiated for $phoneNumber" }

@@ -35,7 +35,6 @@ class AuthRepositoryImpl(
 
     override suspend fun getOAuthUrl(
         provider: SocialProvider,
-        identity: ByteArray,
     ): Pair<Url, String> {
         verifier = oAuthUtilsHelper.generateCodeVerifier()
         val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
@@ -54,7 +53,7 @@ class AuthRepositoryImpl(
                         append("scope", provider.authScope())
                         append("code_challenge", codeChallenge)
                         append("code_challenge_method", "S256")
-                        append("login_hint", authLoginHintProvider.build(identity))
+                        append("login_hint", authLoginHintProvider.build())
                         append("state", codeChallenge)
                     },
             ).build()
@@ -105,11 +104,10 @@ class AuthRepositoryImpl(
 
     override suspend fun phoneAuthLogin(
         phoneNumber: String,
-        identity: ByteArray,
     ): PhoneAuthLoginResponse {
         verifier = oAuthUtilsHelper.generateCodeVerifier()
         val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
-        val loginHint = authLoginHintProvider.build(identity)
+        val loginHint = authLoginHintProvider.build()
         val authClientQuery =
             AuthClientQuery(
                 responseType = "code",

@@ -384,9 +384,8 @@ class AiInfluencerViewModel(
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun createBotAccount(onSuccess: () -> Unit) {
         val currentStep = _state.value.step as? AiInfluencerStep.ProfileDetails
-        val identity = sessionManager.identity
         val principal = sessionManager.userPrincipal
-        if (currentStep == null || identity == null || principal.isNullOrBlank()) {
+        if (currentStep == null || principal.isNullOrBlank()) {
             _state.update { it.copy(errorMessage = DEFAULT_ERROR_MESSAGE) }
             return
         }
@@ -423,6 +422,10 @@ class AiInfluencerViewModel(
                                 progress.botIdentity = it
                             }
 
+                    // delegatedIdentityBytes are no longer used for session or storage;
+                    // bot creation uses JWT auth. The bytes are retained in progress for
+                    // potential future use but not stored in preferences or Session.
+
                     // Bot principal is no longer parsed from identity bytes via Rust FFI.
                     // It should come from the backend create_ai_account response; until the
                     // response shape is updated to carry the principal, fall back to the
@@ -447,7 +450,6 @@ class AiInfluencerViewModel(
                     completeBotSetup(
                         progress = progress,
                         botPrincipal = newBotPrincipal,
-                        botIdentity = delegatedIdentityBytes,
                         profileDetails = currentStep,
                     ).getOrThrow()
                 }.onSuccess {
@@ -506,7 +508,6 @@ class AiInfluencerViewModel(
     private suspend fun completeBotSetup(
         progress: BotCreationProgress,
         botPrincipal: String,
-        botIdentity: ByteArray,
         profileDetails: AiInfluencerStep.ProfileDetails,
     ): Result<CanisterData> =
         runCatching {
@@ -533,7 +534,6 @@ class AiInfluencerViewModel(
             val usernameResult =
                 progress.usernameResult
                     ?: tryUpdateUsername(
-                        botIdentity = botIdentity,
                         canisterId = canisterData.canisterId,
                         requestedUsername = profileDetails.name,
                         botPrincipal = botPrincipal,
@@ -555,7 +555,6 @@ class AiInfluencerViewModel(
                 progress.uploadedAvatarUrl
                     ?: uploadProfileImage(
                         imageBase64 = avatarBytes.encodeBase64(),
-                        identityBase64 = botIdentity.encodeBase64(),
                     ).also {
                         logger.d { "bot_setup: upload avatar success url=$it" }
                         progress.uploadedAvatarUrl = it
@@ -614,7 +613,6 @@ class AiInfluencerViewModel(
             if (!progress.finalized) {
                 botIdentityStorage.saveBotIdentity(
                     principal = botPrincipal,
-                    identity = botIdentity,
                     username = usernameForCreateApi.takeIf { usernameUpdated },
                 )
                 telemetry.botCreationSuccess(
@@ -625,7 +623,6 @@ class AiInfluencerViewModel(
                 telemetry.flush()
                 setActiveBotSession(
                     botPrincipal = botPrincipal,
-                    botIdentity = botIdentity,
                     canisterData = canisterData,
                     profileDetails = profileDetails,
                     profilePicUrl = uploadedAvatarUrl,
@@ -654,7 +651,6 @@ class AiInfluencerViewModel(
         }
 
     private suspend fun tryUpdateUsername(
-        botIdentity: ByteArray,
         canisterId: String,
         requestedUsername: String,
         botPrincipal: String,
@@ -687,7 +683,6 @@ class AiInfluencerViewModel(
 
     private suspend fun uploadProfileImage(
         imageBase64: String,
-        identityBase64: String,
     ): String {
         val idToken =
             preferences.getString(PrefKeys.ID_TOKEN.name)
@@ -758,19 +753,15 @@ class AiInfluencerViewModel(
 
     private suspend fun setActiveBotSession(
         botPrincipal: String,
-        botIdentity: ByteArray,
         canisterData: CanisterData,
         profileDetails: AiInfluencerStep.ProfileDetails,
         profilePicUrl: String,
         displayUsername: String?,
     ) {
-        val mainIdentitySnapshot = sessionManager.identity
         val mainPrincipalSnapshot = sessionManager.userPrincipal
         val resolvedUsername = resolveUsername(displayUsername, botPrincipal)
-        // IC initServiceFactories removed — SpacetimeDB uses JWT auth.
         val botSession =
             Session(
-                identity = botIdentity,
                 canisterId = canisterData.canisterId,
                 userPrincipal = botPrincipal,
                 profilePic = profilePicUrl,
@@ -781,7 +772,6 @@ class AiInfluencerViewModel(
             )
         sessionManager.updateState(SessionState.SignedIn(session = botSession))
         // Persist so subsequent launches continue as bot until switched
-        preferences.putBytes(PrefKeys.IDENTITY.name, botIdentity)
         preferences.putString(PrefKeys.CANISTER_ID.name, canisterData.canisterId)
         preferences.putString(PrefKeys.USER_PRINCIPAL.name, botPrincipal)
         preferences.putString(PrefKeys.PROFILE_PIC.name, profilePicUrl)
@@ -790,8 +780,7 @@ class AiInfluencerViewModel(
         } else {
             preferences.remove(PrefKeys.USERNAME.name)
         }
-        // Preserve main account identity/principal if not already stored
-        mainIdentitySnapshot?.let { accountSessionPreferences.setMainIdentity(it) }
+        // Preserve main account principal if not already stored
         mainPrincipalSnapshot?.let { accountSessionPreferences.setMainPrincipal(it) }
         preferences.putBoolean(
             PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name,
@@ -836,7 +825,6 @@ class BotIdentityStorage(
 ) {
     suspend fun saveBotIdentity(
         principal: String,
-        identity: ByteArray,
         username: String? = null,
     ) {
         val existing = botIdentitiesStore.get()
@@ -845,7 +833,6 @@ class BotIdentityStorage(
                 .filterNot { it.principal == principal } +
                 BotIdentityEntry(
                     principal = principal,
-                    identity = identity.encodeBase64(),
                     username = username?.takeIf { it.isNotBlank() },
                 )
         botIdentitiesStore.put(updated)

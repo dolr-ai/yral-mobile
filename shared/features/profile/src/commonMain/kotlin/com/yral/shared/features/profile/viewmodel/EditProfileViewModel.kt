@@ -295,7 +295,6 @@ class EditProfileViewModel(
         val sanitizedBio = sanitizeBio(currentState.bioInput)
         val userPrincipalText = sessionManager.userPrincipal ?: return
         val principal = userPrincipalText
-        val identity = sessionManager.identity
         val userCanisterId = sessionManager.canisterID
         val previousUsername = currentState.initialUsername
         val previousBio = currentState.initialBio
@@ -317,8 +316,8 @@ class EditProfileViewModel(
             )
         }
 
-        if (shouldUpdateUsername && (identity == null || userCanisterId == null)) {
-            logger.e { "Cannot update username without identity data or canister id" }
+        if (shouldUpdateUsername && userCanisterId == null) {
+            logger.e { "Cannot update username without canister id" }
             return
         }
 
@@ -346,10 +345,9 @@ class EditProfileViewModel(
         viewModelScope.launch {
             try {
                 if (shouldUpdateUsername) {
-                    val identityData = identity
                     val canisterId = userCanisterId
-                    if (identityData == null || canisterId == null) {
-                        logger.e { "Cannot update username without identity data or canister id" }
+                    if (canisterId == null) {
+                        logger.e { "Cannot update username without canister id" }
                         _state.update { current ->
                             current.copy(usernameInput = previousUsername)
                         }

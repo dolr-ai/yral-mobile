@@ -192,9 +192,7 @@ class DefaultAuthClientTest {
         refreshToken: String,
     ) {
         preferences.putString(PrefKeys.MAIN_PRINCIPAL.name, MAIN_PRINCIPAL)
-        preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, MAIN_IDENTITY)
         preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, BOT_PRINCIPAL)
-        preferences.putBytes(PrefKeys.IDENTITY.name, BOT_IDENTITY)
         preferences.putString(PrefKeys.CANISTER_ID.name, BOT_CANISTER)
         preferences.putString(PrefKeys.USER_PRINCIPAL.name, BOT_PRINCIPAL)
         preferences.putString(PrefKeys.PROFILE_PIC.name, BOT_PROFILE_PIC)
@@ -224,7 +222,6 @@ class DefaultAuthClientTest {
 
         override suspend fun getOAuthUrl(
             provider: SocialProvider,
-            identity: ByteArray,
         ): Pair<Url, String> = error("Not used in this test")
 
         override suspend fun obtainAnonymousIdentity(): TokenResponse = error("Not used in this test")
@@ -259,7 +256,6 @@ class DefaultAuthClientTest {
 
         override suspend fun phoneAuthLogin(
             phoneNumber: String,
-            identity: ByteArray,
         ): PhoneAuthLoginResponse = error("Not used in this test")
 
         override suspend fun verifyPhoneAuth(

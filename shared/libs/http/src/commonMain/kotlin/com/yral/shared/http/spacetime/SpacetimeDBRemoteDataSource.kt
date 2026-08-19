@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonNull
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.jsonObject
 
 /**
@@ -99,12 +100,18 @@ class SpacetimeDBRemoteDataSource(
                 "get_posts_of_user_by_principal",
                 listOf(
                     JsonPrimitive(creatorPrincipalText),
-                    JsonPrimitive(offset.toString()),
-                    JsonPrimitive(limit.toString()),
+                    JsonPrimitive(offset.toLong()),
+                    JsonPrimitive(limit.toLong()),
                 ),
                 idToken,
             )
-        return parseResult(responseBody, SpacetimePostListOffset.serializer())
+        // The procedure returns a Vec<String> of post IDs; fetch details for each.
+        val postIds = parsePostIdList(responseBody)
+        val posts = mutableListOf<SpacetimePostDetails>()
+        for (postId in postIds) {
+            getPostById(postId)?.let { posts.add(it) }
+        }
+        return SpacetimePostListOffset(posts = posts)
     }
 
     /**
@@ -126,12 +133,18 @@ class SpacetimeDBRemoteDataSource(
                 "get_draft_posts_of_user_by_principal",
                 listOf(
                     JsonPrimitive(creatorPrincipalText),
-                    JsonPrimitive(offset.toString()),
-                    JsonPrimitive(limit.toString()),
+                    JsonPrimitive(offset.toLong()),
+                    JsonPrimitive(limit.toLong()),
                 ),
                 idToken,
             )
-        return parseResult(responseBody, SpacetimePostListOffset.serializer())
+        // The procedure returns a Vec<String> of post IDs; fetch details for each.
+        val postIds = parsePostIdList(responseBody)
+        val posts = mutableListOf<SpacetimePostDetails>()
+        for (postId in postIds) {
+            getPostById(postId)?.let { posts.add(it) }
+        }
+        return SpacetimePostListOffset(posts = posts)
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -185,7 +198,7 @@ class SpacetimeDBRemoteDataSource(
                 "get_followers",
                 listOf(
                     JsonPrimitive(principalText),
-                    JsonPrimitive(limit.toString()),
+                    JsonPrimitive(limit.toLong()),
                     cursor?.let { JsonPrimitive(it) } ?: JsonNull,
                 ),
                 idToken,
@@ -212,7 +225,7 @@ class SpacetimeDBRemoteDataSource(
                 "get_following",
                 listOf(
                     JsonPrimitive(principalText),
-                    JsonPrimitive(limit.toString()),
+                    JsonPrimitive(limit.toLong()),
                     cursor?.let { JsonPrimitive(it) } ?: JsonNull,
                 ),
                 idToken,
@@ -453,6 +466,35 @@ class SpacetimeDBRemoteDataSource(
                 ?: throw parseError("expected nested array", responseBody)
 
         return innerArray.map { json.decodeFromString(serializer, it.toString()) }
+    }
+
+    /**
+     * Parse a `Vec<String>` REST response — a list of string post IDs.
+     *
+     * SpacetimeDB wraps the result in an outer array, so the response may be
+     * `["id1", "id2", ...]` or `[["id1", "id2", ...]]` depending on the procedure.
+     * This handles both formats.
+     */
+    private fun parsePostIdList(responseBody: String): List<String> {
+        val outerArray =
+            json.parseToJsonElement(responseBody) as? JsonArray
+                ?: throw parseError("expected JSON array", responseBody)
+
+        // Try flat format: ["id1", "id2", ...]
+        val flatStrings: List<String> =
+            outerArray.mapNotNull { element ->
+                (element as? JsonPrimitive)?.content
+            }
+        if (flatStrings.isNotEmpty()) return flatStrings
+
+        // Try nested format: [["id1", "id2", ...]]
+        val innerArray =
+            outerArray.firstOrNull() as? JsonArray
+                ?: throw parseError("expected string array or nested array", responseBody)
+
+        return innerArray.mapNotNull { element ->
+            (element as? JsonPrimitive)?.content
+        }
     }
 
     private fun parseError(

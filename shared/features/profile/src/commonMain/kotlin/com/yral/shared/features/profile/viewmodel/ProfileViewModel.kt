@@ -498,7 +498,7 @@ class ProfileViewModel(
     }
 
     private fun refreshOtherProfileDetails() {
-        if (sessionManager.identity == null) return
+        if (sessionManager.userPrincipal == null) return
         val targetPrincipal = canisterData.userPrincipalId
         if (targetPrincipal.isBlank()) return
         viewModelScope.launch {

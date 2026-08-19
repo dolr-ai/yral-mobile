@@ -4,7 +4,6 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import io.ktor.util.decodeBase64Bytes
-import io.ktor.util.encodeBase64
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -36,8 +35,10 @@ class BotIdentitiesStore(
     /**
      * Parses raw identity payloads from an OAuth token (e.g. [botDelegatedIdentities]),
      * resolves principal via [principalFromIdentityBytes], merges with existing entries and persists.
-     * JSON decode/encode of [KotlinDelegatedIdentityWire] is done here;
-     * principal resolution stays in the caller (e.g. Rust FFI).
+     *
+     * The IC delegated identity bytes are no longer stored — only the principal and username
+     * are kept. The [principalFromIdentityBytes] callback is retained because the backend JWT
+     * still encodes bot principals inside the delegated-identity payload.
      */
     @Suppress("ReturnCount")
     suspend fun mergeFromOAuthTokenRawIdentities(
@@ -61,7 +62,7 @@ class BotIdentitiesStore(
                                 }
                         val encoded = json.encodeToString(wire).encodeToByteArray()
                         val principal = principalFromIdentityBytes(encoded)
-                        BotIdentityEntry(principal = principal, identity = encoded.encodeBase64())
+                        BotIdentityEntry(principal = principal)
                     }.onFailure { error -> onEntryParseFailure?.invoke(raw, error) }.getOrNull()
                 }.filter { it.principal.isNotBlank() }
         if (entries.isEmpty()) return null
@@ -96,6 +97,5 @@ class BotIdentitiesStore(
 @Serializable
 data class BotIdentityEntry(
     val principal: String,
-    val identity: String,
     val username: String? = null,
 )
