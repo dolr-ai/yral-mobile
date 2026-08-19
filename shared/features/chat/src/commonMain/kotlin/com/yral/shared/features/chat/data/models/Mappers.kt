@@ -2,6 +2,7 @@ package com.yral.shared.features.chat.data.models
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
@@ -31,7 +32,6 @@ import com.yral.shared.features.chat.domain.models.SkillCheckins
 import com.yral.shared.features.chat.domain.models.SystemPromptLayers
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SystemPromptSection
-import com.yral.shared.rust.service.utils.propicFromPrincipal
 
 fun InfluencerDto.toDomain(): Influencer =
     Influencer(

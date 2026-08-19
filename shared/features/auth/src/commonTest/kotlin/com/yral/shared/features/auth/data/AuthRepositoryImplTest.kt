@@ -12,7 +12,6 @@ import com.yral.shared.features.auth.domain.models.TokenClaims
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -30,7 +29,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repository = createRepository()
 
-            val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.GOOGLE).first
 
             assertEquals("auth.yral.com", url.host)
         }
@@ -40,7 +39,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repository = createRepository()
 
-            val url = repository.getOAuthUrl(SocialProvider.APPLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.APPLE).first
 
             assertEquals("apple", url.parameters["provider"])
             assertEquals("name email", url.parameters["scope"])
@@ -52,7 +51,7 @@ class AuthRepositoryImplTest {
         runTest {
             val repository = createRepository()
 
-            val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
+            val url = repository.getOAuthUrl(SocialProvider.GOOGLE).first
 
             assertEquals("google", url.parameters["provider"])
             assertEquals("openid", url.parameters["scope"])
@@ -69,7 +68,7 @@ class AuthRepositoryImplTest {
         )
 
     private class FakeAuthLoginHintProvider : AuthLoginHintProvider {
-        override fun build(identity: ByteArray): String = "login-hint"
+        override fun build(): String = "login-hint"
     }
 
     private class FakeOAuthUtilsHelper : OAuthUtilsHelper {
@@ -120,14 +119,6 @@ class AuthRepositoryImplTest {
 
         override suspend fun verifyPhoneAuth(verifyRequest: VerifyRequestDto): PhoneAuthVerifyResponseDto = error("Not used in this test")
 
-        override suspend fun createAiAccount(
-            userPrincipal: String,
-            signature: ByteArray,
-            publicKey: ByteArray,
-            signedMessage: ByteArray,
-            ingressExpirySecs: Long,
-            ingressExpiryNanos: Int,
-            delegations: List<SignedDelegationPayload>?,
-        ): CreateAiAccountResponseDto = error("Not used in this test")
+        override suspend fun createAiAccount(userId: String): CreateAiAccountResponseDto = error("Not used in this test")
     }
 }

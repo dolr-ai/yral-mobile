@@ -28,7 +28,6 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.data)
-            implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.routing.deeplinkEngine)
             implementation(projects.shared.libs.sharing)

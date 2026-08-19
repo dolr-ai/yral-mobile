@@ -5,14 +5,10 @@ import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import io.ktor.http.Url
 
 interface AuthRepository {
-    suspend fun getOAuthUrl(
-        provider: SocialProvider,
-        identity: ByteArray,
-    ): Pair<Url, String>
+    suspend fun getOAuthUrl(provider: SocialProvider): Pair<Url, String>
 
     suspend fun obtainAnonymousIdentity(): TokenResponse
     suspend fun authenticateToken(code: String): TokenResponse
@@ -29,23 +25,12 @@ interface AuthRepository {
     suspend fun deleteAccount(): String
     suspend fun registerForNotifications(token: String)
     suspend fun deregisterForNotifications(token: String)
-    suspend fun phoneAuthLogin(
-        phoneNumber: String,
-        identity: ByteArray,
-    ): PhoneAuthLoginResponse
+    suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse
     suspend fun verifyPhoneAuth(
         phoneNumber: String,
         code: String,
         clientState: String,
     ): PhoneAuthVerifyResponse
 
-    suspend fun createAiAccount(
-        userPrincipal: String,
-        signature: ByteArray,
-        publicKey: ByteArray,
-        signedMessage: ByteArray,
-        ingressExpirySecs: Long,
-        ingressExpiryNanos: Int,
-        delegations: List<SignedDelegationPayload>?,
-    ): ByteArray
+    suspend fun createAiAccount(userId: String): String
 }

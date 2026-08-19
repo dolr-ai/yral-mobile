@@ -23,7 +23,7 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.uploadvideo)
-            implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.ktor.serialization.kotlinx.json)

@@ -1,7 +1,6 @@
 package com.yral.shared.features.uploadvideo.data
 
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.uploadvideo.data.remote.UploadVideoRemoteDataSource
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
@@ -16,17 +15,18 @@ import com.yral.shared.features.uploadvideo.data.remote.models.toUploadStatus
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
-import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
 
 internal class UploadRepositoryImpl(
     private val remoteDataSource: UploadVideoRemoteDataSource,
     private val sessionManager: SessionManager,
-    private val json: Json,
+    private val preferences: Preferences,
 ) : UploadRepository {
     override suspend fun fetchUploadUrl(): UploadEndpoint {
         val publisherUserID =
@@ -47,17 +47,13 @@ internal class UploadRepositoryImpl(
     ) = remoteDataSource.uploadFile(uploadUrl, filePath).map { it.toUploadStatus() }
 
     override suspend fun updateMetadata(uploadFileRequest: UploadFileRequest) {
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("Session not found while finalising video upload")
-        val identityWireJson = delegatedIdentityWireToJson(identity)
-        val delegatedIdentityWire =
-            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
         val creatorPrincipal =
             sessionManager.userPrincipal
                 ?: throw YralException("Session not found while finalising video upload")
+        val idToken = currentIdToken()
         remoteDataSource.updateMetadata(
-            uploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire, creatorPrincipal),
+            uploadFileRequest.toUpdateMetaDataRequestDto(creatorPrincipal),
+            idToken,
         )
     }
 
@@ -67,55 +63,34 @@ internal class UploadRepositoryImpl(
             .toDomain()
 
     override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult {
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("Session not found while finalising video upload")
-        val identityWireJson = delegatedIdentityWireToJson(identity)
-        val delegatedIdentityWire =
-            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-        val dto = params.toRequestDto(delegatedIdentityWire)
-        return remoteDataSource.generateVideo(dto)
+        val idToken = currentIdToken()
+        val dto = params.toRequestDto()
+        return remoteDataSource.generateVideo(dto, idToken)
     }
 
-    override suspend fun getInProgressDrafts(userId: String) =
-        remoteDataSource
+    override suspend fun getInProgressDrafts(userId: String): List<InProgressDraft> {
+        val idToken = currentIdToken()
+        return remoteDataSource
             .getInProgressDrafts(
-                InProgressDraftsRequestDto(
-                    delegatedIdentity = currentDelegatedIdentityWire("fetching in-progress video drafts"),
-                    userId = userId,
-                ),
+                InProgressDraftsRequestDto(userId = userId),
+                idToken,
             ).toDomain()
+    }
 
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String {
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("Session not found while uploading AI video from url")
-        val identityWireJson = delegatedIdentityWireToJson(identity)
-        val delegatedIdentityWire =
-            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-        return remoteDataSource.uploadAiVideoFromUrl(request.toDto(delegatedIdentityWire))
+        val idToken = currentIdToken()
+        return remoteDataSource.uploadAiVideoFromUrl(request.toDto(), idToken)
     }
 
     override suspend fun markPostAsPublished(postId: String) {
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("Session not found while publishing draft video")
-        val identityWireJson = delegatedIdentityWireToJson(identity)
-        val delegatedIdentityWire =
-            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+        val idToken = currentIdToken()
         remoteDataSource.markPostAsPublished(
-            MarkPostAsPublishedRequestDto(
-                postId = postId,
-                delegatedIdentityWire = delegatedIdentityWire,
-            ),
+            MarkPostAsPublishedRequestDto(postId = postId),
+            idToken,
         )
     }
 
-    private fun currentDelegatedIdentityWire(action: String): KotlinDelegatedIdentityWire {
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("Session not found while $action")
-        val identityWireJson = delegatedIdentityWireToJson(identity)
-        return json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-    }
+    private suspend fun currentIdToken(): String =
+        preferences.getString(PrefKeys.ID_TOKEN.name)
+            ?: throw YralException("ID token not found while calling upload service")
 }

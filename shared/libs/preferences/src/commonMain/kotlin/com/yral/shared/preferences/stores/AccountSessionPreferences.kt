@@ -25,14 +25,4 @@ class AccountSessionPreferences(
             preferences.remove(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
         }
     }
-
-    suspend fun getMainIdentity(): ByteArray? = preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
-
-    suspend fun setMainIdentity(value: ByteArray?) {
-        if (value != null) {
-            preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, value)
-        } else {
-            preferences.remove(PrefKeys.MAIN_IDENTITY.name)
-        }
-    }
 }

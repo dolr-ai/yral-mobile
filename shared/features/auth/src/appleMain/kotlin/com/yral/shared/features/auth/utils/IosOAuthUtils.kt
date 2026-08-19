@@ -224,20 +224,11 @@ class IosOAuthUtilsHelper(
         val principal = payloadJson.requireStringClaim(KEY_SUB)
         val nonce = payloadJson[KEY_NONCE]?.jsonPrimitive?.contentOrNull
         val isAnonymous = payloadJson[KEY_IS_ANONYMOUS]?.jsonPrimitive?.booleanOrNull ?: false
-        val delegatedIdentity =
-            payloadJson[KEY_DELEGATED_IDENTITY]
-                ?.takeUnless { it is JsonNull }
-                ?.toString()
-                ?.encodeToByteArray()
-        val botDelegatedIdentities =
-            payloadJson[KEY_AI_ACCOUNT_DELEGATED_IDENTITIES]
+        val botAccountIds =
+            payloadJson[KEY_AI_ACCOUNT_IDS]
                 ?.jsonArrayOrNull()
                 ?.mapNotNull { element ->
-                    when (element) {
-                        is JsonNull -> null
-                        is JsonPrimitive -> element.contentOrNull?.encodeToByteArray()
-                        else -> element.toString().encodeToByteArray()
-                    }
+                    if (element is JsonNull) null else element.jsonPrimitive.contentOrNull
                 }
         val email = payloadJson[KEY_EMAIL]?.jsonPrimitive?.contentOrNull
 
@@ -249,9 +240,8 @@ class IosOAuthUtilsHelper(
             principal = principal,
             nonce = nonce,
             extIsAnonymous = isAnonymous,
-            delegatedIdentity = delegatedIdentity,
             email = email,
-            botDelegatedIdentities = botDelegatedIdentities,
+            botAccountIds = botAccountIds,
         )
     }
 

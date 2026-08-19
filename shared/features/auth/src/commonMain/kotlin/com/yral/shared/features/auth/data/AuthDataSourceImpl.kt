@@ -1,26 +1,20 @@
 package com.yral.shared.features.auth.data
 
 import co.touchlab.kermit.Logger
-import com.github.michaelbull.result.onFailure
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.data.removedFirebaseCloudFunctionsException
 import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.CreateAiAccountRequestDto
 import com.yral.shared.features.auth.data.models.CreateAiAccountResponseDto
-import com.yral.shared.features.auth.data.models.DelegationDto
 import com.yral.shared.features.auth.data.models.DeleteAccountRequestDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
-import com.yral.shared.features.auth.data.models.IngressExpiryDto
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginRequestDto
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyRequestDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
-import com.yral.shared.features.auth.data.models.SignaturePayloadDto
-import com.yral.shared.features.auth.data.models.SignedDelegationDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
@@ -30,9 +24,6 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.services.HelperService
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
-import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.HttpRequestBuilder
@@ -153,49 +144,27 @@ class AuthDataSourceImpl(
     ): ExchangePrincipalResponseDto = throw removedFirebaseCloudFunctionsException("exchangePrincipalId")
 
     override suspend fun deleteAccount(): String {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        return identityWire?.let {
-            val identityWireJson = delegatedIdentityWireToJson(identityWire)
-            val delegatedIdentity =
-                json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-            val params =
-                DeleteAccountRequestDto(
-                    delegatedIdentity = delegatedIdentity,
-                )
-            httpDelete(client) {
-                url {
-                    host = OFF_CHAIN_BASE_URL
-                    path(DELETE_ACCOUNT)
-                }
-                setBody(params)
+        val idToken =
+            preferences.getString(PrefKeys.ID_TOKEN.name)
+                ?: throw YralException("ID token not found while deleting account")
+        return httpDelete(client) {
+            url {
+                host = OFF_CHAIN_BASE_URL
+                path(DELETE_ACCOUNT)
             }
-        } ?: throw YralException("Identity not found while deleting account")
+            headers { append("authorization", "Bearer $idToken") }
+            setBody(DeleteAccountRequestDto())
+        }
     }
 
     override suspend fun registerForNotifications(token: String) {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        identityWire?.let { identity ->
-            Logger.d("AuthDataSource") { "registerForNotifications: token $token" }
-            HelperService
-                .registerDevice(identity, token)
-                .onFailure { error ->
-                    Logger.e("AuthDataSource") { "Failed to register device: ${error.message}" }
-                    throw YralException("Failed to register device: ${error.message}")
-                }
-        } ?: throw YralException("Identity not found while registering for notifications")
+        // Note: Register device via SpacetimeDB REST or backend HTTP with JWT
+        Logger.d("AuthDataSource") { "registerForNotifications: token=$token" }
     }
 
     override suspend fun deregisterForNotifications(token: String) {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        identityWire?.let { identity ->
-            HelperService
-                .unregisterDevice(identity, token)
-                .onFailure { error ->
-                    // Failures here come from the metadata service (e.g. empty/non-JSON
-                    // response bodies) and are not actionable on mobile; don't escalate.
-                    Logger.w("AuthDataSource") { "Failed to unregister device: ${error.message}" }
-                }
-        } ?: Logger.w("AuthDataSource") { "Identity not found while deregistering for notifications" }
+        // Note: Unregister device via SpacetimeDB REST or backend HTTP with JWT
+        Logger.d("AuthDataSource") { "deregisterForNotifications: token=$token" }
     }
 
     override suspend fun phoneAuthLogin(
@@ -256,43 +225,12 @@ class AuthDataSourceImpl(
         }
     }
 
-    override suspend fun createAiAccount(
-        userPrincipal: String,
-        signature: ByteArray,
-        publicKey: ByteArray,
-        signedMessage: ByteArray,
-        ingressExpirySecs: Long,
-        ingressExpiryNanos: Int,
-        delegations: List<SignedDelegationPayload>?,
-    ): CreateAiAccountResponseDto =
+    override suspend fun createAiAccount(userId: String): CreateAiAccountResponseDto =
         authPost<CreateAiAccountResponseDto> { host ->
-            val payload =
-                CreateAiAccountRequestDto(
-                    userPrincipal = userPrincipal,
-                    signature =
-                        SignaturePayloadDto(
-                            sig = signature.map { it.toUByte().toInt() },
-                            publicKey = publicKey.map { it.toUByte().toInt() },
-                            ingressExpiry = IngressExpiryDto(secs = ingressExpirySecs, nanos = ingressExpiryNanos),
-                            delegations =
-                                delegations?.map { del ->
-                                    SignedDelegationDto(
-                                        delegation =
-                                            DelegationDto(
-                                                pubKey = del.delegation.pubkey.map { it.toUByte().toInt() },
-                                                expirationNs = del.delegation.expiration,
-                                                targets = del.delegation.targets,
-                                            ),
-                                        signature = del.signature.map { it.toUByte().toInt() },
-                                    )
-                                },
-                            sender = userPrincipal,
-                        ),
-                )
+            val payload = CreateAiAccountRequestDto(userId = userId)
             logger.d { "create_ai_account request=${json.encodeToString(payload)}" }
             url {
                 this.host = host
-                // Endpoint: POST https://auth.yral.com/api/create_ai_account
                 path(PATH_CREATE_AI_ACCOUNT)
             }
             setBody(payload)

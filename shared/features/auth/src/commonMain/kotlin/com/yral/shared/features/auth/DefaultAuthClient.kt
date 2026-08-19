@@ -12,10 +12,12 @@ import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
 import com.yral.shared.analytics.events.OtpValidationStatus
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -23,6 +25,7 @@ import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
+import com.yral.shared.features.auth.domain.models.TokenClaims
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
@@ -42,11 +45,6 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.YralFfiException
-import com.yral.shared.rust.service.utils.authenticateWithNetwork
-import com.yral.shared.rust.service.utils.getSessionFromIdentity
-import com.yral.shared.rust.service.utils.propicFromPrincipal
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -72,7 +70,6 @@ class DefaultAuthClient(
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val scope: CoroutineScope,
     private val authTelemetry: AuthTelemetry,
-    private val initRustFactories: (identity: ByteArray) -> Unit,
     private val deregisterNotificationToken: suspend () -> Unit = {
         requiredUseCases.deregisterNotificationTokenUseCase()
     },
@@ -200,12 +197,10 @@ class DefaultAuthClient(
         }
         val tokenClaim = oAuthUtilsHelper.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
-            tokenClaim.delegatedIdentity?.let {
-                if (resetCanister) {
-                    resetCachedCanisterData()
-                }
-                handleExtractIdentityResponse(it)
+            if (resetCanister) {
+                resetCachedCanisterData()
             }
+            handleTokenClaims(tokenClaim)
             tokenClaim.email?.let {
                 sessionManager.updateLoggedInUserEmail(it)
             }
@@ -331,40 +326,29 @@ class DefaultAuthClient(
         sessionManager.updateState(SessionState.Initial)
     }
 
-    private suspend fun refreshAuthenticateWithNetwork(data: ByteArray): Session? =
-        try {
-            Logger.d("DefaultAuthClient") { "Refreshing authenticateWithNetwork" }
-            val canisterWrapper = authenticateWithNetwork(data)
-            cacheSession(data, canisterWrapper)
-            Logger.d("DefaultAuthClient") { "Reauthenticated: ${canisterWrapper.isCreatedFromServiceCanister} " }
-            Session(
-                identity = data,
-                canisterId = canisterWrapper.canisterId,
-                userPrincipal = canisterWrapper.userPrincipalId,
-                profilePic = canisterWrapper.profilePic,
-                username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
-                isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
-            )
-        } catch (e: YralFfiException) {
-            crashlyticsManager.recordException(
-                YralException("Reauthenticate failed $e"),
-                ExceptionType.AUTH,
-            )
-            null
-        }
-
-    private suspend fun handleExtractIdentityResponse(data: ByteArray) {
+    /**
+     * Build the session directly from JWT claims — no IC network call needed.
+     * The principal comes from the JWT `sub` claim; the profile pic is derived
+     * deterministically from the principal via `propicFromPrincipal`.
+     *
+     * The IC delegated identity bytes (if present in the JWT) are kept in the
+     * session for backward compatibility with backend HTTP services that still
+     * require IC-signed requests (offchain, storage-interface, analytics, etc.).
+     * These will be removed once those services accept JWT Bearer auth.
+     */
+    private suspend fun handleTokenClaims(tokenClaim: TokenClaims) {
         try {
             val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
             val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
-            val identityPrincipal = getSessionFromIdentity(data).userPrincipalId
+            val principal = tokenClaim.principal
+
             if (
                 storedMainPrincipal != null &&
                 lastActivePrincipal == storedMainPrincipal &&
-                identityPrincipal != storedMainPrincipal
+                principal != storedMainPrincipal
             ) {
                 Logger.w("DefaultAuthClient") {
-                    "Ignoring token identity for non-main principal=$identityPrincipal storedMain=$storedMainPrincipal"
+                    "Ignoring token principal=$principal storedMain=$storedMainPrincipal"
                 }
                 getCachedSession()
                     ?.takeIf { it.userPrincipal == storedMainPrincipal }
@@ -374,34 +358,40 @@ class DefaultAuthClient(
                     }
                 return
             }
-            var cachedSession = getCachedSession()
-            if (cachedSession == null) {
-                // Use getSessionFromIdentity to get principal without network call
-                // Uses USER_INFO_SERVICE_ID as default canister
-                val canisterWrapper = getSessionFromIdentity(data)
-                cacheSession(data, canisterWrapper)
-                cachedSession =
-                    Session(
-                        identity = data,
-                        canisterId = canisterWrapper.canisterId,
-                        userPrincipal = canisterWrapper.userPrincipalId,
-                        profilePic = canisterWrapper.profilePic,
-                        username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
-                        isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
-                    )
-            }
-            cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
+
+            val profilePic = propicFromPrincipal(principal)
+            val canisterData =
+                CanisterData(
+                    canisterId = principal,
+                    userPrincipalId = principal,
+                    profilePic = profilePic,
+                    username = null,
+                    isCreatedFromServiceCanister = true,
+                    isFollowing = false,
+                )
+
+            cacheSession(canisterData)
+
+            val session =
+                Session(
+                    canisterId = canisterData.canisterId,
+                    userPrincipal = canisterData.userPrincipalId,
+                    profilePic = canisterData.profilePic,
+                    username = resolveUsername(canisterData.username, canisterData.userPrincipalId),
+                    isCreatedFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                )
+
+            session.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
-            // Always refresh with network to get actual canister and profile info
-            val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
-            val finalSession = reAuthenticatedSession ?: cachedSession
-            setSession(session = finalSession)
+            setSession(session = session)
             sessionManager.updateFirebaseLoginState(true)
             postLogin()
-        } catch (e: YralFfiException) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") exception: Exception,
+        ) {
             resetCachedCanisterData()
-            crashlyticsManager.recordException(e, ExceptionType.AUTH)
-            throw YralAuthException(e)
+            crashlyticsManager.recordException(exception, ExceptionType.AUTH)
+            throw YralAuthException(exception)
         }
     }
 
@@ -433,7 +423,8 @@ class DefaultAuthClient(
     }
 
     private fun setSession(session: Session) {
-        session.identity?.let { identity -> initRustFactories(identity) }
+        // IC service factories (initRustFactories) are no longer needed —
+        // all canister calls go through SpacetimeDB REST using the JWT.
         sessionManager.updateState(SessionState.SignedIn(session = session))
     }
 
@@ -474,14 +465,12 @@ class DefaultAuthClient(
         context: Any,
         provider: SocialProvider,
     ) {
-        sessionManager.identity?.let { identity ->
-            val authUrl = authRepository.getOAuthUrl(provider, identity)
-            currentState = authUrl.second
-            oAuthUtils.openOAuth(
-                authUrl = authUrl.first,
-                context = context,
-            ) { result -> scope.launch { handleOAuthCallback(result) } }
-        }
+        val authUrl = authRepository.getOAuthUrl(provider)
+        currentState = authUrl.second
+        oAuthUtils.openOAuth(
+            authUrl = authUrl.first,
+            context = context,
+        ) { result -> scope.launch { handleOAuthCallback(result) } }
     }
 
     private suspend fun handleOAuthCallback(result: OAuthResult) {
@@ -595,20 +584,14 @@ class DefaultAuthClient(
     )
 
     private suspend fun getCachedSession(): Session? {
-        // Prefer explicitly stored main identity/principal when available
-        val mainIdentity = accountSessionPreferences.getMainIdentity()
         val mainPrincipal = accountSessionPreferences.getMainPrincipal()
         val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
 
-        // If last active was a bot (or non-main), try using the generic identity/principal first
-        val preferredIdentity = preferences.getBytes(PrefKeys.IDENTITY.name)
         val preferredPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val usePreferred =
             lastActivePrincipal != null &&
-                preferredPrincipal == lastActivePrincipal &&
-                preferredIdentity != null
+                preferredPrincipal == lastActivePrincipal
 
-        val identity = if (usePreferred) preferredIdentity else mainIdentity ?: preferredIdentity
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = if (usePreferred) preferredPrincipal else mainPrincipal ?: preferredPrincipal
         val profilePic = getCachedProfilePic(userPrincipal, preferredPrincipal)
@@ -616,12 +599,11 @@ class DefaultAuthClient(
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         val resolvedIsBotAccount =
             mainPrincipal?.let { main -> userPrincipal != null && userPrincipal != main } ?: false
-        return listOf(identity, canisterId, userPrincipal, profilePic)
+        return listOf(canisterId, userPrincipal, profilePic)
             .all { it != null }
             .let { allPresent ->
                 if (allPresent) {
                     Session(
-                        identity = identity!!,
                         canisterId = canisterId!!,
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
@@ -665,12 +647,10 @@ class DefaultAuthClient(
             ?.takeIf { preferredPrincipal == userPrincipal }
 
     private suspend fun cacheSession(
-        identity: ByteArray,
         canisterWrapper: CanisterData,
         isBotAccount: Boolean = false,
     ) {
         with(canisterWrapper) {
-            preferences.putBytes(PrefKeys.IDENTITY.name, identity)
             preferences.putString(PrefKeys.CANISTER_ID.name, canisterId)
             preferences.putString(PrefKeys.USER_PRINCIPAL.name, userPrincipalId)
             preferences.putString(PrefKeys.PROFILE_PIC.name, profilePic)
@@ -681,16 +661,15 @@ class DefaultAuthClient(
                 preferences.remove(PrefKeys.USERNAME.name)
             }
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
-            // Always persist a main identity when the session is not a bot account
+            // Always persist main principal when the session is not a bot account
             if (!isBotAccount) {
                 val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
                 if (storedMainPrincipal == null || storedMainPrincipal == userPrincipalId) {
-                    accountSessionPreferences.setMainIdentity(identity)
                     accountSessionPreferences.setMainPrincipal(userPrincipalId)
                     accountSessionPreferences.setLastActivePrincipal(userPrincipalId)
                 } else {
                     Logger.w("DefaultAuthClient") {
-                        "Skipped main identity overwrite for principal=$userPrincipalId storedMain=$storedMainPrincipal"
+                        "Skipped main principal overwrite for principal=$userPrincipalId storedMain=$storedMainPrincipal"
                     }
                 }
             }
@@ -698,13 +677,11 @@ class DefaultAuthClient(
     }
 
     private suspend fun resetCachedCanisterData() {
-        preferences.remove(PrefKeys.IDENTITY.name)
         preferences.remove(PrefKeys.CANISTER_ID.name)
         preferences.remove(PrefKeys.USER_PRINCIPAL.name)
         preferences.remove(PrefKeys.PROFILE_PIC.name)
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
-        accountSessionPreferences.setMainIdentity(null)
         accountSessionPreferences.setMainPrincipal(null)
         accountSessionPreferences.setLastActivePrincipal(null)
         botIdentitiesStore.remove()
@@ -712,14 +689,10 @@ class DefaultAuthClient(
     }
 
     override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
-        val identity =
-            sessionManager.identity
-                ?: throw YralAuthException("Phone auth login failed - identity not available")
         return requiredUseCases.phoneAuthLoginUseCase
             .invoke(
                 PhoneAuthLoginUseCase.Params(
                     phoneNumber = phoneNumber,
-                    identity = identity,
                 ),
             ).onSuccess { result ->
                 Logger.d("DefaultAuthClient") { "Phone auth login initiated for $phoneNumber" }
@@ -788,30 +761,22 @@ class DefaultAuthClient(
 
     private suspend fun persistBotIdentitiesFromToken(idToken: String) {
         val claims = runCatching { oAuthUtilsHelper.parseOAuthToken(idToken) }.getOrNull()
-        val botIdentities = claims?.botDelegatedIdentities?.takeIf { it.isNotEmpty() }
-        if (botIdentities == null) {
+        val botAccountIds = claims?.botAccountIds?.takeIf { it.isNotEmpty() }
+        if (botAccountIds == null) {
             Logger.d("DefaultAuthClient") {
                 val payloadKeys = extractPayloadKeys(idToken)
                 val payloadJson = extractPayloadJson(idToken)
-                "persistBotIdentitiesFromToken: no bot identities in token. " +
+                "persistBotIdentitiesFromToken: no bot account IDs in token. " +
                     "Payload keys=$payloadKeys payload=$payloadJson"
             }
         } else {
             Logger.d("DefaultAuthClient") {
                 val payloadKeys = extractPayloadKeys(idToken)
-                "persistBotIdentitiesFromToken: found ${botIdentities.size} bot identities. " +
+                "persistBotIdentitiesFromToken: found ${botAccountIds.size} bot account IDs. " +
                     "Payload keys=$payloadKeys"
             }
             val result =
-                botIdentitiesStore.mergeFromOAuthTokenRawIdentities(
-                    rawPayloads = botIdentities,
-                    principalFromIdentityBytes = { encoded -> getSessionFromIdentity(encoded).userPrincipalId },
-                    onEntryParseFailure = { _, error ->
-                        Logger.e("DefaultAuthClient") {
-                            "Failed to persist bot identity from token: ${error.message}"
-                        }
-                    },
-                )
+                botIdentitiesStore.mergeFromTokenBotAccountIds(botAccountIds)
             result?.let { r ->
                 Logger.d("BotIdentitySource") {
                     "persistBotIdentitiesFromToken source=oauth_token existing=${r.existingCount} " +

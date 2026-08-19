@@ -2,44 +2,32 @@ package com.yral.shared.analytics.providers.yral
 
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.core.AppConfigurations
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
+import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.path
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 class AnalyticsApiService internal constructor(
     private val client: HttpClient,
-    private val json: Json,
     private val preferences: Preferences,
 ) {
     suspend fun sendEvents(events: List<EventData>) {
-        val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
-        identityWire?.let {
-            val identityWireJson = delegatedIdentityWireToJson(identityWire)
-            val delegatedIdentity =
-                json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
-            val params =
-                BulkEvent(
-                    delegatedIdentity = delegatedIdentity,
-                    events = events,
-                )
-            httpPostWithStringResponse(client) {
-                url {
-                    host = AppConfigurations.OFF_CHAIN_BASE_URL
-                    path(BULK_EVENTS_END_POINT)
-                }
-                contentType(ContentType.Application.Json)
-                setBody(params)
+        val idToken = preferences.getString(PrefKeys.ID_TOKEN.name) ?: return
+        val params = BulkEvent(events = events)
+        httpPostWithStringResponse(client) {
+            url {
+                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                path(BULK_EVENTS_END_POINT)
             }
+            contentType(ContentType.Application.Json)
+            headers { append("authorization", "Bearer $idToken") }
+            setBody(params)
         }
     }
 
@@ -49,7 +37,6 @@ class AnalyticsApiService internal constructor(
 
     @Serializable
     private data class BulkEvent(
-        @SerialName("delegated_identity_wire") val delegatedIdentity: KotlinDelegatedIdentityWire,
         val events: List<EventData>,
     )
 }

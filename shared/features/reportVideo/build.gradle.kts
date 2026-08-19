@@ -22,10 +22,10 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.core)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.designsystem)
-            implementation(projects.shared.rust.service)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

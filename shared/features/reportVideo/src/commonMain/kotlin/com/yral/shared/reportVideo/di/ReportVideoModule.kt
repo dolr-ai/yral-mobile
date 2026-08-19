@@ -11,6 +11,6 @@ import org.koin.dsl.module
 val reportVideoModule =
     module {
         factory<IReportVideoRepository> { ReportVideoRepository(get()) }
-        factory<IReportVideoDataSource> { ReportVideoRemoteDataSource(get()) }
+        factory<IReportVideoDataSource> { ReportVideoRemoteDataSource(get(), get()) }
         factoryOf(::ReportVideoUseCase)
     }

@@ -1,14 +1,11 @@
 package com.yral.shared.features.uploadvideo.data.remote.models
 
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class UpdateMetaDataRequestDto(
-    @SerialName("delegated_identity_wire")
-    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
     @SerialName("meta")
     val meta: Map<String, String>,
     @SerialName("post_details")
@@ -37,27 +34,22 @@ internal data class PostDetailsDto(
 internal data class MarkPostAsPublishedRequestDto(
     @SerialName("post_id")
     val postId: String,
-    @SerialName("delegated_identity_wire")
-    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
 )
 
-internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
-    delegatedIdentityWire: KotlinDelegatedIdentityWire,
-    creatorPrincipal: String,
-) = UpdateMetaDataRequestDto(
-    delegatedIdentityWire = delegatedIdentityWire,
-    meta = emptyMap(),
-    postDetails =
-        PostDetailsDto(
-            id = postId,
-            title = caption,
-            description = caption,
-            creatorPrincipal = creatorPrincipal,
-            videoUid = videoUid,
-            hashtags = hashtags,
-            status = status,
-        ),
-)
+internal fun UploadFileRequest.toUpdateMetaDataRequestDto(creatorPrincipal: String) =
+    UpdateMetaDataRequestDto(
+        meta = emptyMap(),
+        postDetails =
+            PostDetailsDto(
+                id = postId,
+                title = caption,
+                description = caption,
+                creatorPrincipal = creatorPrincipal,
+                videoUid = videoUid,
+                hashtags = hashtags,
+                status = status,
+            ),
+    )
 
 @Serializable
 internal data class UpdateMetaDataResponseDto(

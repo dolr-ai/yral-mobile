@@ -38,7 +38,6 @@ import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import com.yral.shared.testsupport.preferences.FakePreferences
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import io.ktor.http.Url
@@ -182,7 +181,6 @@ class DefaultAuthClientTest {
             oAuthUtilsHelper = oAuthUtilsHelper,
             scope = backgroundScope,
             authTelemetry = AuthTelemetry(AnalyticsManager(), AffiliateAttributionStore(MapSettings())),
-            initRustFactories = {},
             deregisterNotificationToken = {},
         )
     }
@@ -193,9 +191,7 @@ class DefaultAuthClientTest {
         refreshToken: String,
     ) {
         preferences.putString(PrefKeys.MAIN_PRINCIPAL.name, MAIN_PRINCIPAL)
-        preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, MAIN_IDENTITY)
         preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, BOT_PRINCIPAL)
-        preferences.putBytes(PrefKeys.IDENTITY.name, BOT_IDENTITY)
         preferences.putString(PrefKeys.CANISTER_ID.name, BOT_CANISTER)
         preferences.putString(PrefKeys.USER_PRINCIPAL.name, BOT_PRINCIPAL)
         preferences.putString(PrefKeys.PROFILE_PIC.name, BOT_PROFILE_PIC)
@@ -223,10 +219,7 @@ class DefaultAuthClientTest {
         var updateSessionAsRegisteredCalls = 0
             private set
 
-        override suspend fun getOAuthUrl(
-            provider: SocialProvider,
-            identity: ByteArray,
-        ): Pair<Url, String> = error("Not used in this test")
+        override suspend fun getOAuthUrl(provider: SocialProvider): Pair<Url, String> = error("Not used in this test")
 
         override suspend fun obtainAnonymousIdentity(): TokenResponse = error("Not used in this test")
 
@@ -258,10 +251,7 @@ class DefaultAuthClientTest {
 
         override suspend fun deregisterForNotifications(token: String) = error("Not used in this test")
 
-        override suspend fun phoneAuthLogin(
-            phoneNumber: String,
-            identity: ByteArray,
-        ): PhoneAuthLoginResponse = error("Not used in this test")
+        override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse = error("Not used in this test")
 
         override suspend fun verifyPhoneAuth(
             phoneNumber: String,
@@ -269,15 +259,7 @@ class DefaultAuthClientTest {
             clientState: String,
         ): PhoneAuthVerifyResponse = error("Not used in this test")
 
-        override suspend fun createAiAccount(
-            userPrincipal: String,
-            signature: ByteArray,
-            publicKey: ByteArray,
-            signedMessage: ByteArray,
-            ingressExpirySecs: Long,
-            ingressExpiryNanos: Int,
-            delegations: List<SignedDelegationPayload>?,
-        ): ByteArray = error("Not used in this test")
+        override suspend fun createAiAccount(userId: String): String = error("Not used in this test")
     }
 
     private class FakeOAuthUtilsHelper : OAuthUtilsHelper {
@@ -374,7 +356,6 @@ private fun tokenClaims(expiry: Long): TokenClaims =
         principal = "principal",
         nonce = null,
         extIsAnonymous = false,
-        delegatedIdentity = null,
         email = null,
-        botDelegatedIdentities = null,
+        botAccountIds = null,
     )

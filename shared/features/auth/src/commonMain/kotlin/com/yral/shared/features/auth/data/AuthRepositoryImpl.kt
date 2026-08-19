@@ -16,7 +16,6 @@ import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
@@ -33,10 +32,7 @@ class AuthRepositoryImpl(
 ) : AuthRepository {
     private var verifier: String = ""
 
-    override suspend fun getOAuthUrl(
-        provider: SocialProvider,
-        identity: ByteArray,
-    ): Pair<Url, String> {
+    override suspend fun getOAuthUrl(provider: SocialProvider): Pair<Url, String> {
         verifier = oAuthUtilsHelper.generateCodeVerifier()
         val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
         val authUrl =
@@ -54,7 +50,7 @@ class AuthRepositoryImpl(
                         append("scope", provider.authScope())
                         append("code_challenge", codeChallenge)
                         append("code_challenge_method", "S256")
-                        append("login_hint", authLoginHintProvider.build(identity))
+                        append("login_hint", authLoginHintProvider.build())
                         append("state", codeChallenge)
                     },
             ).build()
@@ -103,13 +99,10 @@ class AuthRepositoryImpl(
         dataSource.deregisterForNotifications(token)
     }
 
-    override suspend fun phoneAuthLogin(
-        phoneNumber: String,
-        identity: ByteArray,
-    ): PhoneAuthLoginResponse {
+    override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
         verifier = oAuthUtilsHelper.generateCodeVerifier()
         val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
-        val loginHint = authLoginHintProvider.build(identity)
+        val loginHint = authLoginHintProvider.build()
         val authClientQuery =
             AuthClientQuery(
                 responseType = "code",
@@ -146,29 +139,7 @@ class AuthRepositoryImpl(
                     ),
             ).toPhoneAuthVerifyResponse()
 
-    override suspend fun createAiAccount(
-        userPrincipal: String,
-        signature: ByteArray,
-        publicKey: ByteArray,
-        signedMessage: ByteArray,
-        ingressExpirySecs: Long,
-        ingressExpiryNanos: Int,
-        delegations: List<SignedDelegationPayload>?,
-    ): ByteArray {
-        val response =
-            dataSource.createAiAccount(
-                userPrincipal = userPrincipal,
-                signature = signature,
-                publicKey = publicKey,
-                signedMessage = signedMessage,
-                ingressExpirySecs = ingressExpirySecs,
-                ingressExpiryNanos = ingressExpiryNanos,
-                delegations = delegations,
-            )
-        return json
-            .encodeToString(response.delegatedIdentity)
-            .toByteArray()
-    }
+    override suspend fun createAiAccount(userId: String): String = dataSource.createAiAccount(userId).aiAccountId
 
     private fun SocialProvider.responseMode(): String =
         when (this) {

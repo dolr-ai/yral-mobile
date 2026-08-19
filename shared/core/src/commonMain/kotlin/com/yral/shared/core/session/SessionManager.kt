@@ -29,13 +29,6 @@ class SessionManager {
                 else -> null
             }
 
-    val identity: ByteArray?
-        get() =
-            when (val state = mutableState.value) {
-                is SessionState.SignedIn -> state.session.identity
-                else -> null
-            }
-
     val profilePic: String?
         get() =
             when (val state = mutableState.value) {

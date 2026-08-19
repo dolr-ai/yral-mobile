@@ -35,7 +35,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.ProDetails
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
@@ -61,8 +63,6 @@ import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -513,7 +513,7 @@ fun ChatConversationScreen(
                         )
                     val canisterData =
                         CanisterData(
-                            canisterId = getUserInfoServiceCanister(),
+                            canisterId = SERVICE_CANISTER_ID,
                             userPrincipalId = userPrincipal,
                             profilePic = component.openConversationParams.avatarUrl.orEmpty(),
                             username = component.openConversationParams.username.orEmpty(),

@@ -70,13 +70,17 @@ internal class UploadVideoRemoteDataSource(
         emit(FileUploadStatus.Error(e))
     }
 
-    suspend fun updateMetadata(dto: UpdateMetaDataRequestDto): UpdateMetaDataResponseDto =
+    suspend fun updateMetadata(
+        dto: UpdateMetaDataRequestDto,
+        idToken: String,
+    ): UpdateMetaDataResponseDto =
         httpPost(client, json) {
             url {
                 host = AppConfigurations.UPLOAD_BASE_URL
                 path(UPDATE_VIDEO_METADATA_PATH)
             }
             contentType(ContentType.Application.Json)
+            headers.append("authorization", "Bearer $idToken")
             setBody(dto)
         }
 
@@ -126,7 +130,10 @@ internal class UploadVideoRemoteDataSource(
         }
     }
 
-    suspend fun generateVideo(dto: GenerateVideoRequestDto): GenerateVideoResult =
+    suspend fun generateVideo(
+        dto: GenerateVideoRequestDto,
+        idToken: String,
+    ): GenerateVideoResult =
         try {
             val response: HttpResponse =
                 client.post {
@@ -135,6 +142,7 @@ internal class UploadVideoRemoteDataSource(
                         path(GENERATE_WITH_IDENTITY_V2_PATH)
                     }
                     contentType(ContentType.Application.Json)
+                    headers.append("authorization", "Bearer $idToken")
                     setBody(dto)
                     timeout {
                         requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
@@ -158,33 +166,45 @@ internal class UploadVideoRemoteDataSource(
             }
         }
 
-    suspend fun uploadAiVideoFromUrl(dto: UploadAiVideoFromUrlRequestDto): String =
+    suspend fun uploadAiVideoFromUrl(
+        dto: UploadAiVideoFromUrlRequestDto,
+        idToken: String,
+    ): String =
         httpPostWithStringResponse(client) {
             url {
                 host = AppConfigurations.ANONYMOUS_IDENTITY_BASE_URL
                 path(UPLOAD_AI_VIDEO_FROM_URL_PATH)
             }
             contentType(ContentType.Application.Json)
+            headers.append("authorization", "Bearer $idToken")
             setBody(dto)
         }
 
-    suspend fun getInProgressDrafts(dto: InProgressDraftsRequestDto): InProgressDraftsResponseDto =
+    suspend fun getInProgressDrafts(
+        dto: InProgressDraftsRequestDto,
+        idToken: String,
+    ): InProgressDraftsResponseDto =
         httpPost(client, json) {
             url {
                 host = AppConfigurations.STORAGE_INTERFACE_BASE_URL
                 path(GET_IN_PROGRESS_DRAFTS_PATH)
             }
             contentType(ContentType.Application.Json)
+            headers.append("authorization", "Bearer $idToken")
             setBody(dto)
         }
 
-    suspend fun markPostAsPublished(dto: MarkPostAsPublishedRequestDto) {
+    suspend fun markPostAsPublished(
+        dto: MarkPostAsPublishedRequestDto,
+        idToken: String,
+    ) {
         httpPostWithStringResponse(client) {
             url {
                 host = AppConfigurations.UPLOAD_BASE_URL
                 path(MARK_POST_AS_PUBLISHED_PATH)
             }
             contentType(ContentType.Application.Json)
+            headers.append("authorization", "Bearer $idToken")
             setBody(dto)
         }
     }

@@ -1,6 +1,5 @@
 package com.yral.shared.reportVideo.data.models
 
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -20,8 +19,6 @@ data class ReportRequestDto(
     val userCanisterId: String,
     @SerialName("user_principal")
     val userPrincipal: String,
-    @SerialName("delegated_identity_wire")
-    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
     @SerialName("report_mode")
     val reportMode: String = "Android",
 )

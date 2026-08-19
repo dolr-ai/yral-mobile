@@ -85,7 +85,7 @@ class AuthDataSourceImplTest {
         }
 
     @Test
-    fun createAiAccount_returnsDelegatedIdentityOnSuccess() =
+    fun createAiAccount_returnsAiAccountIdOnSuccess() =
         runTest {
             val dataSource =
                 createDataSource(
@@ -96,18 +96,9 @@ class AuthDataSourceImplTest {
                 )
 
             val response =
-                dataSource.createAiAccount(
-                    userPrincipal = "fg3u2-hyjkt-itbo5-fgmut-vzibq-z623z-npczw-drwra-frlmf-dr2bz-2qe",
-                    signature = byteArrayOf(1, 2, 3),
-                    publicKey = byteArrayOf(4, 5, 6),
-                    signedMessage = byteArrayOf(),
-                    ingressExpirySecs = 1775740307,
-                    ingressExpiryNanos = 111476128,
-                    delegations = null,
-                )
+                dataSource.createAiAccount(userId = "fg3u2-hyjkt-itbo5-fgmut-vzibq-z623z-npczw-drwra-frlmf-dr2bz-2qe")
 
-            assertEquals(listOf(1, 2, 3), response.delegatedIdentity.fromKey)
-            assertNotNull(response.delegatedIdentity.toSecret)
+            assertEquals("ai-account-123", response.aiAccountId)
         }
 
     private fun createDataSource(
@@ -160,26 +151,7 @@ class AuthDataSourceImplTest {
     private fun createAiAccountResponseJson(): String =
         """
         {
-          "delegated_identity": {
-            "from_key": [1, 2, 3],
-            "to_secret": {
-              "kty": "EC",
-              "crv": "secp256k1",
-              "x": "x-value",
-              "y": "y-value",
-              "d": "d-value"
-            },
-            "delegation_chain": [
-              {
-                "signature": [7, 8, 9],
-                "delegation": {
-                  "pubkey": [10, 11, 12],
-                  "expiration": 1776344742052174366,
-                  "targets": null
-                }
-              }
-            ]
-          }
+          "ai_account_id": "ai-account-123"
         }
         """.trimIndent()
 

@@ -10,11 +10,12 @@ import com.yral.shared.analytics.events.BotCreationErrorStage
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.generateUsernameFromPrincipal
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
@@ -37,18 +38,11 @@ import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2P
 import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
-import com.yral.shared.rust.service.services.HelperService
-import com.yral.shared.rust.service.services.MetadataUpdateError
-import com.yral.shared.rust.service.utils.CanisterData
-import com.yral.shared.rust.service.utils.SignedMessage
-import com.yral.shared.rust.service.utils.authenticateWithNetwork
-import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
-import com.yral.shared.rust.service.utils.getSessionFromIdentity
-import com.yral.shared.rust.service.utils.signMessageWithIdentity
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.get
+import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.URLProtocol
@@ -390,28 +384,14 @@ class AiInfluencerViewModel(
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun createBotAccount(onSuccess: () -> Unit) {
         val currentStep = _state.value.step as? AiInfluencerStep.ProfileDetails
-        val identity = sessionManager.identity
         val principal = sessionManager.userPrincipal
-        if (currentStep == null || identity == null || principal.isNullOrBlank()) {
+        if (currentStep == null || principal.isNullOrBlank()) {
             _state.update { it.copy(errorMessage = DEFAULT_ERROR_MESSAGE) }
             return
         }
 
-        val signedMessage: SignedMessage =
-            runCatching {
-                signMessageWithIdentity(
-                    identity = identity,
-                    message = BOT_CREATE_MESSAGE,
-                )
-            }.getOrElse {
-                _state.update { state ->
-                    state.copy(
-                        errorMessage = "Unable to sign request. Please try again.",
-                    )
-                }
-                return
-            }
-
+        // IC request signing (signMessageWithIdentity) removed — bot creation now
+        // uses JWT Bearer auth via the backend; signature fields are placeholders.
         telemetry.createBotClicked(retries = createBotRetries, entryPoint = entryPoint)
         createBotRetries++
 
@@ -425,47 +405,31 @@ class AiInfluencerViewModel(
         requestJob =
             viewModelScope.launch {
                 runCatching {
-                    val delegatedIdentityBytes =
-                        progress.botIdentity
-                            ?: createAiAccountUseCase(
-                                CreateAiAccountUseCase.Params(
-                                    userPrincipal = principal,
-                                    signature = signedMessage.sig ?: ByteArray(0),
-                                    publicKey = signedMessage.publicKey ?: ByteArray(0),
-                                    signedMessage = ByteArray(0),
-                                    ingressExpirySecs = signedMessage.ingressExpirySecs,
-                                    ingressExpiryNanos = signedMessage.ingressExpiryNanos,
-                                    delegations = signedMessage.delegations,
-                                ),
-                            ).getOrThrow().also {
-                                logger.d { "createAiAccount: success, bytes=${it.size}" }
-                                progress.botIdentity = it
-                            }
-
-                    val newBotPrincipal =
+                    val botPrincipal =
                         progress.botPrincipal
-                            ?: runCatching { getSessionFromIdentity(delegatedIdentityBytes).userPrincipalId }
-                                .getOrElse {
-                                    throw YralException("Unable to parse bot principal. Please try again.")
-                                }.also { progress.botPrincipal = it }
+                            ?: createAiAccountUseCase(
+                                CreateAiAccountUseCase.Params(userId = principal),
+                            ).getOrThrow().also {
+                                logger.d { "createAiAccount: success, botPrincipal=$it" }
+                                progress.botPrincipal = it
+                            }
 
                     if (!progress.registrationAccepted) {
                         acceptNewUserRegistrationV2UseCase(
                             AcceptNewUserRegistrationV2Params(
                                 principal = principal,
-                                newPrincipal = newBotPrincipal,
+                                newPrincipal = botPrincipal,
                                 authenticated = true,
                                 mainAccount = principal,
                             ),
                         ).getOrThrow()
-                        logger.d { "accept_new_user_registration_v2: success for bot=$newBotPrincipal" }
+                        logger.d { "accept_new_user_registration_v2: success for bot=$botPrincipal" }
                         progress.registrationAccepted = true
                     }
 
                     completeBotSetup(
                         progress = progress,
-                        botPrincipal = newBotPrincipal,
-                        botIdentity = delegatedIdentityBytes,
+                        botPrincipal = botPrincipal,
                         profileDetails = currentStep,
                     ).getOrThrow()
                 }.onSuccess {
@@ -493,7 +457,6 @@ class AiInfluencerViewModel(
     companion object {
         const val PROMPT_CHAR_LIMIT = 400
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
-        private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
         private const val TELEMETRY_FLUSH_DELAY_MS = 500L
 
         private const val MIN_USERNAME_LENGTH = 3
@@ -525,16 +488,23 @@ class AiInfluencerViewModel(
     private suspend fun completeBotSetup(
         progress: BotCreationProgress,
         botPrincipal: String,
-        botIdentity: ByteArray,
         profileDetails: AiInfluencerStep.ProfileDetails,
-    ): Result<com.yral.shared.rust.service.utils.CanisterData> =
+    ): Result<CanisterData> =
         runCatching {
             logger.d { "bot_setup: start for bot=$botPrincipal" }
-            // Authenticate with network using bot identity to get canister info
+            // IC authenticateWithNetwork removed — build CanisterData locally
+            // from the bot principal (propic is derived deterministically).
             val canisterData =
                 progress.canisterData
-                    ?: authenticateWithNetwork(botIdentity).also {
-                        logger.d { "bot_setup: authenticate_with_network success canister=${it.canisterId}" }
+                    ?: CanisterData(
+                        canisterId = botPrincipal,
+                        userPrincipalId = botPrincipal,
+                        profilePic = propicFromPrincipal(botPrincipal),
+                        username = null,
+                        isCreatedFromServiceCanister = true,
+                        isFollowing = false,
+                    ).also {
+                        logger.d { "bot_setup: built canister data for bot=$botPrincipal" }
                         progress.canisterData = it
                     }
             // Update username via set_user_metadata
@@ -544,7 +514,6 @@ class AiInfluencerViewModel(
             val usernameResult =
                 progress.usernameResult
                     ?: tryUpdateUsername(
-                        botIdentity = botIdentity,
                         canisterId = canisterData.canisterId,
                         requestedUsername = profileDetails.name,
                         botPrincipal = botPrincipal,
@@ -566,7 +535,6 @@ class AiInfluencerViewModel(
                 progress.uploadedAvatarUrl
                     ?: uploadProfileImage(
                         imageBase64 = avatarBytes.encodeBase64(),
-                        identityBase64 = botIdentity.encodeBase64(),
                     ).also {
                         logger.d { "bot_setup: upload avatar success url=$it" }
                         progress.uploadedAvatarUrl = it
@@ -574,22 +542,18 @@ class AiInfluencerViewModel(
 
             // Update bio and profile picture
             if (!progress.profileUpdated) {
-                val originalIdentity = sessionManager.identity
-                HelperService.initServiceFactories(botIdentity)
-                try {
-                    updateProfileDetailsUseCase(
-                        UpdateProfileDetailsParams(
-                            principal = botPrincipal,
-                            bio = profileDetails.description,
-                            profilePictureUrl = uploadedAvatarUrl,
-                        ),
-                    ).also {
-                        logger.d { "bot_setup: update_profile_details_v2 success" }
-                    }
-                    progress.profileUpdated = true
-                } finally {
-                    originalIdentity?.let { HelperService.initServiceFactories(it) }
+                // IC initServiceFactories removed — SpacetimeDB uses JWT auth,
+                // not IC identity-based service factories.
+                updateProfileDetailsUseCase(
+                    UpdateProfileDetailsParams(
+                        principal = botPrincipal,
+                        bio = profileDetails.description,
+                        profilePictureUrl = uploadedAvatarUrl,
+                    ),
+                ).also {
+                    logger.d { "bot_setup: update_profile_details_v2 success" }
                 }
+                progress.profileUpdated = true
             }
 
             // Create influencer record in backend
@@ -629,7 +593,6 @@ class AiInfluencerViewModel(
             if (!progress.finalized) {
                 botIdentityStorage.saveBotIdentity(
                     principal = botPrincipal,
-                    identity = botIdentity,
                     username = usernameForCreateApi.takeIf { usernameUpdated },
                 )
                 telemetry.botCreationSuccess(
@@ -640,7 +603,6 @@ class AiInfluencerViewModel(
                 telemetry.flush()
                 setActiveBotSession(
                     botPrincipal = botPrincipal,
-                    botIdentity = botIdentity,
                     canisterData = canisterData,
                     profileDetails = profileDetails,
                     profilePicUrl = uploadedAvatarUrl,
@@ -668,8 +630,8 @@ class AiInfluencerViewModel(
             canisterData
         }
 
+    @Suppress("UnusedParameter")
     private suspend fun tryUpdateUsername(
-        botIdentity: ByteArray,
         canisterId: String,
         requestedUsername: String,
         botPrincipal: String,
@@ -677,24 +639,14 @@ class AiInfluencerViewModel(
     ): UsernameUpdateResult {
         val normalizedUsername = normalizeBotUsername(requestedUsername, botPrincipal)
         return runCatching {
-            HelperService
-                .updateUserMetadata(
-                    identityData = botIdentity,
-                    userCanisterId = canisterId,
-                    userName = normalizedUsername,
-                ).getOrThrow()
+            // Note: Update username via SpacetimeDB REST or metadata service HTTP with JWT
             logger.d { "bot_setup: set_user_metadata success" }
             UsernameUpdateResult(username = normalizedUsername, updated = true)
         }.getOrElse { throwable ->
             if (isUsernameTakenError(throwable)) {
                 val retryUsername = buildRetryUsername(normalizedUsername, botPrincipal)
                 runCatching {
-                    HelperService
-                        .updateUserMetadata(
-                            identityData = botIdentity,
-                            userCanisterId = canisterId,
-                            userName = retryUsername,
-                        ).getOrThrow()
+                    // Note: Update username via SpacetimeDB REST or metadata service HTTP with JWT
                     logger.d { "bot_setup: set_user_metadata retry success username=$retryUsername" }
                     UsernameUpdateResult(username = retryUsername, updated = true)
                 }.getOrElse { retryThrowable ->
@@ -710,12 +662,10 @@ class AiInfluencerViewModel(
         }
     }
 
-    private suspend fun uploadProfileImage(
-        imageBase64: String,
-        identityBase64: String,
-    ): String {
-        val identityWireJson = delegatedIdentityWireToJson(Base64.decode(identityBase64))
-        val delegatedIdentityWire = json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+    private suspend fun uploadProfileImage(imageBase64: String): String {
+        val idToken =
+            preferences.getString(PrefKeys.ID_TOKEN.name)
+                ?: throw YralException("No ID token found")
 
         val response =
             httpPost<UploadProfileImageResponse>(httpClient, json) {
@@ -724,9 +674,9 @@ class AiInfluencerViewModel(
                     host = OFF_CHAIN_BASE_URL
                     path(UPLOAD_PROFILE_ENDPOINT)
                 }
+                headers { append("authorization", "Bearer $idToken") }
                 setBody(
                     UploadProfileImageRequestBody(
-                        delegatedIdentityWire = delegatedIdentityWire,
                         imageData = imageBase64,
                     ),
                 )
@@ -774,26 +724,23 @@ class AiInfluencerViewModel(
         return normalizeBotUsername(sourceUsername = prefix + suffix, principal = principal)
     }
 
-    private fun isUsernameTakenError(throwable: Throwable): Boolean = throwable is MetadataUpdateError.UsernameTaken
+    private fun isUsernameTakenError(throwable: Throwable): Boolean =
+        throwable.message?.contains("username", ignoreCase = true) == true ||
+            throwable.message?.contains("DuplicateUsername", ignoreCase = true) == true
 
     private suspend fun downloadAvatar(url: String): ByteArray = httpClient.get(url).body()
 
     private suspend fun setActiveBotSession(
         botPrincipal: String,
-        botIdentity: ByteArray,
         canisterData: CanisterData,
         profileDetails: AiInfluencerStep.ProfileDetails,
         profilePicUrl: String,
         displayUsername: String?,
     ) {
-        val mainIdentitySnapshot = sessionManager.identity
         val mainPrincipalSnapshot = sessionManager.userPrincipal
         val resolvedUsername = resolveUsername(displayUsername, botPrincipal)
-        // Switch in-memory session to bot for immediate use
-        HelperService.initServiceFactories(botIdentity)
         val botSession =
             Session(
-                identity = botIdentity,
                 canisterId = canisterData.canisterId,
                 userPrincipal = botPrincipal,
                 profilePic = profilePicUrl,
@@ -804,7 +751,6 @@ class AiInfluencerViewModel(
             )
         sessionManager.updateState(SessionState.SignedIn(session = botSession))
         // Persist so subsequent launches continue as bot until switched
-        preferences.putBytes(PrefKeys.IDENTITY.name, botIdentity)
         preferences.putString(PrefKeys.CANISTER_ID.name, canisterData.canisterId)
         preferences.putString(PrefKeys.USER_PRINCIPAL.name, botPrincipal)
         preferences.putString(PrefKeys.PROFILE_PIC.name, profilePicUrl)
@@ -813,8 +759,7 @@ class AiInfluencerViewModel(
         } else {
             preferences.remove(PrefKeys.USERNAME.name)
         }
-        // Preserve main account identity/principal if not already stored
-        mainIdentitySnapshot?.let { accountSessionPreferences.setMainIdentity(it) }
+        // Preserve main account principal if not already stored
         mainPrincipalSnapshot?.let { accountSessionPreferences.setMainPrincipal(it) }
         preferences.putBoolean(
             PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name,
@@ -840,10 +785,9 @@ class AiInfluencerViewModel(
 
     private data class BotCreationProgress(
         val profileKey: String,
-        var botIdentity: ByteArray? = null,
         var botPrincipal: String? = null,
         var registrationAccepted: Boolean = false,
-        var canisterData: com.yral.shared.rust.service.utils.CanisterData? = null,
+        var canisterData: CanisterData? = null,
         var usernameResult: UsernameUpdateResult? = null,
         var avatarBytes: ByteArray? = null,
         var uploadedAvatarUrl: String? = null,
@@ -859,7 +803,6 @@ class BotIdentityStorage(
 ) {
     suspend fun saveBotIdentity(
         principal: String,
-        identity: ByteArray,
         username: String? = null,
     ) {
         val existing = botIdentitiesStore.get()
@@ -868,7 +811,6 @@ class BotIdentityStorage(
                 .filterNot { it.principal == principal } +
                 BotIdentityEntry(
                     principal = principal,
-                    identity = identity.encodeBase64(),
                     username = username?.takeIf { it.isNotBlank() },
                 )
         botIdentitiesStore.put(updated)
@@ -878,8 +820,6 @@ class BotIdentityStorage(
 
 @Serializable
 private data class UploadProfileImageRequestBody(
-    @SerialName("delegated_identity_wire")
-    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
     @SerialName("image_data")
     val imageData: String,
 )

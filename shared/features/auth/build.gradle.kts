@@ -59,7 +59,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
-            implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.phoneValidation)

@@ -7,13 +7,13 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
-import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 

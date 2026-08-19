@@ -1,13 +1,11 @@
 package com.yral.shared.features.uploadvideo.data.remote.models
 
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class InProgressDraftsRequestDto(
-    @SerialName("delegated_identity") val delegatedIdentity: KotlinDelegatedIdentityWire,
     @SerialName("user_id") val userId: String,
 )
 

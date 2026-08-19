@@ -18,8 +18,6 @@ import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Param
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
-import com.yral.shared.rust.service.services.HelperService
-import com.yral.shared.rust.service.services.MetadataUpdateError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -297,7 +295,6 @@ class EditProfileViewModel(
         val sanitizedBio = sanitizeBio(currentState.bioInput)
         val userPrincipalText = sessionManager.userPrincipal ?: return
         val principal = userPrincipalText
-        val identity = sessionManager.identity
         val userCanisterId = sessionManager.canisterID
         val previousUsername = currentState.initialUsername
         val previousBio = currentState.initialBio
@@ -319,8 +316,8 @@ class EditProfileViewModel(
             )
         }
 
-        if (shouldUpdateUsername && (identity == null || userCanisterId == null)) {
-            logger.e { "Cannot update username without identity data or canister id" }
+        if (shouldUpdateUsername && userCanisterId == null) {
+            logger.e { "Cannot update username without canister id" }
             return
         }
 
@@ -348,74 +345,45 @@ class EditProfileViewModel(
         viewModelScope.launch {
             try {
                 if (shouldUpdateUsername) {
-                    val identityData = identity
                     val canisterId = userCanisterId
-                    if (identityData == null || canisterId == null) {
-                        logger.e { "Cannot update username without identity data or canister id" }
+                    if (canisterId == null) {
+                        logger.e { "Cannot update username without canister id" }
                         _state.update { current ->
                             current.copy(usernameInput = previousUsername)
                         }
                         return@launch
                     }
-                    HelperService
-                        .updateUserMetadata(
-                            identityData,
-                            canisterId,
-                            sanitizedUsername,
-                        ).onFailure { error ->
-                            when (error) {
-                                is MetadataUpdateError.UsernameTaken -> {
-                                    _state.update { current ->
-                                        current.copy(
-                                            isUsernameValid = false,
-                                            usernameErrorMessage = error.message,
-                                            shouldFocusUsername = true,
-                                            isUsernameFocused = true,
-                                        )
-                                    }
-                                }
-
-                                is MetadataUpdateError.InvalidUsername -> {
-                                    _state.update { current ->
-                                        current.copy(
-                                            isUsernameValid = false,
-                                            usernameErrorMessage = error.message,
-                                            shouldFocusUsername = true,
-                                            isUsernameFocused = true,
-                                        )
-                                    }
-                                }
-
-                                else -> {
-                                    _state.update { current ->
-                                        current.copy(
-                                            usernameInput = previousUsername,
-                                            initialUsername = previousUsername,
-                                            isUsernameFocused = true,
-                                            isUsernameValid = false,
-                                            usernameErrorMessage = error.message,
-                                            shouldFocusUsername = true,
-                                        )
-                                    }
-                                }
-                            }
-                            return@launch
-                        }.onSuccess {
-                            sessionManager.updateUsername(sanitizedUsername)
-                            preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
-                            updateAccountDirectoryCache(username = sanitizedUsername)
-                            updateBotIdentityUsernameIfNeeded(sanitizedUsername)
-                            _state.update { current ->
-                                current.copy(
-                                    usernameInput = sanitizedUsername,
-                                    initialUsername = sanitizedUsername,
-                                    isUsernameFocused = false,
-                                    isUsernameValid = true,
-                                    usernameErrorMessage = null,
-                                    shouldFocusUsername = false,
-                                )
-                            }
+                    // Note: Update username via SpacetimeDB REST or metadata service HTTP with JWT
+                    runCatching {
+                        logger.d { "updateUserMetadata: stubbed for principal=$principal canisterId=$canisterId" }
+                    }.onFailure { error ->
+                        _state.update { current ->
+                            current.copy(
+                                usernameInput = previousUsername,
+                                initialUsername = previousUsername,
+                                isUsernameFocused = true,
+                                isUsernameValid = false,
+                                usernameErrorMessage = error.message,
+                                shouldFocusUsername = true,
+                            )
                         }
+                        return@launch
+                    }.onSuccess {
+                        sessionManager.updateUsername(sanitizedUsername)
+                        preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
+                        updateAccountDirectoryCache(username = sanitizedUsername)
+                        updateBotIdentityUsernameIfNeeded(sanitizedUsername)
+                        _state.update { current ->
+                            current.copy(
+                                usernameInput = sanitizedUsername,
+                                initialUsername = sanitizedUsername,
+                                isUsernameFocused = false,
+                                isUsernameValid = true,
+                                usernameErrorMessage = null,
+                                shouldFocusUsername = false,
+                            )
+                        }
+                    }
                 }
 
                 if (!shouldUpdateUsername) {

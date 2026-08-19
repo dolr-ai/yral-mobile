@@ -22,11 +22,9 @@ class PhoneAuthLoginUseCase(
         authRepository
             .phoneAuthLogin(
                 phoneNumber = parameter.phoneNumber,
-                identity = parameter.identity,
             )
 
     data class Params(
         val phoneNumber: String,
-        val identity: ByteArray,
     )
 }

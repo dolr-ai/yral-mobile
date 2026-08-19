@@ -29,6 +29,8 @@ kotlin {
             api(libs.kotlinResult.coroutines)
             implementation(libs.ktor.serialization.kotlinx.json)
 
+            api(libs.kotlinResult.core)
+            api(libs.kotlinResult.coroutines)
             api(libs.touchlab.logger)
 
             implementation(projects.shared.core)
@@ -37,6 +39,11 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.crashlytics)
+            implementation(projects.shared.libs.firebasePerf)
+
+            implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

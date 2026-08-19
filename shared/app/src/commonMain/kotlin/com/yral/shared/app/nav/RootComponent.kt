@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
@@ -29,7 +30,6 @@ import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
-import com.yral.shared.rust.service.utils.CanisterData
 
 @Suppress("TooManyFunctions")
 interface RootComponent {

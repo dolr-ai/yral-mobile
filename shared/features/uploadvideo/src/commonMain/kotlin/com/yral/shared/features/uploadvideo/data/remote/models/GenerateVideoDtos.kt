@@ -1,6 +1,5 @@
 package com.yral.shared.features.uploadvideo.data.remote.models
 
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
@@ -31,7 +30,6 @@ import kotlinx.serialization.json.put
 
 @Serializable
 internal data class GenerateVideoRequestDto(
-    @SerialName("delegated_identity") val delegatedIdentity: KotlinDelegatedIdentityWire,
     @SerialName("request") val request: RequestBodyDto,
     @SerialName("upload_handling") val uploadHandling: String? = null,
 )
@@ -150,9 +148,8 @@ internal object VideoGenErrorDtoSerializer : KSerializer<VideoGenErrorDto> {
 }
 
 @Suppress("MaxLineLength")
-internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDelegatedIdentityWire): GenerateVideoRequestDto =
+internal fun GenerateVideoParams.toRequestDto(): GenerateVideoRequestDto =
     GenerateVideoRequestDto(
-        delegatedIdentity = delegatedIdentityWire,
         request =
             RequestBodyDto(
                 aspectRatio = aspectRatio,

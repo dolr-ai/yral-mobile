@@ -14,6 +14,7 @@ import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoPublishedData
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -93,7 +94,6 @@ import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceF
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
-import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.testsupport.analytics.RecordingAnalyticsProvider
 import com.yral.shared.testsupport.metadata.FakeFollowersMetadataDataSource
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
@@ -108,7 +108,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -264,7 +263,6 @@ class ProfileViewModelTest {
                 ReportVideoUseCase(
                     FakeReportVideoRepository(),
                     sessionManager,
-                    Json,
                     appDispatchers,
                     failureListener,
                 ),
@@ -282,8 +280,6 @@ class ProfileViewModelTest {
                 ),
             followNotificationUseCase =
                 FollowNotificationUseCase(
-                    sessionManager,
-                    Json,
                     fakeProfileRepository,
                     appDispatchers,
                     failureListener,

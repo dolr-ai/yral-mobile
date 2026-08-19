@@ -161,12 +161,5 @@ gradlePlugin {
                     .pluginId
             implementationClass = "StyleEnforcerConventionPlugin"
         }
-        register("rustAgent") {
-            id =
-                libs.plugins.yral.shared.rust.agent
-                    .get()
-                    .pluginId
-            implementationClass = "SharedRustAgentConventionPlugin"
-        }
     }
 }
