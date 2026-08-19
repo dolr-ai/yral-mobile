@@ -139,8 +139,7 @@ class AuthRepositoryImpl(
                     ),
             ).toPhoneAuthVerifyResponse()
 
-    override suspend fun createAiAccount(userId: String): String =
-        dataSource.createAiAccount(userId).aiAccountId
+    override suspend fun createAiAccount(userId: String): String = dataSource.createAiAccount(userId).aiAccountId
 
     private fun SocialProvider.responseMode(): String =
         when (this) {

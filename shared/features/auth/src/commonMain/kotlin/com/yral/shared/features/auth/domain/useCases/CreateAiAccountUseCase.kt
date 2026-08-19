@@ -13,8 +13,7 @@ class CreateAiAccountUseCase(
         coroutineDispatcher = appDispatchers.network,
         failureListener = useCaseFailureListener,
     ) {
-    override suspend fun execute(parameter: Params): String =
-        authRepository.createAiAccount(userId = parameter.userId)
+    override suspend fun execute(parameter: Params): String = authRepository.createAiAccount(userId = parameter.userId)
 
     data class Params(
         val userId: String,
