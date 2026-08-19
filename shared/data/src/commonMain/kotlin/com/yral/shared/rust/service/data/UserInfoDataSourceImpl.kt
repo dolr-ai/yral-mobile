@@ -13,28 +13,27 @@ class UserInfoDataSourceImpl(
     override suspend fun followUser(
         principal: String,
         targetPrincipal: String,
-    ): Unit =
-        spacetimeDBRemoteDataSource.followUser(targetPrincipal)
+    ): Unit = spacetimeDBRemoteDataSource.followUser(targetPrincipal)
 
     override suspend fun unfollowUser(
         principal: String,
         targetPrincipal: String,
-    ): Unit =
-        spacetimeDBRemoteDataSource.unfollowUser(targetPrincipal)
+    ): Unit = spacetimeDBRemoteDataSource.unfollowUser(targetPrincipal)
 
     override suspend fun getUserProfileDetailsV7(
         principal: String,
         targetPrincipal: String,
     ): UserProfileDetails =
-        spacetimeDBRemoteDataSource.getUserProfileDetailsV7(targetPrincipal)
+        spacetimeDBRemoteDataSource
+            .getUserProfileDetailsV7(targetPrincipal)
             ?.toDomain()
-            ?: throw com.yral.shared.core.exceptions.YralException("User profile not found: $targetPrincipal")
+            ?: throw com.yral.shared.core.exceptions
+                .YralException("User profile not found: $targetPrincipal")
 
     override suspend fun getUsersProfileDetails(
         principal: String,
         targetPrincipalIds: List<String>,
-    ): List<UserProfileDetails> =
-        spacetimeDBRemoteDataSource.getUsersProfileDetails(targetPrincipalIds).map { it.toDomain() }
+    ): List<UserProfileDetails> = spacetimeDBRemoteDataSource.getUsersProfileDetails(targetPrincipalIds).map { it.toDomain() }
 
     override suspend fun getFollowers(
         principal: String,
@@ -42,8 +41,7 @@ class UserInfoDataSourceImpl(
         cursorPrincipal: String?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): SpacetimeFollowersPage =
-        spacetimeDBRemoteDataSource.getFollowers(targetPrincipal, limit, cursorPrincipal)
+    ): SpacetimeFollowersPage = spacetimeDBRemoteDataSource.getFollowers(targetPrincipal, limit, cursorPrincipal)
 
     override suspend fun getFollowing(
         principal: String,
@@ -51,8 +49,7 @@ class UserInfoDataSourceImpl(
         cursorPrincipal: String?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): SpacetimeFollowingPage =
-        spacetimeDBRemoteDataSource.getFollowing(targetPrincipal, limit, cursorPrincipal)
+    ): SpacetimeFollowingPage = spacetimeDBRemoteDataSource.getFollowing(targetPrincipal, limit, cursorPrincipal)
 
     override suspend fun updateProfileDetailsV2(
         principal: String,

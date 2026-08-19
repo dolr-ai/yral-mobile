@@ -17,7 +17,8 @@ class ReportVideoRemoteDataSource(
     override suspend fun reportVideo(request: ReportRequestDto): String {
         val idToken =
             preferences.getString(PrefKeys.ID_TOKEN.name)
-                ?: throw com.yral.shared.core.exceptions.YralException("No ID token found")
+                ?: throw com.yral.shared.core.exceptions
+                    .YralException("No ID token found")
         return httpPostWithStringResponse(
             httpClient = client,
         ) {

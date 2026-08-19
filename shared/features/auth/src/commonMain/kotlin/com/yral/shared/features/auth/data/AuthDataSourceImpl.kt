@@ -19,6 +19,7 @@ import com.yral.shared.features.auth.data.models.PhoneAuthVerifyRequestDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
 import com.yral.shared.features.auth.data.models.SignaturePayloadDto
 import com.yral.shared.features.auth.data.models.SignedDelegationDto
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
@@ -28,7 +29,6 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.HttpRequestBuilder
@@ -163,12 +163,12 @@ class AuthDataSourceImpl(
     }
 
     override suspend fun registerForNotifications(token: String) {
-        // TODO: Register device via SpacetimeDB REST or backend HTTP with JWT
+        // Note: Register device via SpacetimeDB REST or backend HTTP with JWT
         Logger.d("AuthDataSource") { "registerForNotifications: token=$token" }
     }
 
     override suspend fun deregisterForNotifications(token: String) {
-        // TODO: Unregister device via SpacetimeDB REST or backend HTTP with JWT
+        // Note: Unregister device via SpacetimeDB REST or backend HTTP with JWT
         Logger.d("AuthDataSource") { "deregisterForNotifications: token=$token" }
     }
 

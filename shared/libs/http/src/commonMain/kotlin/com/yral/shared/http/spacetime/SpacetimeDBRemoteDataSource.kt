@@ -13,6 +13,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.path
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -20,7 +21,6 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonNull
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.jsonObject
 
 /**
@@ -41,6 +41,7 @@ import kotlinx.serialization.json.jsonObject
  * - `Some(value)` → `[[0, <value JSON>]]`
  * - `None` → `[[1, []]]`
  */
+@Suppress("TooManyFunctions")
 class SpacetimeDBRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,

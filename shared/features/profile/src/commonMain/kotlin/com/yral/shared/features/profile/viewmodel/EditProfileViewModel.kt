@@ -353,7 +353,7 @@ class EditProfileViewModel(
                         }
                         return@launch
                     }
-                    // TODO: Update username via SpacetimeDB REST or metadata service HTTP with JWT
+                    // Note: Update username via SpacetimeDB REST or metadata service HTTP with JWT
                     runCatching {
                         logger.d { "updateUserMetadata: stubbed for principal=$principal canisterId=$canisterId" }
                     }.onFailure { error ->

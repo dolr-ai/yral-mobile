@@ -57,6 +57,7 @@ import com.yral.shared.app.ui.screens.home.nav.getWalletConfig
 import com.yral.shared.app.ui.screens.profile.LockedProfileStackScreen
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
 import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
@@ -80,7 +81,6 @@ import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.component.popPressedSoundUri
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.core.session.CanisterData
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource

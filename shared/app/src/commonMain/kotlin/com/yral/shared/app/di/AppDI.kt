@@ -18,7 +18,6 @@ import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.data.di.commonDataModule
-import com.yral.shared.rust.service.di.rustModule
 import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.aiinfluencer.di.aiInfluencerModule
 import com.yral.shared.features.auth.di.authModule
@@ -41,6 +40,7 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.filedownloader.di.fileDownloaderModule
 import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.reportVideo.di.reportVideoModule
+import com.yral.shared.rust.service.di.rustModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf

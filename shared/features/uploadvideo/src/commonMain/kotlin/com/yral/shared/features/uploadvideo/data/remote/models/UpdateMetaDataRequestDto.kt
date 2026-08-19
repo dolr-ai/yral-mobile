@@ -36,21 +36,20 @@ internal data class MarkPostAsPublishedRequestDto(
     val postId: String,
 )
 
-internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
-    creatorPrincipal: String,
-) = UpdateMetaDataRequestDto(
-    meta = emptyMap(),
-    postDetails =
-        PostDetailsDto(
-            id = postId,
-            title = caption,
-            description = caption,
-            creatorPrincipal = creatorPrincipal,
-            videoUid = videoUid,
-            hashtags = hashtags,
-            status = status,
-        ),
-)
+internal fun UploadFileRequest.toUpdateMetaDataRequestDto(creatorPrincipal: String) =
+    UpdateMetaDataRequestDto(
+        meta = emptyMap(),
+        postDetails =
+            PostDetailsDto(
+                id = postId,
+                title = caption,
+                description = caption,
+                creatorPrincipal = creatorPrincipal,
+                videoUid = videoUid,
+                hashtags = hashtags,
+                status = status,
+            ),
+    )
 
 @Serializable
 internal data class UpdateMetaDataResponseDto(

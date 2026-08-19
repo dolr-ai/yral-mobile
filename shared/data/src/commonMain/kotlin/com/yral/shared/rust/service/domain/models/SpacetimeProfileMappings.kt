@@ -31,14 +31,18 @@ fun SpacetimeUserProfileV7.toDomain(): UserProfileDetails =
 
 fun SpacetimeSubscriptionPlan.toDomain(): SubscriptionPlan =
     when (this) {
-        is SpacetimeSubscriptionPlan.Free -> SubscriptionPlan.Free
-        is SpacetimeSubscriptionPlan.Pro ->
+        is SpacetimeSubscriptionPlan.Free -> {
+            SubscriptionPlan.Free
+        }
+
+        is SpacetimeSubscriptionPlan.Pro -> {
             SubscriptionPlan.Pro(
                 YralProSubscription(
                     freeVideoCreditsLeft = freeVideoCreditsLeft,
                     totalVideoCreditsAlloted = totalVideoCreditsAlloted,
                 ),
             )
+        }
     }
 
 fun SpacetimeUserAccountType.toDomain(): UserAccountType =

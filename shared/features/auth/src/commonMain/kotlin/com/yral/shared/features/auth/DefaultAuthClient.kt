@@ -12,10 +12,12 @@ import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
 import com.yral.shared.analytics.events.OtpValidationStatus
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -43,8 +45,6 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.core.session.CanisterData
-import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -386,10 +386,12 @@ class DefaultAuthClient(
             setSession(session = session)
             sessionManager.updateFirebaseLoginState(true)
             postLogin()
-        } catch (e: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") exception: Exception,
+        ) {
             resetCachedCanisterData()
-            crashlyticsManager.recordException(e, ExceptionType.AUTH)
-            throw YralAuthException(e)
+            crashlyticsManager.recordException(exception, ExceptionType.AUTH)
+            throw YralAuthException(exception)
         }
     }
 

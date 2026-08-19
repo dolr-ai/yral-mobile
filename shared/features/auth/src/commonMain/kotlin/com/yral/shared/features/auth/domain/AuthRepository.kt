@@ -1,17 +1,15 @@
 package com.yral.shared.features.auth.domain
 
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import io.ktor.http.Url
 
 interface AuthRepository {
-    suspend fun getOAuthUrl(
-        provider: SocialProvider,
-    ): Pair<Url, String>
+    suspend fun getOAuthUrl(provider: SocialProvider): Pair<Url, String>
 
     suspend fun obtainAnonymousIdentity(): TokenResponse
     suspend fun authenticateToken(code: String): TokenResponse
@@ -28,9 +26,7 @@ interface AuthRepository {
     suspend fun deleteAccount(): String
     suspend fun registerForNotifications(token: String)
     suspend fun deregisterForNotifications(token: String)
-    suspend fun phoneAuthLogin(
-        phoneNumber: String,
-    ): PhoneAuthLoginResponse
+    suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse
     suspend fun verifyPhoneAuth(
         phoneNumber: String,
         code: String,

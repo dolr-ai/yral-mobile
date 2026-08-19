@@ -11,6 +11,7 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
@@ -21,7 +22,6 @@ import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
-import com.yral.shared.core.session.CanisterData
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow

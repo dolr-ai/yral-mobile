@@ -37,6 +37,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.core.session.CanisterData
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
@@ -44,9 +47,6 @@ import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.core.session.CanisterData
-import com.yral.shared.core.utils.propicFromPrincipal
-import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

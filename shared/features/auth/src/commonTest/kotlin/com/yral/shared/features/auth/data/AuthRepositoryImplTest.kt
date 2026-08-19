@@ -5,6 +5,7 @@ import com.yral.shared.features.auth.data.models.CreateAiAccountResponseDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
@@ -12,7 +13,6 @@ import com.yral.shared.features.auth.domain.models.TokenClaims
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test

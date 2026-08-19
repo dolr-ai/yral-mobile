@@ -185,10 +185,9 @@ class ProfileDataSourceImpl(
     }
 }
 
-internal fun DeleteVideoRequest.toDeleteVideoRequestBody(
-    principal: String,
-) = DeleteVideoRequestBody(
-    principal = principal,
-    postId = feedDetails.postID,
-    videoId = feedDetails.videoID,
-)
+internal fun DeleteVideoRequest.toDeleteVideoRequestBody(principal: String) =
+    DeleteVideoRequestBody(
+        principal = principal,
+        postId = feedDetails.postID,
+        videoId = feedDetails.videoID,
+    )

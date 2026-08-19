@@ -2,12 +2,12 @@ package com.yral.shared.features.feed.nav
 
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
-import com.yral.shared.core.session.CanisterData
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow

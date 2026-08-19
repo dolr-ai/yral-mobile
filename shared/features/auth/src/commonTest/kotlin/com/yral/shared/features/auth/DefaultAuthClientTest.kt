@@ -5,6 +5,7 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.analytics.AuthTelemetry
+import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
@@ -38,7 +39,6 @@ import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.testsupport.preferences.FakePreferences
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import io.ktor.http.Url
@@ -220,9 +220,7 @@ class DefaultAuthClientTest {
         var updateSessionAsRegisteredCalls = 0
             private set
 
-        override suspend fun getOAuthUrl(
-            provider: SocialProvider,
-        ): Pair<Url, String> = error("Not used in this test")
+        override suspend fun getOAuthUrl(provider: SocialProvider): Pair<Url, String> = error("Not used in this test")
 
         override suspend fun obtainAnonymousIdentity(): TokenResponse = error("Not used in this test")
 
@@ -254,9 +252,7 @@ class DefaultAuthClientTest {
 
         override suspend fun deregisterForNotifications(token: String) = error("Not used in this test")
 
-        override suspend fun phoneAuthLogin(
-            phoneNumber: String,
-        ): PhoneAuthLoginResponse = error("Not used in this test")
+        override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse = error("Not used in this test")
 
         override suspend fun verifyPhoneAuth(
             phoneNumber: String,

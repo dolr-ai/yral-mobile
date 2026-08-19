@@ -19,6 +19,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
@@ -47,7 +48,6 @@ import com.yral.shared.libs.routing.routes.api.RewardOn
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
-import com.yral.shared.core.session.CanisterData
 import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions", "LongParameterList")

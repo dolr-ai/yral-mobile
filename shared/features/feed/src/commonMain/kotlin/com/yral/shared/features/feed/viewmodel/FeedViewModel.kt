@@ -13,6 +13,7 @@ import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.core.utils.update
@@ -49,7 +50,6 @@ import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.rust.service.domain.models.toPartialFeedDetails
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
-import com.yral.shared.core.session.CanisterData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job

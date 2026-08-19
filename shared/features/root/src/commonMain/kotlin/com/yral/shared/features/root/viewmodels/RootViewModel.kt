@@ -18,6 +18,7 @@ import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.hasSameUserPrincipal
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -48,7 +49,6 @@ import com.yral.shared.rust.service.domain.models.UserAccountType
 import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
-import com.yral.shared.core.utils.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -875,17 +875,6 @@ class RootViewModel(
         }
     }
 
-    private fun requireAuthenticatedPrincipalMatches(
-        authenticatedPrincipal: String,
-        requestedPrincipal: String,
-    ) {
-        if (authenticatedPrincipal != requestedPrincipal) {
-            throw YralException(
-                "Authenticated principal $authenticatedPrincipal does not match requested $requestedPrincipal",
-            )
-        }
-    }
-
     fun showAccountSwitcher() {
         if (_state.value.isAccountSwitchInProgress) return
         if (_state.value.sessionState is SessionState.Loading) return
@@ -976,9 +965,7 @@ class RootViewModel(
         applyAccountDirectory(updatedDirectory)
     }
 
-    private suspend fun cacheSession(
-        session: Session,
-    ) {
+    private suspend fun cacheSession(session: Session) {
         session.canisterId?.let { preferences.putString(PrefKeys.CANISTER_ID.name, it) }
         session.userPrincipal?.let { preferences.putString(PrefKeys.USER_PRINCIPAL.name, it) }
         session.profilePic?.let { preferences.putString(PrefKeys.PROFILE_PIC.name, it) }
@@ -1188,9 +1175,6 @@ class RootViewModel(
 
             rawStrings.mapNotNull { raw ->
                 runCatching {
-                    val identityBytes =
-                        decodeBase64Flexible(raw)
-                            ?: raw.encodeToByteArray()
                     // Bot principals are no longer resolved from identity bytes via Rust FFI.
                     // The backend JWT should carry bot principals directly in its claims;
                     // until then we skip entries we cannot resolve to a principal.

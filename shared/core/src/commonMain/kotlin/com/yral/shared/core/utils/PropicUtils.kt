@@ -25,18 +25,21 @@ fun propicFromPrincipal(principalId: String): String {
  * Kotlin implementation of CRC32 (IEEE 802.3 polynomial).
  * Used for deterministic GobGob avatar index assignment.
  */
+@Suppress("MagicNumber")
 private fun crc32(data: ByteArray): Int {
-    val table = IntArray(256) { i ->
-        var crc = i
-        repeat(8) {
-            crc = if (crc and 1 != 0) {
-                (crc ushr 1) xor 0xEDB88320.toInt()
-            } else {
-                crc ushr 1
+    val table =
+        IntArray(256) { i ->
+            var crc = i
+            repeat(8) {
+                crc =
+                    if (crc and 1 != 0) {
+                        (crc ushr 1) xor 0xEDB88320.toInt()
+                    } else {
+                        crc ushr 1
+                    }
             }
+            crc
         }
-        crc
-    }
     var crc = 0xFFFFFFFF.toInt()
     for (b in data) {
         val index = (crc xor (b.toInt() and 0xFF)) and 0xFF

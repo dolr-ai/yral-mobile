@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.FeedType
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.features.ProfileImageView
@@ -40,7 +41,6 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.reportVideo.ui.ReportVideo
 import com.yral.shared.rust.service.domain.models.toCanisterData
-import com.yral.shared.core.session.CanisterData
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource

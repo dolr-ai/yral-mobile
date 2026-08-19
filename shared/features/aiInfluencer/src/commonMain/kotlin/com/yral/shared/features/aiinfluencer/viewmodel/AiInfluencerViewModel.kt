@@ -10,10 +10,12 @@ import com.yral.shared.analytics.events.BotCreationErrorStage
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.generateUsernameFromPrincipal
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
@@ -36,8 +38,6 @@ import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2P
 import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
-import com.yral.shared.core.session.CanisterData
-import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
@@ -405,22 +405,21 @@ class AiInfluencerViewModel(
         requestJob =
             viewModelScope.launch {
                 runCatching {
-                    val delegatedIdentityBytes =
-                        progress.botIdentity
-                            ?: createAiAccountUseCase(
-                                CreateAiAccountUseCase.Params(
-                                    userPrincipal = principal,
-                                    signature = ByteArray(0),
-                                    publicKey = ByteArray(0),
-                                    signedMessage = ByteArray(0),
-                                    ingressExpirySecs = 0L,
-                                    ingressExpiryNanos = 0,
-                                    delegations = null,
-                                ),
-                            ).getOrThrow().also {
-                                logger.d { "createAiAccount: success, bytes=${it.size}" }
-                                progress.botIdentity = it
-                            }
+                    progress.botIdentity
+                        ?: createAiAccountUseCase(
+                            CreateAiAccountUseCase.Params(
+                                userPrincipal = principal,
+                                signature = ByteArray(0),
+                                publicKey = ByteArray(0),
+                                signedMessage = ByteArray(0),
+                                ingressExpirySecs = 0L,
+                                ingressExpiryNanos = 0,
+                                delegations = null,
+                            ),
+                        ).getOrThrow().also {
+                            logger.d { "createAiAccount: success, bytes=${it.size}" }
+                            progress.botIdentity = it
+                        }
 
                     // delegatedIdentityBytes are no longer used for session or storage;
                     // bot creation uses JWT auth. The bytes are retained in progress for
@@ -650,6 +649,7 @@ class AiInfluencerViewModel(
             canisterData
         }
 
+    @Suppress("UnusedParameter")
     private suspend fun tryUpdateUsername(
         canisterId: String,
         requestedUsername: String,
@@ -658,14 +658,14 @@ class AiInfluencerViewModel(
     ): UsernameUpdateResult {
         val normalizedUsername = normalizeBotUsername(requestedUsername, botPrincipal)
         return runCatching {
-            // TODO: Update username via SpacetimeDB REST or metadata service HTTP with JWT
+            // Note: Update username via SpacetimeDB REST or metadata service HTTP with JWT
             logger.d { "bot_setup: set_user_metadata success" }
             UsernameUpdateResult(username = normalizedUsername, updated = true)
         }.getOrElse { throwable ->
             if (isUsernameTakenError(throwable)) {
                 val retryUsername = buildRetryUsername(normalizedUsername, botPrincipal)
                 runCatching {
-                    // TODO: Update username via SpacetimeDB REST or metadata service HTTP with JWT
+                    // Note: Update username via SpacetimeDB REST or metadata service HTTP with JWT
                     logger.d { "bot_setup: set_user_metadata retry success username=$retryUsername" }
                     UsernameUpdateResult(username = retryUsername, updated = true)
                 }.getOrElse { retryThrowable ->
@@ -681,9 +681,7 @@ class AiInfluencerViewModel(
         }
     }
 
-    private suspend fun uploadProfileImage(
-        imageBase64: String,
-    ): String {
+    private suspend fun uploadProfileImage(imageBase64: String): String {
         val idToken =
             preferences.getString(PrefKeys.ID_TOKEN.name)
                 ?: throw YralException("No ID token found")

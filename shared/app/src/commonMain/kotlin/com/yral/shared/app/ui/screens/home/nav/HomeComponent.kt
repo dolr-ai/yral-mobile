@@ -9,6 +9,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
@@ -24,7 +25,6 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
-import com.yral.shared.core.session.CanisterData
 
 abstract class HomeComponent {
     abstract val requestLoginFactory: RequestLoginFactory

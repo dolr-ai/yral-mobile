@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
@@ -11,7 +12,6 @@ import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
-import com.yral.shared.core.session.CanisterData
 import kotlinx.serialization.Serializable
 
 abstract class ChatComponent : HomeChildSnapshotProvider {

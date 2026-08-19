@@ -1,10 +1,10 @@
 package com.yral.shared.features.chat.nav.conversation
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
-import com.yral.shared.core.session.CanisterData
 
 abstract class ConversationComponent {
     abstract val requestLoginFactory: RequestLoginFactory

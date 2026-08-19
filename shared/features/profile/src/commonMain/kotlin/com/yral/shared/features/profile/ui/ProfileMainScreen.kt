@@ -80,7 +80,10 @@ import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.ConversationInfluencerSource
@@ -132,9 +135,6 @@ import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.videoPlayer.YralVideoPlayer
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
-import com.yral.shared.core.session.CanisterData
-import com.yral.shared.core.utils.propicFromPrincipal
-import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.getString

@@ -24,10 +24,12 @@ import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -85,8 +87,6 @@ import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Param
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
-import com.yral.shared.core.session.CanisterData
-import com.yral.shared.core.utils.propicFromPrincipal
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

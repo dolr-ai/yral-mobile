@@ -30,8 +30,10 @@ import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.LoginCoordinator
@@ -49,8 +51,6 @@ import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
-import com.yral.shared.core.session.CanisterData
-import com.yral.shared.core.utils.SERVICE_CANISTER_ID
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("TooManyFunctions")

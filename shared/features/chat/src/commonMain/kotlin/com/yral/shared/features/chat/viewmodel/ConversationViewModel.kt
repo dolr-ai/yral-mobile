@@ -16,6 +16,8 @@ import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.SERVICE_CANISTER_ID
+import com.yral.shared.core.utils.propicFromPrincipal
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.ConversationInfluencerSource
@@ -73,8 +75,6 @@ import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
-import com.yral.shared.core.utils.SERVICE_CANISTER_ID
-import com.yral.shared.core.utils.propicFromPrincipal
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview

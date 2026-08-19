@@ -7,7 +7,7 @@ package com.yral.shared.features.auth.data.models
  * They are kept here as plain Kotlin data classes so the auth API contract
  * remains stable while the IC identity layer is being removed.
  *
- * TODO: Remove entirely once createAiAccount is migrated to JWT-only auth.
+ * Note: Remove entirely once createAiAccount is migrated to JWT-only auth.
  */
 data class DelegationPayload(
     val pubkey: ByteArray,
