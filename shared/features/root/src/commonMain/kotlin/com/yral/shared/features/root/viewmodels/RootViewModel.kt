@@ -68,8 +68,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Clock
@@ -1146,49 +1148,24 @@ class RootViewModel(
                     json.parseToJsonElement(it)
                 }.getOrNull()
             }
-        val botArray = payloadElement?.jsonObject?.get("ext_ai_account_delegated_identities")
+        val botArray = payloadElement?.jsonObject?.get("ext_ai_account_ids")
         return if (payloadJson == null || botArray == null) {
             if (payloadElement != null && botArray == null) {
                 Logger.d("RootViewModel") {
-                    "parseBotsFromToken: no ext_ai_account_delegated_identities. " +
+                    "parseBotsFromToken: no ext_ai_account_ids. " +
                         "Payload keys=${payloadElement.jsonObject.keys}"
                 }
             }
             emptyList()
         } else {
-            val rawStrings: List<String> =
-                botArray.jsonArray.mapNotNull { element ->
-                    when {
-                        element is kotlinx.serialization.json.JsonPrimitive && element.isString -> {
-                            element.content
-                        }
-
-                        element is kotlinx.serialization.json.JsonPrimitive && element.isString.not() -> {
-                            element.content
-                        }
-
-                        else -> {
-                            element.toString()
-                        }
-                    }
+            botArray.jsonArray.mapNotNull { element ->
+                if (element is JsonNull) return@mapNotNull null
+                val principal = element.jsonPrimitive.content
+                if (principal.isBlank()) {
+                    null
+                } else {
+                    BotIdentityEntry(principal = principal)
                 }
-
-            rawStrings.mapNotNull { raw ->
-                runCatching {
-                    // Bot principals are no longer resolved from identity bytes via Rust FFI.
-                    // The backend JWT should carry bot principals directly in its claims;
-                    // until then we skip entries we cannot resolve to a principal.
-                    val principal = ""
-                    if (principal.isBlank()) {
-                        null
-                    } else {
-                        BotIdentityEntry(principal = principal)
-                    }
-                }.onFailure { error ->
-                    Logger.e("RootViewModel") {
-                        "parseBotsFromToken: failed to decode one entry: ${error.message}"
-                    }
-                }.getOrNull()
             }
         }
     }

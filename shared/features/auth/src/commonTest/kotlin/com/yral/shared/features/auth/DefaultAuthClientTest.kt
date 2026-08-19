@@ -5,7 +5,6 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.analytics.AuthTelemetry
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
@@ -260,15 +259,7 @@ class DefaultAuthClientTest {
             clientState: String,
         ): PhoneAuthVerifyResponse = error("Not used in this test")
 
-        override suspend fun createAiAccount(
-            userPrincipal: String,
-            signature: ByteArray,
-            publicKey: ByteArray,
-            signedMessage: ByteArray,
-            ingressExpirySecs: Long,
-            ingressExpiryNanos: Int,
-            delegations: List<SignedDelegationPayload>?,
-        ): ByteArray = error("Not used in this test")
+        override suspend fun createAiAccount(userId: String): String = error("Not used in this test")
     }
 
     private class FakeOAuthUtilsHelper : OAuthUtilsHelper {
@@ -365,7 +356,6 @@ private fun tokenClaims(expiry: Long): TokenClaims =
         principal = "principal",
         nonce = null,
         extIsAnonymous = false,
-        delegatedIdentity = null,
         email = null,
-        botDelegatedIdentities = null,
+        botAccountIds = null,
     )

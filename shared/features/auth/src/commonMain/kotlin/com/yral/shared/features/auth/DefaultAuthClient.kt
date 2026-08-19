@@ -761,33 +761,22 @@ class DefaultAuthClient(
 
     private suspend fun persistBotIdentitiesFromToken(idToken: String) {
         val claims = runCatching { oAuthUtilsHelper.parseOAuthToken(idToken) }.getOrNull()
-        val botIdentities = claims?.botDelegatedIdentities?.takeIf { it.isNotEmpty() }
-        if (botIdentities == null) {
+        val botAccountIds = claims?.botAccountIds?.takeIf { it.isNotEmpty() }
+        if (botAccountIds == null) {
             Logger.d("DefaultAuthClient") {
                 val payloadKeys = extractPayloadKeys(idToken)
                 val payloadJson = extractPayloadJson(idToken)
-                "persistBotIdentitiesFromToken: no bot identities in token. " +
+                "persistBotIdentitiesFromToken: no bot account IDs in token. " +
                     "Payload keys=$payloadKeys payload=$payloadJson"
             }
         } else {
             Logger.d("DefaultAuthClient") {
                 val payloadKeys = extractPayloadKeys(idToken)
-                "persistBotIdentitiesFromToken: found ${botIdentities.size} bot identities. " +
+                "persistBotIdentitiesFromToken: found ${botAccountIds.size} bot account IDs. " +
                     "Payload keys=$payloadKeys"
             }
             val result =
-                botIdentitiesStore.mergeFromOAuthTokenRawIdentities(
-                    rawPayloads = botIdentities,
-                    // Bot principals are no longer resolved from identity bytes via Rust FFI.
-                    // The backend JWT carries bot principals directly; principal resolution here
-                    // is a placeholder until the backend supplies the principal in the token claims.
-                    principalFromIdentityBytes = { _ -> "" },
-                    onEntryParseFailure = { _, error ->
-                        Logger.e("DefaultAuthClient") {
-                            "Failed to persist bot identity from token: ${error.message}"
-                        }
-                    },
-                )
+                botIdentitiesStore.mergeFromTokenBotAccountIds(botAccountIds)
             result?.let { r ->
                 Logger.d("BotIdentitySource") {
                     "persistBotIdentitiesFromToken source=oauth_token existing=${r.existingCount} " +

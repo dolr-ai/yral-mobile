@@ -5,7 +5,6 @@ import com.yral.shared.features.auth.data.models.CreateAiAccountResponseDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
@@ -120,14 +119,6 @@ class AuthRepositoryImplTest {
 
         override suspend fun verifyPhoneAuth(verifyRequest: VerifyRequestDto): PhoneAuthVerifyResponseDto = error("Not used in this test")
 
-        override suspend fun createAiAccount(
-            userPrincipal: String,
-            signature: ByteArray,
-            publicKey: ByteArray,
-            signedMessage: ByteArray,
-            ingressExpirySecs: Long,
-            ingressExpiryNanos: Int,
-            delegations: List<SignedDelegationPayload>?,
-        ): CreateAiAccountResponseDto = error("Not used in this test")
+        override suspend fun createAiAccount(userId: String): CreateAiAccountResponseDto = error("Not used in this test")
     }
 }

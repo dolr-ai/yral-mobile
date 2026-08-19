@@ -405,50 +405,31 @@ class AiInfluencerViewModel(
         requestJob =
             viewModelScope.launch {
                 runCatching {
-                    progress.botIdentity
-                        ?: createAiAccountUseCase(
-                            CreateAiAccountUseCase.Params(
-                                userPrincipal = principal,
-                                signature = ByteArray(0),
-                                publicKey = ByteArray(0),
-                                signedMessage = ByteArray(0),
-                                ingressExpirySecs = 0L,
-                                ingressExpiryNanos = 0,
-                                delegations = null,
-                            ),
-                        ).getOrThrow().also {
-                            logger.d { "createAiAccount: success, bytes=${it.size}" }
-                            progress.botIdentity = it
-                        }
-
-                    // delegatedIdentityBytes are no longer used for session or storage;
-                    // bot creation uses JWT auth. The bytes are retained in progress for
-                    // potential future use but not stored in preferences or Session.
-
-                    // Bot principal is no longer parsed from identity bytes via Rust FFI.
-                    // It should come from the backend create_ai_account response; until the
-                    // response shape is updated to carry the principal, fall back to the
-                    // user principal as a placeholder so the flow can proceed.
-                    val newBotPrincipal =
+                    val botPrincipal =
                         progress.botPrincipal
-                            ?: principal.also { progress.botPrincipal = it }
+                            ?: createAiAccountUseCase(
+                                CreateAiAccountUseCase.Params(userId = principal),
+                            ).getOrThrow().also {
+                                logger.d { "createAiAccount: success, botPrincipal=$it" }
+                                progress.botPrincipal = it
+                            }
 
                     if (!progress.registrationAccepted) {
                         acceptNewUserRegistrationV2UseCase(
                             AcceptNewUserRegistrationV2Params(
                                 principal = principal,
-                                newPrincipal = newBotPrincipal,
+                                newPrincipal = botPrincipal,
                                 authenticated = true,
                                 mainAccount = principal,
                             ),
                         ).getOrThrow()
-                        logger.d { "accept_new_user_registration_v2: success for bot=$newBotPrincipal" }
+                        logger.d { "accept_new_user_registration_v2: success for bot=$botPrincipal" }
                         progress.registrationAccepted = true
                     }
 
                     completeBotSetup(
                         progress = progress,
-                        botPrincipal = newBotPrincipal,
+                        botPrincipal = botPrincipal,
                         profileDetails = currentStep,
                     ).getOrThrow()
                 }.onSuccess {
@@ -804,7 +785,6 @@ class AiInfluencerViewModel(
 
     private data class BotCreationProgress(
         val profileKey: String,
-        var botIdentity: ByteArray? = null,
         var botPrincipal: String? = null,
         var registrationAccepted: Boolean = false,
         var canisterData: CanisterData? = null,

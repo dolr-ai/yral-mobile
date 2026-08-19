@@ -1,6 +1,5 @@
 package com.yral.shared.features.auth.domain
 
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
@@ -33,13 +32,5 @@ interface AuthRepository {
         clientState: String,
     ): PhoneAuthVerifyResponse
 
-    suspend fun createAiAccount(
-        userPrincipal: String,
-        signature: ByteArray,
-        publicKey: ByteArray,
-        signedMessage: ByteArray,
-        ingressExpirySecs: Long,
-        ingressExpiryNanos: Int,
-        delegations: List<SignedDelegationPayload>?,
-    ): ByteArray
+    suspend fun createAiAccount(userId: String): String
 }

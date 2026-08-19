@@ -4,7 +4,6 @@ import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
-import com.yral.shared.features.auth.data.models.SignedDelegationPayload
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.data.models.toExchangePrincipalResponse
 import com.yral.shared.features.auth.data.models.toPhoneAuthVerifyResponse
@@ -140,29 +139,8 @@ class AuthRepositoryImpl(
                     ),
             ).toPhoneAuthVerifyResponse()
 
-    override suspend fun createAiAccount(
-        userPrincipal: String,
-        signature: ByteArray,
-        publicKey: ByteArray,
-        signedMessage: ByteArray,
-        ingressExpirySecs: Long,
-        ingressExpiryNanos: Int,
-        delegations: List<SignedDelegationPayload>?,
-    ): ByteArray {
-        val response =
-            dataSource.createAiAccount(
-                userPrincipal = userPrincipal,
-                signature = signature,
-                publicKey = publicKey,
-                signedMessage = signedMessage,
-                ingressExpirySecs = ingressExpirySecs,
-                ingressExpiryNanos = ingressExpiryNanos,
-                delegations = delegations,
-            )
-        return json
-            .encodeToString(response.delegatedIdentity)
-            .toByteArray()
-    }
+    override suspend fun createAiAccount(userId: String): String =
+        dataSource.createAiAccount(userId).aiAccountId
 
     private fun SocialProvider.responseMode(): String =
         when (this) {
