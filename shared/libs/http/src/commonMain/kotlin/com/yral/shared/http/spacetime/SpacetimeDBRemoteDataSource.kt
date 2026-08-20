@@ -292,7 +292,7 @@ class SpacetimeDBRemoteDataSource(
     }
 
     /**
-     * Register a new user or create a bot account. Calls `accept_new_user_registration_v2`.
+     * Register a new user or create a bot account. Calls `accept_new_user_registration_v_2`.
      *
      * @param newPrincipalText The IC Principal text of the new user.
      * @param authenticated Whether the user is authenticated (accepted for API compat, not used).
@@ -305,7 +305,9 @@ class SpacetimeDBRemoteDataSource(
     ) {
         val idToken = getIdTokenOrThrow()
         callProcedure(
-            "accept_new_user_registration_v2",
+            // Deployed module mangles the Rust fn name `..._v2` → reducer `..._v_2`
+            // (SpacetimeDB codegen inserts an underscore before the digit).
+            "accept_new_user_registration_v_2",
             listOf(
                 JsonPrimitive(newPrincipalText),
                 JsonPrimitive(authenticated),
