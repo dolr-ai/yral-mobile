@@ -8,7 +8,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.BotCreationErrorStage
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
+import com.yral.shared.core.AppConfigurations.STORAGE_INTERFACE_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.Session
@@ -671,7 +671,7 @@ class AiInfluencerViewModel(
             httpPost<UploadProfileImageResponse>(httpClient, json) {
                 url {
                     protocol = URLProtocol.HTTPS
-                    host = OFF_CHAIN_BASE_URL
+                    host = STORAGE_INTERFACE_BASE_URL
                     path(UPLOAD_PROFILE_ENDPOINT)
                 }
                 headers { append("authorization", "Bearer $idToken") }
