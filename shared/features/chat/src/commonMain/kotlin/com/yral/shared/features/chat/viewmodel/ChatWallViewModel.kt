@@ -186,5 +186,5 @@ data class ChatWallState(
     val influencerDetail: Influencer? = null,
     val isInfluencerLoading: Boolean = false,
     val influencerError: ChatError? = null,
-    val maxBotCountForCta: Int = 3,
+    val maxBotCountForCta: Int = 100,
 )

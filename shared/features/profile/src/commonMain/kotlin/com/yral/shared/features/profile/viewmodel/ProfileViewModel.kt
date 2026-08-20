@@ -1573,7 +1573,7 @@ data class ViewState(
     val isSubscriptionEnabled: Boolean = false,
     val isSoulFileCoachEnabled: Boolean = false,
     val isYralProAvailable: Boolean = false,
-    val maxBotCountForCta: Int = 3,
+    val maxBotCountForCta: Int = 100,
     val maxVisibleBotUsernames: Int = 2,
     val createdByUsername: String? = null,
     val createdByPrincipal: String? = null,
