@@ -304,6 +304,15 @@ class SpacetimeDBRemoteDataSource(
         mainAccountText: String?,
     ) {
         val idToken = getIdTokenOrThrow()
+        // main_account_text is Option<String>. As a reducer ARGUMENT, SpacetimeDB
+        // encodes a sum type as [variantIndex, payload]: Some(v) -> [0, v],
+        // None -> [1, []]. (The doubly-nested [[...]] form is the *response* shape.)
+        val mainAccount: JsonElement =
+            if (mainAccountText != null) {
+                JsonArray(listOf(JsonPrimitive(0), JsonPrimitive(mainAccountText)))
+            } else {
+                JsonArray(listOf(JsonPrimitive(1), JsonArray(emptyList())))
+            }
         callProcedure(
             // Deployed module mangles the Rust fn name `..._v2` → reducer `..._v_2`
             // (SpacetimeDB codegen inserts an underscore before the digit).
@@ -311,7 +320,7 @@ class SpacetimeDBRemoteDataSource(
             listOf(
                 JsonPrimitive(newPrincipalText),
                 JsonPrimitive(authenticated),
-                mainAccountText?.let { JsonPrimitive(it) } ?: JsonNull,
+                mainAccount,
             ),
             idToken,
         )

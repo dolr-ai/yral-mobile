@@ -11,6 +11,7 @@ import com.yral.shared.http.httpPost
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
@@ -33,6 +34,10 @@ class AiInfluencerRemoteDataSource(
                 host = chatBaseUrl
                 path(GENERATE_PROMPT_PATH)
             }
+            // gemini-2.5-flash "thinking" makes persona generation slow + spiky
+            // (7s..>30s). The default 30s client timeout cuts off legitimate
+            // completions; give the LLM room up to the backend's own ceiling.
+            timeout { requestTimeoutMillis = PERSONA_GEN_TIMEOUT_MS }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             setBody(GeneratePromptRequestDto(prompt = prompt))
         }
@@ -49,6 +54,7 @@ class AiInfluencerRemoteDataSource(
                 host = chatBaseUrl
                 path(VALIDATE_AND_GENERATE_METADATA_PATH)
             }
+            timeout { requestTimeoutMillis = PERSONA_GEN_TIMEOUT_MS }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             setBody(
                 ValidateAndGenerateMetadataRequestDto(
@@ -78,6 +84,8 @@ class AiInfluencerRemoteDataSource(
             ?: throw YralException("Authorisation not found")
 
     private companion object {
+        // Matches the sync-LLM client timeout used by Coach + collage (90s).
+        private const val PERSONA_GEN_TIMEOUT_MS = 90_000L
         private const val GENERATE_PROMPT_PATH = "api/v1/influencers/generate-prompt"
         private const val VALIDATE_AND_GENERATE_METADATA_PATH = "api/v1/influencers/validate-and-generate-metadata"
         private const val CREATE_INFLUENCER_PATH = "api/v1/influencers/create"
