@@ -33,7 +33,9 @@ object ChatFeatureFlags {
                 keySuffix = "maxBotCountForCta",
                 name = "Max bot count for CTA",
                 description = "Maximum number of bots before hiding the create influencer CTA",
-                defaultValue = 3,
+                // Server-side limit removed with yral-auth v2; keep the client CTA
+                // effectively unlimited (100) until this gate is deleted entirely.
+                defaultValue = 100,
             )
         val MaxVisibleBotUsernames: FeatureFlag<Int> =
             int(

@@ -8,7 +8,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.BotCreationErrorStage
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.core.AppConfigurations.STORAGE_INTERFACE_BASE_URL
+import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.Session
@@ -405,6 +405,24 @@ class AiInfluencerViewModel(
         requestJob =
             viewModelScope.launch {
                 runCatching {
+                    // The owner (main account) must exist as a MainAccount in SpacetimeDB before a
+                    // bot can attach to it, else accept_new_user_registration_v2 returns "Owner not
+                    // found". Registering the owner is the SAME reducer with main_account_text = null:
+                    // the "normal account" branch keys the row by the passed principal — the exact
+                    // principal the bot-accept step then looks the owner up by. Idempotent, and nothing
+                    // else registers the main account today.
+                    if (!progress.ownerRegistered) {
+                        acceptNewUserRegistrationV2UseCase(
+                            AcceptNewUserRegistrationV2Params(
+                                principal = principal,
+                                newPrincipal = principal,
+                                authenticated = true,
+                                mainAccount = null,
+                            ),
+                        ).getOrThrow()
+                        progress.ownerRegistered = true
+                    }
+
                     val botPrincipal =
                         progress.botPrincipal
                             ?: createAiAccountUseCase(
@@ -671,7 +689,9 @@ class AiInfluencerViewModel(
             httpPost<UploadProfileImageResponse>(httpClient, json) {
                 url {
                     protocol = URLProtocol.HTTPS
-                    host = STORAGE_INTERFACE_BASE_URL
+                    // Bot avatars upload to our agent service (JWT auth), not Prakash's
+                    // departed storage-interface. Same path + body — only the host moves.
+                    host = CHAT_BASE_URL
                     path(UPLOAD_PROFILE_ENDPOINT)
                 }
                 headers { append("authorization", "Bearer $idToken") }
@@ -786,6 +806,7 @@ class AiInfluencerViewModel(
     private data class BotCreationProgress(
         val profileKey: String,
         var botPrincipal: String? = null,
+        var ownerRegistered: Boolean = false,
         var registrationAccepted: Boolean = false,
         var canisterData: CanisterData? = null,
         var usernameResult: UsernameUpdateResult? = null,
