@@ -7,7 +7,10 @@ object AppConfigurations {
     const val FEED_BASE_URL = "recommendation-service-82502260393.us-central1.run.app"
     const val INFLUENCER_FEED_BASE_URL = "recsys-influencer-feed.ansuman.yral.com"
     const val OFF_CHAIN_BASE_URL = "offchain.yral.com"
-    const val STORAGE_INTERFACE_BASE_URL = "storage-interface.prakash.yral.com"
+
+    // Profile images (users and bots) moved to our agent service. Video generation
+    // still runs on the old storage-interface until its replacement ships.
+    const val STORAGE_INTERFACE_BASE_URL = "agent.rishi.yral.com"
     const val VIDEOGEN_BASE_URL = "storage-interface.prakash.yral.com"
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
     const val UPLOAD_BASE_URL = "storage-interface.prakash.yral.com"

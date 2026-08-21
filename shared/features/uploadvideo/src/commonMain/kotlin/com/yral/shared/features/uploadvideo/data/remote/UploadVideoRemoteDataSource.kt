@@ -186,7 +186,7 @@ internal class UploadVideoRemoteDataSource(
     ): InProgressDraftsResponseDto =
         httpPost(client, json) {
             url {
-                host = AppConfigurations.STORAGE_INTERFACE_BASE_URL
+                host = AppConfigurations.VIDEOGEN_BASE_URL
                 path(GET_IN_PROGRESS_DRAFTS_PATH)
             }
             contentType(ContentType.Application.Json)
