@@ -8,12 +8,13 @@ object AppConfigurations {
     const val INFLUENCER_FEED_BASE_URL = "recsys-influencer-feed.ansuman.yral.com"
     const val OFF_CHAIN_BASE_URL = "offchain.yral.com"
 
-    // Profile images (users and bots) moved to our agent service. Video generation
-    // still runs on the old storage-interface until its replacement ships.
+    // Profile images, video generation and draft publishing all moved to our
+    // agent service. Prakash's storage-interface is retired — its worker and
+    // tunnel were shut down on 2026-08-21, so these hosts no longer answer.
     const val STORAGE_INTERFACE_BASE_URL = "agent.rishi.yral.com"
-    const val VIDEOGEN_BASE_URL = "storage-interface.prakash.yral.com"
+    const val VIDEOGEN_BASE_URL = "agent.rishi.yral.com"
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
-    const val UPLOAD_BASE_URL = "storage-interface.prakash.yral.com"
+    const val UPLOAD_BASE_URL = "agent.rishi.yral.com"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
     const val CHAT_BASE_URL = "agent.rishi.yral.com"
     const val COACH_BASE_URL = "agent.rishi.yral.com"
