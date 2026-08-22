@@ -8,7 +8,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.BotCreationErrorStage
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
+import com.yral.shared.core.AppConfigurations.STORAGE_INTERFACE_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.CanisterData
 import com.yral.shared.core.session.Session
@@ -689,9 +689,7 @@ class AiInfluencerViewModel(
             httpPost<UploadProfileImageResponse>(httpClient, json) {
                 url {
                     protocol = URLProtocol.HTTPS
-                    // Bot avatars upload to our agent service (JWT auth), not Prakash's
-                    // departed storage-interface. Same path + body — only the host moves.
-                    host = CHAT_BASE_URL
+                    host = STORAGE_INTERFACE_BASE_URL
                     path(UPLOAD_PROFILE_ENDPOINT)
                 }
                 headers { append("authorization", "Bearer $idToken") }

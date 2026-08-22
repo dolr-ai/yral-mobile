@@ -154,6 +154,20 @@ class EditProfileViewModel(
                     sessionManager.updateProfilePicture(imageUrl)
                     preferences.putString(PrefKeys.PROFILE_PIC.name, imageUrl)
                     updateAccountDirectoryCache(avatarUrl = imageUrl)
+                    // Persist server-side (SpacetimeDB) — the old storage-interface endpoint
+                    // did this via an IC canister write; ours doesn't, so the client owns it,
+                    // same as the bot avatar flow. Logged-not-thrown so a persist hiccup can't
+                    // undo the local UI update.
+                    sessionManager.userPrincipal?.let { principalText ->
+                        updateProfileDetailsUseCase(
+                            UpdateProfileDetailsParams(
+                                principal = principalText,
+                                profilePictureUrl = imageUrl,
+                            ),
+                        ).onFailure { error ->
+                            logger.e { "Failed to persist profile picture: ${error.message}" }
+                        }
+                    }
                     _state.update { current ->
                         current.copy(
                             profileImageUrl = imageUrl,
