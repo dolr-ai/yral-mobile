@@ -75,12 +75,12 @@ class UserInfoRepositoryImpl(
 
             val usernames =
                 runSuspendCatching {
-                    val principalTexts =
+                    val oauthSubjects =
                         response.followers
-                            .map { it.principalText }
+                            .map { it.oauthSubject }
                             .filter { it.isNotBlank() }
                             .distinct()
-                    followersMetadataDataSource.fetchUsernames(principalTexts)
+                    followersMetadataDataSource.fetchUsernames(oauthSubjects)
                 }.onFailure { logger.w(throwable = it) { "Failed to fetch follower usernames" } }
                     .getOrElse { emptyMap() }
 
@@ -106,12 +106,12 @@ class UserInfoRepositoryImpl(
 
             val usernames =
                 runSuspendCatching {
-                    val principalTexts =
+                    val oauthSubjects =
                         response.following
-                            .map { it.principalText }
+                            .map { it.oauthSubject }
                             .filter { it.isNotBlank() }
                             .distinct()
-                    followersMetadataDataSource.fetchUsernames(principalTexts)
+                    followersMetadataDataSource.fetchUsernames(oauthSubjects)
                 }.onFailure { logger.w(throwable = it) { "Failed to fetch following usernames" } }
                     .getOrElse { emptyMap() }
 

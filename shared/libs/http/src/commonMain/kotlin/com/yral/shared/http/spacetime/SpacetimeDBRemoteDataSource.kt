@@ -156,12 +156,12 @@ class SpacetimeDBRemoteDataSource(
      * Get profile details V7 for a user. Returns `null` if the user doesn't exist.
      * Calls `get_user_profile_details_v7`.
      *
-     * @param principalText The user's principal text (or SpacetimeDB Identity hex).
+     * @param oauthSubject The user's OAuth subject (or SpacetimeDB Identity hex).
      */
-    suspend fun getUserProfileDetailsV7(principalText: String): SpacetimeUserProfileV7? {
+    suspend fun getUserProfileDetailsV7(oauthSubject: String): SpacetimeUserProfileV7? {
         val idToken = getIdTokenOrNull()
         val responseBody =
-            callProcedure("get_user_profile_details_v7", listOf(JsonPrimitive(principalText)), idToken)
+            callProcedure("get_user_profile_details_v7", listOf(JsonPrimitive(oauthSubject)), idToken)
         return parseOption(responseBody, SpacetimeUserProfileV7.serializer())
     }
 
@@ -170,11 +170,11 @@ class SpacetimeDBRemoteDataSource(
      * Users that are not found are silently skipped.
      * Calls `get_users_profile_details`.
      *
-     * @param principalTexts List of principal texts to look up.
+     * @param oauthSubjects List of OAuth subjects to look up.
      */
-    suspend fun getUsersProfileDetails(principalTexts: List<String>): List<SpacetimeUserProfileV7> {
+    suspend fun getUsersProfileDetails(oauthSubjects: List<String>): List<SpacetimeUserProfileV7> {
         val idToken = getIdTokenOrNull()
-        val args = JsonArray(principalTexts.map { JsonPrimitive(it) })
+        val args = JsonArray(oauthSubjects.map { JsonPrimitive(it) })
         val responseBody =
             callProcedure("get_users_profile_details", listOf(args), idToken)
         return parseResultList(responseBody, SpacetimeUserProfileV7.serializer())
@@ -184,12 +184,12 @@ class SpacetimeDBRemoteDataSource(
      * Get a page of followers for a user (cursor-paginated).
      * Calls `get_followers`.
      *
-     * @param principalText The user whose followers to fetch.
+     * @param oauthSubject The user whose followers to fetch.
      * @param limit Maximum number of followers per page.
      * @param cursor The `nextCursor` from the previous page, or `null` to start.
      */
     suspend fun getFollowers(
-        principalText: String,
+        oauthSubject: String,
         limit: ULong,
         cursor: String?,
     ): SpacetimeFollowersPage {
@@ -198,7 +198,7 @@ class SpacetimeDBRemoteDataSource(
             callProcedure(
                 "get_followers",
                 listOf(
-                    JsonPrimitive(principalText),
+                    JsonPrimitive(oauthSubject),
                     JsonPrimitive(limit.toLong()),
                     cursor?.let { JsonPrimitive(it) } ?: JsonNull,
                 ),
@@ -211,12 +211,12 @@ class SpacetimeDBRemoteDataSource(
      * Get a page of users that a user is following (cursor-paginated).
      * Calls `get_following`.
      *
-     * @param principalText The user whose following list to fetch.
+     * @param oauthSubject The user whose following list to fetch.
      * @param limit Maximum number of items per page.
      * @param cursor The `nextCursor` from the previous page, or `null` to start.
      */
     suspend fun getFollowing(
-        principalText: String,
+        oauthSubject: String,
         limit: ULong,
         cursor: String?,
     ): SpacetimeFollowingPage {
@@ -225,7 +225,7 @@ class SpacetimeDBRemoteDataSource(
             callProcedure(
                 "get_following",
                 listOf(
-                    JsonPrimitive(principalText),
+                    JsonPrimitive(oauthSubject),
                     JsonPrimitive(limit.toLong()),
                     cursor?.let { JsonPrimitive(it) } ?: JsonNull,
                 ),
@@ -242,21 +242,21 @@ class SpacetimeDBRemoteDataSource(
      * Follow another user. Calls the `follow_user` reducer.
      * The caller's identity is derived from the JWT.
      *
-     * @param followeeText The principal text of the user to follow.
+     * @param followeeSubject The OAuth subject of the user to follow.
      */
-    suspend fun followUser(followeeText: String) {
+    suspend fun followUser(followeeSubject: String) {
         val idToken = getIdTokenOrThrow()
-        callProcedure("follow_user", listOf(JsonPrimitive(followeeText)), idToken)
+        callProcedure("follow_user", listOf(JsonPrimitive(followeeSubject)), idToken)
     }
 
     /**
      * Unfollow a user. Calls the `unfollow_user` reducer.
      *
-     * @param followeeText The principal text of the user to unfollow.
+     * @param followeeSubject The OAuth subject of the user to unfollow.
      */
-    suspend fun unfollowUser(followeeText: String) {
+    suspend fun unfollowUser(followeeSubject: String) {
         val idToken = getIdTokenOrThrow()
-        callProcedure("unfollow_user", listOf(JsonPrimitive(followeeText)), idToken)
+        callProcedure("unfollow_user", listOf(JsonPrimitive(followeeSubject)), idToken)
     }
 
     /**

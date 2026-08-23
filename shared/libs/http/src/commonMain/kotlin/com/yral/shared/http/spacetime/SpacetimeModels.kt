@@ -17,7 +17,7 @@ import kotlinx.serialization.json.JsonElement
  */
 @Serializable
 data class SpacetimeUserProfileV7(
-    @SerialName("principalText") val principalText: String,
+    @SerialName("oauthSubject") val oauthSubject: String,
     @SerialName("profilePicture") val profilePicture: SpacetimeProfilePictureData? = null,
     val bio: String = "",
     @SerialName("websiteUrl") val websiteUrl: String = "",
@@ -94,7 +94,7 @@ data class SpacetimeFollowersPage(
 
 @Serializable
 data class SpacetimeFollowerItem(
-    @SerialName("principalText") val principalText: String,
+    @SerialName("oauthSubject") val oauthSubject: String,
     @SerialName("callerFollows") val callerFollows: Boolean = false,
     @SerialName("profilePictureUrl") val profilePictureUrl: String = "",
 )
@@ -108,7 +108,7 @@ data class SpacetimeFollowingPage(
 
 @Serializable
 data class SpacetimeFollowingItem(
-    @SerialName("principalText") val principalText: String,
+    @SerialName("oauthSubject") val oauthSubject: String,
     @SerialName("callerFollows") val callerFollows: Boolean = false,
     @SerialName("profilePictureUrl") val profilePictureUrl: String = "",
 )
