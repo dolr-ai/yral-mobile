@@ -156,7 +156,7 @@ class SpacetimeDBRemoteDataSource(
      * Get profile details V7 for a user. Returns `null` if the user doesn't exist.
      * Calls `get_user_profile_details_v7`.
      *
-     * @param principalText The user's IC Principal as text (or SpacetimeDB Identity hex).
+     * @param principalText The user's principal text (or SpacetimeDB Identity hex).
      */
     suspend fun getUserProfileDetailsV7(principalText: String): SpacetimeUserProfileV7? {
         val idToken = getIdTokenOrNull()
@@ -170,7 +170,7 @@ class SpacetimeDBRemoteDataSource(
      * Users that are not found are silently skipped.
      * Calls `get_users_profile_details`.
      *
-     * @param principalTexts List of IC Principal texts to look up.
+     * @param principalTexts List of principal texts to look up.
      */
     suspend fun getUsersProfileDetails(principalTexts: List<String>): List<SpacetimeUserProfileV7> {
         val idToken = getIdTokenOrNull()
@@ -242,21 +242,21 @@ class SpacetimeDBRemoteDataSource(
      * Follow another user. Calls the `follow_user` reducer.
      * The caller's identity is derived from the JWT.
      *
-     * @param followeePrincipalText The IC Principal text of the user to follow.
+     * @param followeeText The principal text of the user to follow.
      */
-    suspend fun followUser(followeePrincipalText: String) {
+    suspend fun followUser(followeeText: String) {
         val idToken = getIdTokenOrThrow()
-        callProcedure("follow_user", listOf(JsonPrimitive(followeePrincipalText)), idToken)
+        callProcedure("follow_user", listOf(JsonPrimitive(followeeText)), idToken)
     }
 
     /**
      * Unfollow a user. Calls the `unfollow_user` reducer.
      *
-     * @param followeePrincipalText The IC Principal text of the user to unfollow.
+     * @param followeeText The principal text of the user to unfollow.
      */
-    suspend fun unfollowUser(followeePrincipalText: String) {
+    suspend fun unfollowUser(followeeText: String) {
         val idToken = getIdTokenOrThrow()
-        callProcedure("unfollow_user", listOf(JsonPrimitive(followeePrincipalText)), idToken)
+        callProcedure("unfollow_user", listOf(JsonPrimitive(followeeText)), idToken)
     }
 
     /**
@@ -294,7 +294,7 @@ class SpacetimeDBRemoteDataSource(
     /**
      * Register a new user or create a bot account. Calls `accept_new_user_registration_v_2`.
      *
-     * @param newPrincipalText The IC Principal text of the new user.
+     * @param newPrincipalText The principal text of the new user.
      * @param authenticated Whether the user is authenticated (accepted for API compat, not used).
      * @param mainAccountText The owner's principal text for bot accounts, or `null` for normal accounts.
      */
