@@ -21,7 +21,7 @@ fun SpacetimeUserProfileV7.toDomain(): UserProfileDetails =
         followingCount = followingCount,
         userFollowsCaller = userFollowsCaller,
         profilePictureUrl = profilePicture?.let { rewriteProfileImageUrl(it.url) },
-        principalId = principalText,
+        principalId = oauthSubject,
         followersCount = followersCount,
         callerFollowsUser = callerFollowsUser,
         subscriptionPlan = subscriptionPlan.toDomain(),
@@ -59,8 +59,8 @@ fun SpacetimeFollowersPage.toFollowerPageResult(usernames: Map<String, String>):
                 FollowerItem(
                     callerFollows = follower.callerFollows,
                     profilePictureUrl = follower.profilePictureUrl.takeUnless { it.isBlank() },
-                    principalId = follower.principalText,
-                    username = usernames[follower.principalText],
+                    principalId = follower.oauthSubject,
+                    username = usernames[follower.oauthSubject],
                 )
             },
         totalCount = totalCount,
@@ -74,8 +74,8 @@ fun SpacetimeFollowingPage.toFollowingPageResult(usernames: Map<String, String>)
                 FollowerItem(
                     callerFollows = follower.callerFollows,
                     profilePictureUrl = follower.profilePictureUrl.takeUnless { it.isBlank() },
-                    principalId = follower.principalText,
-                    username = usernames[follower.principalText],
+                    principalId = follower.oauthSubject,
+                    username = usernames[follower.oauthSubject],
                 )
             },
         totalCount = totalCount,
