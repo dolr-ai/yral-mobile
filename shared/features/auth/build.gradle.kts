@@ -29,30 +29,6 @@ configureCocoapods {
     pod("FirebaseMessaging") {
         version = firebaseIosSdkVersion
     }
-    // KMM pod() is not transitive: this module links these Firebase frameworks via
-    // transitive cinterop klibs from :shared.libs.firebasePerf, :shared.libs.crashlytics,
-    // :shared.libs.analytics, and :shared.libs.featureFlag (through :shared.data and
-    // direct dependencies), but its own synthetic Pods project doesn't build them.
-    // linkOnly adds each pod to the synthetic Podfile so the framework binary is produced
-    // for linking, without generating a duplicate cinterop klib (which would cause
-    // "symbol multiply defined" errors). Same pattern as iosApp/Podfile's explicit
-    // Firebase pod declarations.
-    pod("FirebasePerformance") {
-        version = firebaseIosSdkVersion
-        linkOnly = true
-    }
-    pod("FirebaseCrashlytics") {
-        version = firebaseIosSdkVersion
-        linkOnly = true
-    }
-    pod("FirebaseAnalytics") {
-        version = firebaseIosSdkVersion
-        linkOnly = true
-    }
-    pod("FirebaseRemoteConfig") {
-        version = firebaseIosSdkVersion
-        linkOnly = true
-    }
 }
 
 kotlin {
