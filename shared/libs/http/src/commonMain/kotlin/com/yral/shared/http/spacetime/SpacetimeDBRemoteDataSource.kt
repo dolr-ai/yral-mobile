@@ -19,9 +19,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonNull
-import kotlinx.serialization.json.jsonObject
 
 /**
  * Remote data source for SpacetimeDB REST API calls.
@@ -36,10 +33,18 @@ import kotlinx.serialization.json.jsonObject
  * work identently.
  *
  * ## REST response format
- * SpacetimeDB wraps procedure results in an outer array: `[[<result>]]`.
- * For `Option<T>`:
- * - `Some(value)` → `[[0, <value JSON>]]`
- * - `None` → `[[1, []]]`
+ * SpacetimeDB's REST `/call` endpoint serializes procedure return values
+ * using `SerdeWrapper(AlgebraicValue)`, which serializes SATS product types
+ * (structs) as **positional JSON arrays** and sum types (Option, enums) as
+ * `[variant_tag, payload]`. The response body IS the return value directly
+ * — there is no extra wrapping array.
+ *
+ * For `Option<T>` (a SATS sum type with variants `Some` = tag 0, `None` = tag 1):
+ * - `Some(value)` → `[0, <value SATS array> ]`
+ * - `None` → `[1, []]`
+ *
+ * For a struct like `PostDetailsForFrontend`:
+ * - `["id", "description", [...hashtags], "videoUid", [...identity], "creatorOauthSubject", [...timestamp], viewCount, likeCount, likedByMe, [statusTag, []]]`
  */
 @Suppress("TooManyFunctions")
 class SpacetimeDBRemoteDataSource(
@@ -57,9 +62,9 @@ class SpacetimeDBRemoteDataSource(
     /**
      * Get a single post by ID from SpacetimeDB.
      *
-     * Calls the `get_post_by_id` procedure, which checks the `posts_v2`
-     * table first (has `creator_principal_text`), falling back to the
-     * legacy `posts` table.
+     * Calls the `get_post_by_id` procedure, which checks the `posts_3`
+     * table first (has `creator_oauth_subject`), lazily migrating from
+     * `posts_v2`, falling back to the legacy `posts` table.
      *
      * @param postId The post's UUID.
      * @return `SpacetimePostDetails` if found, `null` if the post doesn't
@@ -68,7 +73,7 @@ class SpacetimeDBRemoteDataSource(
     suspend fun getPostById(postId: String): SpacetimePostDetails? {
         val idToken = getIdTokenOrNull()
         val responseBody = callProcedure("get_post_by_id", listOf(JsonPrimitive(postId)), idToken)
-        return parseOption(responseBody, SpacetimePostDetails.serializer())
+        return parseOptionPost(responseBody)
     }
 
     /**
@@ -79,19 +84,19 @@ class SpacetimeDBRemoteDataSource(
         val idToken = getIdTokenOrNull()
         val responseBody =
             callProcedure("get_individual_post_details_by_id", listOf(JsonPrimitive(postId)), idToken)
-        return parseOption(responseBody, SpacetimePostDetails.serializer())
+        return parseOptionPost(responseBody)
     }
 
     /**
-     * Get a page of a user's visible posts by principal text (offset pagination).
+     * Get a page of a user's visible posts by OAuth subject (offset pagination).
      * Calls `get_posts_of_user_by_principal`.
      *
-     * @param creatorPrincipalText The creator's IC Principal as text.
+     * @param creatorOauthSubject The creator's OAuth subject (`sub` claim from yral-auth JWT).
      * @param offset Number of posts to skip.
      * @param limit Maximum number of posts to return.
      */
     suspend fun getPostsOfUserByPrincipal(
-        creatorPrincipalText: String,
+        creatorOauthSubject: String,
         offset: ULong,
         limit: ULong,
     ): SpacetimePostListOffset {
@@ -100,31 +105,26 @@ class SpacetimeDBRemoteDataSource(
             callProcedure(
                 "get_posts_of_user_by_principal",
                 listOf(
-                    JsonPrimitive(creatorPrincipalText),
+                    JsonPrimitive(creatorOauthSubject),
                     JsonPrimitive(offset.toLong()),
                     JsonPrimitive(limit.toLong()),
                 ),
                 idToken,
             )
-        // The procedure returns a Vec<String> of post IDs; fetch details for each.
-        val postIds = parsePostIdList(responseBody)
-        val posts = mutableListOf<SpacetimePostDetails>()
-        for (postId in postIds) {
-            getPostById(postId)?.let { posts.add(it) }
-        }
-        return SpacetimePostListOffset(posts = posts)
+        // The procedure returns PostListOffset (full post objects), not post IDs.
+        return parsePostListOffset(responseBody)
     }
 
     /**
-     * Get a page of the current caller's draft posts by principal text (offset pagination).
+     * Get a page of the current caller's draft posts by OAuth subject (offset pagination).
      * Calls `get_draft_posts_of_user_by_principal`.
      *
-     * @param creatorPrincipalText The creator's IC Principal as text.
+     * @param creatorOauthSubject The creator's OAuth subject (`sub` claim from yral-auth JWT).
      * @param offset Number of posts to skip.
      * @param limit Maximum number of posts to return.
      */
     suspend fun getDraftPostsOfUserByPrincipal(
-        creatorPrincipalText: String,
+        creatorOauthSubject: String,
         offset: ULong,
         limit: ULong,
     ): SpacetimePostListOffset {
@@ -133,19 +133,14 @@ class SpacetimeDBRemoteDataSource(
             callProcedure(
                 "get_draft_posts_of_user_by_principal",
                 listOf(
-                    JsonPrimitive(creatorPrincipalText),
+                    JsonPrimitive(creatorOauthSubject),
                     JsonPrimitive(offset.toLong()),
                     JsonPrimitive(limit.toLong()),
                 ),
                 idToken,
             )
-        // The procedure returns a Vec<String> of post IDs; fetch details for each.
-        val postIds = parsePostIdList(responseBody)
-        val posts = mutableListOf<SpacetimePostDetails>()
-        for (postId in postIds) {
-            getPostById(postId)?.let { posts.add(it) }
-        }
-        return SpacetimePostListOffset(posts = posts)
+        // The procedure returns PostListOffset (full post objects), not post IDs.
+        return parsePostListOffset(responseBody)
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -154,15 +149,19 @@ class SpacetimeDBRemoteDataSource(
 
     /**
      * Get profile details V7 for a user. Returns `null` if the user doesn't exist.
-     * Calls `get_user_profile_details_v7`.
+     * Calls `get_user_profile_details_v_7`.
+     *
+     * Note: SpacetimeDB's automatic snake_case conversion splits `v7` into `v_7`,
+     * so the REST procedure name is `get_user_profile_details_v_7`, not
+     * `get_user_profile_details_v7`.
      *
      * @param oauthSubject The user's OAuth subject (or SpacetimeDB Identity hex).
      */
     suspend fun getUserProfileDetailsV7(oauthSubject: String): SpacetimeUserProfileV7? {
         val idToken = getIdTokenOrNull()
         val responseBody =
-            callProcedure("get_user_profile_details_v7", listOf(JsonPrimitive(oauthSubject)), idToken)
-        return parseOption(responseBody, SpacetimeUserProfileV7.serializer())
+            callProcedure("get_user_profile_details_v_7", listOf(JsonPrimitive(oauthSubject)), idToken)
+        return parseOptionUserProfile(responseBody)
     }
 
     /**
@@ -177,7 +176,7 @@ class SpacetimeDBRemoteDataSource(
         val args = JsonArray(oauthSubjects.map { JsonPrimitive(it) })
         val responseBody =
             callProcedure("get_users_profile_details", listOf(args), idToken)
-        return parseResultList(responseBody, SpacetimeUserProfileV7.serializer())
+        return parseUserProfileList(responseBody)
     }
 
     /**
@@ -204,7 +203,7 @@ class SpacetimeDBRemoteDataSource(
                 ),
                 idToken,
             )
-        return parseResult(responseBody, SpacetimeFollowersPage.serializer())
+        return parseFollowersPage(responseBody)
     }
 
     /**
@@ -231,7 +230,7 @@ class SpacetimeDBRemoteDataSource(
                 ),
                 idToken,
             )
-        return parseResult(responseBody, SpacetimeFollowingPage.serializer())
+        return parseFollowingPage(responseBody)
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -404,110 +403,77 @@ class SpacetimeDBRemoteDataSource(
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // Positional SATS response parsers
+    // ─────────────────────────────────────────────────────────────────────
+    //
+    // SpacetimeDB's REST `/call` endpoint serializes procedure return values
+    // using `SerdeWrapper(AlgebraicValue)`. Product types (structs) are
+    // positional JSON arrays; sum types (Option, enums) are `[tag, payload]`.
+    // The response body IS the return value — no extra wrapping array.
+
     /**
-     * Parse the `Option<T>` REST response.
-     *
-     * The response is `[[variant_index, payload]]`:
-     * - `[[0, {<T JSON>}]]` → Some(value)
-     * - `[[1, []]]` → None
+     * Parse an `Option<PostDetailsForFrontend>` REST response.
+     * The response is a SATS sum type: `[0, postArray]` for Some, `[1, []]` for None.
      */
-    @Suppress("ThrowsCount")
-    private fun <T> parseOption(
-        responseBody: String,
-        serializer: kotlinx.serialization.KSerializer<T>,
-    ): T? {
-        val outerArray =
-            json.parseToJsonElement(responseBody) as? JsonArray
-                ?: throw parseError("expected JSON array", responseBody)
-
-        val innerArray =
-            outerArray.firstOrNull() as? JsonArray
-                ?: throw parseError("expected nested array", responseBody)
-
-        val variantIndex =
-            (innerArray.getOrNull(0) as? JsonPrimitive)?.content?.toIntOrNull()
-                ?: throw parseError("expected variant index", responseBody)
-
-        if (variantIndex != 0) return null // None
-
-        val payload =
-            innerArray.getOrNull(1)
-                ?: throw parseError("expected payload", responseBody)
-
-        return json.decodeFromString(serializer, payload.toString())
+    private fun parseOptionPost(responseBody: String): SpacetimePostDetails? {
+        val array = parseResponseArray(responseBody)
+        val payload = parseOptionArray(array) ?: return null
+        return SpacetimePostDetails.fromJsonArray(payload)
     }
 
     /**
-     * Parse a direct (non-Option) REST response.
-     *
-     * The response is `[{<T JSON>}]` — a single object wrapped in an outer array.
+     * Parse an `Option<UserProfileDetailsV7>` REST response.
+     * The response is a SATS sum type: `[0, profileArray]` for Some, `[1, []]` for None.
      */
-    @Suppress("ThrowsCount")
-    private fun <T> parseResult(
-        responseBody: String,
-        serializer: kotlinx.serialization.KSerializer<T>,
-    ): T {
-        val outerArray =
-            json.parseToJsonElement(responseBody) as? JsonArray
-                ?: throw parseError("expected JSON array", responseBody)
-
-        val payload =
-            outerArray.firstOrNull()
-                ?: throw parseError("expected result payload", responseBody)
-
-        return json.decodeFromString(serializer, payload.toString())
+    private fun parseOptionUserProfile(responseBody: String): SpacetimeUserProfileV7? {
+        val array = parseResponseArray(responseBody)
+        val payload = parseOptionArray(array) ?: return null
+        return SpacetimeUserProfileV7.fromJsonArray(payload)
     }
 
     /**
-     * Parse a `Vec<T>` REST response.
-     *
-     * The response is `[{<T JSON>}, {<T JSON>}, ...]` — an array of objects
-     * wrapped in an outer array.
+     * Parse a `PostListOffset` REST response.
+     * The response is a SATS product type: `[[postArray0, postArray1, ...]]`.
      */
-    @Suppress("ThrowsCount")
-    private fun <T> parseResultList(
-        responseBody: String,
-        serializer: kotlinx.serialization.KSerializer<T>,
-    ): List<T> {
-        val outerArray =
-            json.parseToJsonElement(responseBody) as? JsonArray
-                ?: throw parseError("expected JSON array", responseBody)
-
-        val innerArray =
-            outerArray.firstOrNull() as? JsonArray
-                ?: throw parseError("expected nested array", responseBody)
-
-        return innerArray.map { json.decodeFromString(serializer, it.toString()) }
+    private fun parsePostListOffset(responseBody: String): SpacetimePostListOffset {
+        val array = parseResponseArray(responseBody)
+        return SpacetimePostListOffset.fromJsonArray(array)
     }
 
     /**
-     * Parse a `Vec<String>` REST response — a list of string post IDs.
-     *
-     * SpacetimeDB wraps the result in an outer array, so the response may be
-     * `["id1", "id2", ...]` or `[["id1", "id2", ...]]` depending on the procedure.
-     * This handles both formats.
+     * Parse a `FollowersPage` REST response.
+     * The response is a SATS product type: `[[followerItem0, ...], totalCount, [0, cursor] | [1, []]]`.
      */
-    private fun parsePostIdList(responseBody: String): List<String> {
-        val outerArray =
-            json.parseToJsonElement(responseBody) as? JsonArray
-                ?: throw parseError("expected JSON array", responseBody)
-
-        // Try flat format: ["id1", "id2", ...]
-        val flatStrings: List<String> =
-            outerArray.mapNotNull { element ->
-                (element as? JsonPrimitive)?.content
-            }
-        if (flatStrings.isNotEmpty()) return flatStrings
-
-        // Try nested format: [["id1", "id2", ...]]
-        val innerArray =
-            outerArray.firstOrNull() as? JsonArray
-                ?: throw parseError("expected string array or nested array", responseBody)
-
-        return innerArray.mapNotNull { element ->
-            (element as? JsonPrimitive)?.content
-        }
+    private fun parseFollowersPage(responseBody: String): SpacetimeFollowersPage {
+        val array = parseResponseArray(responseBody)
+        return SpacetimeFollowersPage.fromJsonArray(array)
     }
+
+    /**
+     * Parse a `FollowingPage` REST response.
+     * The response is a SATS product type: `[[followingItem0, ...], totalCount, [0, cursor] | [1, []]]`.
+     */
+    private fun parseFollowingPage(responseBody: String): SpacetimeFollowingPage {
+        val array = parseResponseArray(responseBody)
+        return SpacetimeFollowingPage.fromJsonArray(array)
+    }
+
+    /**
+     * Parse a `Vec<UserProfileDetailsV7>` REST response.
+     * The response is a SATS array of product arrays: `[[profile0], [profile1], ...]`.
+     */
+    private fun parseUserProfileList(responseBody: String): List<SpacetimeUserProfileV7> {
+        val array = parseResponseArray(responseBody)
+        return array.map { SpacetimeUserProfileV7.fromJsonArray(it as JsonArray) }
+    }
+
+    /**
+     * Parse the raw response body as a JSON array, throwing a clear error if not.
+     */
+    private fun parseResponseArray(responseBody: String): JsonArray =
+        json.parseToJsonElement(responseBody) as? JsonArray
+            ?: throw parseError("expected JSON array", responseBody)
 
     private fun parseError(
         expected: String,
