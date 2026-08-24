@@ -148,19 +148,15 @@ class SpacetimeDBRemoteDataSource(
     // ─────────────────────────────────────────────────────────────────────
 
     /**
-     * Get profile details V7 for a user. Returns `null` if the user doesn't exist.
-     * Calls `get_user_profile_details_v_7`.
-     *
-     * Note: SpacetimeDB's automatic snake_case conversion splits `v7` into `v_7`,
-     * so the REST procedure name is `get_user_profile_details_v_7`, not
-     * `get_user_profile_details_v7`.
+     * Get profile details for a user. Returns `null` if the user doesn't exist.
+     * Calls `get_user_profile_details`.
      *
      * @param oauthSubject The user's OAuth subject (or SpacetimeDB Identity hex).
      */
     suspend fun getUserProfileDetailsV7(oauthSubject: String): SpacetimeUserProfileV7? {
         val idToken = getIdTokenOrNull()
         val responseBody =
-            callProcedure("get_user_profile_details_v_7", listOf(JsonPrimitive(oauthSubject)), idToken)
+            callProcedure("get_user_profile_details", listOf(JsonPrimitive(oauthSubject)), idToken)
         return parseOptionUserProfile(responseBody)
     }
 
@@ -267,7 +263,7 @@ class SpacetimeDBRemoteDataSource(
     }
 
     /**
-     * Update the caller's profile details. Calls `update_profile_details_v2`.
+     * Update the caller's profile details. Calls `update_profile_details`.
      *
      * @param bio New bio, or `null` to leave unchanged.
      * @param websiteUrl New website URL, or `null` to leave unchanged.
@@ -291,7 +287,7 @@ class SpacetimeDBRemoteDataSource(
     }
 
     /**
-     * Register a new user or create a bot account. Calls `accept_new_user_registration_v_2`.
+     * Register a new user or create a bot account. Calls `accept_new_user_registration`.
      *
      * @param newPrincipalText The principal text of the new user.
      * @param authenticated Whether the user is authenticated (accepted for API compat, not used).
@@ -313,9 +309,8 @@ class SpacetimeDBRemoteDataSource(
                 JsonArray(listOf(JsonPrimitive(1), JsonArray(emptyList())))
             }
         callProcedure(
-            // Deployed module mangles the Rust fn name `..._v2` → reducer `..._v_2`
-            // (SpacetimeDB codegen inserts an underscore before the digit).
-            "accept_new_user_registration_v_2",
+            // SpacetimeDB CaseConversionPolicy::None — function name used verbatim.
+            "accept_new_user_registration",
             listOf(
                 JsonPrimitive(newPrincipalText),
                 JsonPrimitive(authenticated),

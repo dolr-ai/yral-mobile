@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonArray
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
- * SpacetimeDB `UserProfileDetailsV7` — returned by `get_user_profile_details_v7`.
+ * SpacetimeDB `UserProfileDetails` — returned by `get_user_profile_details`.
  *
  * SpacetimeDB serializes `SpacetimeType` structs as **positional JSON arrays**.
  * Field order matches the Rust struct definition in
