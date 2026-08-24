@@ -44,7 +44,8 @@ import kotlinx.serialization.json.JsonPrimitive
  * - `None` → `[1, []]`
  *
  * For a struct like `PostDetailsForFrontend`:
- * - `["id", "description", [...hashtags], "videoUid", [...identity], "creatorOauthSubject", [...timestamp], viewCount, likeCount, likedByMe, [statusTag, []]]`
+ * - `["id", "description", [...hashtags], "videoUid", [...identity], "creatorOauthSubject",
+ *   [...timestamp], viewCount, likeCount, likedByMe, [statusTag, []]]`
  */
 @Suppress("TooManyFunctions")
 class SpacetimeDBRemoteDataSource(

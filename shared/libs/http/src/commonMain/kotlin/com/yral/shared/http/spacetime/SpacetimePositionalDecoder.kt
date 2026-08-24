@@ -15,14 +15,17 @@ import kotlinx.serialization.json.JsonPrimitive
  * This class wraps a `JsonArray` and provides typed accessors by index,
  * matching the field order defined in the Rust `SpacetimeType` structs.
  */
-internal class SpacetimePositionalDecoder(private val array: JsonArray) {
-    fun getString(index: Int): String =
-        (element(index) as JsonPrimitive).content
+internal class SpacetimePositionalDecoder(
+    private val array: JsonArray,
+) {
+    fun getString(index: Int): String = (element(index) as JsonPrimitive).content
 
     fun getStringOrNull(index: Int): String? {
-        val element = elementOrNull(index) ?: return null
-        if (element is JsonNull) return null
-        return (element as JsonPrimitive).content
+        val element = elementOrNull(index)
+        return when {
+            element == null || element is JsonNull -> null
+            else -> (element as JsonPrimitive).content
+        }
     }
 
     fun getBoolean(index: Int): Boolean {
@@ -31,9 +34,11 @@ internal class SpacetimePositionalDecoder(private val array: JsonArray) {
     }
 
     fun getBooleanOrNull(index: Int): Boolean? {
-        val element = elementOrNull(index) ?: return null
-        if (element is JsonNull) return null
-        return (element as JsonPrimitive).content.toBooleanStrict()
+        val element = elementOrNull(index)
+        return when {
+            element == null || element is JsonNull -> null
+            else -> (element as JsonPrimitive).content.toBooleanStrict()
+        }
     }
 
     fun getULong(index: Int): ULong {
@@ -54,18 +59,18 @@ internal class SpacetimePositionalDecoder(private val array: JsonArray) {
     fun getArray(index: Int): JsonArray = element(index) as JsonArray
 
     fun getArrayOrNull(index: Int): JsonArray? {
-        val element = elementOrNull(index) ?: return null
-        if (element is JsonNull) return null
-        return element as? JsonArray
+        val element = elementOrNull(index)
+        return when {
+            element == null || element is JsonNull -> null
+            else -> element as? JsonArray
+        }
     }
 
     fun size(): Int = array.size
 
-    private fun element(index: Int) =
-        array[index]
+    private fun element(index: Int) = array[index]
 
-    private fun elementOrNull(index: Int) =
-        array.getOrNull(index)
+    private fun elementOrNull(index: Int) = array.getOrNull(index)
 }
 
 /**
@@ -77,7 +82,10 @@ internal class SpacetimePositionalDecoder(private val array: JsonArray) {
  * - `PostStatus::Draft` → `[7, []]`
  * - `SubscriptionPlan::Pro(data)` → `[1, [field0, field1]]`
  */
-internal data class SumVariant(val tag: Int, val payload: JsonArray) {
+internal data class SumVariant(
+    val tag: Int,
+    val payload: JsonArray,
+) {
     companion object {
         fun fromArray(array: JsonArray): SumVariant {
             val tag = (array[0] as JsonPrimitive).content.toInt()
@@ -100,12 +108,10 @@ internal fun parseOptionArray(array: JsonArray): JsonArray? {
 /**
  * Parse a SATS `Vec<String>` from a JSON array of string primitives.
  */
-internal fun parseStringVec(array: JsonArray): List<String> =
-    array.map { (it as JsonPrimitive).content }
+internal fun parseStringVec(array: JsonArray): List<String> = array.map { (it as JsonPrimitive).content }
 
 /**
  * Parse a SATS `Vec<Long>` from a JSON array of number primitives (used for
  * `Timestamp` which serializes as `[micros]`).
  */
-internal fun parseLongVec(array: JsonArray): List<Long> =
-    array.map { (it as JsonPrimitive).content.toLong() }
+internal fun parseLongVec(array: JsonArray): List<Long> = array.map { (it as JsonPrimitive).content.toLong() }

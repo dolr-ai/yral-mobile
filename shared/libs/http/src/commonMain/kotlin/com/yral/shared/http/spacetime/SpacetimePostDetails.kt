@@ -46,6 +46,18 @@ data class SpacetimePostDetails(
     val status: SpacetimePostStatus,
 ) {
     companion object {
+        private const val INDEX_ID = 0
+        private const val INDEX_DESCRIPTION = 1
+        private const val INDEX_HASHTAGS = 2
+        private const val INDEX_VIDEO_UID = 3
+        private const val INDEX_CREATOR = 4
+        private const val INDEX_CREATOR_OAUTH_SUBJECT = 5
+        private const val INDEX_CREATED_AT = 6
+        private const val INDEX_TOTAL_VIEW_COUNT = 7
+        private const val INDEX_LIKE_COUNT = 8
+        private const val INDEX_LIKED_BY_ME = 9
+        private const val INDEX_STATUS = 10
+
         /**
          * Decode a `PostDetailsForFrontend` from its SATS positional array
          * representation.
@@ -53,17 +65,17 @@ data class SpacetimePostDetails(
         fun fromJsonArray(array: JsonArray): SpacetimePostDetails {
             val decoder = SpacetimePositionalDecoder(array)
             return SpacetimePostDetails(
-                id = decoder.getString(0),
-                description = decoder.getString(1),
-                hashtags = decoder.getArrayOrNull(2)?.let { parseStringVec(it) } ?: emptyList(),
-                videoUid = decoder.getString(3),
-                creator = decoder.getArrayOrNull(4),
-                creatorOauthSubject = decoder.getString(5),
-                createdAt = decoder.getArrayOrNull(6)?.let { parseLongVec(it) } ?: emptyList(),
-                totalViewCount = decoder.getULong(7),
-                likeCount = decoder.getULong(8),
-                likedByMe = decoder.getBoolean(9),
-                status = parsePostStatus(decoder.getArray(10)),
+                id = decoder.getString(INDEX_ID),
+                description = decoder.getString(INDEX_DESCRIPTION),
+                hashtags = decoder.getArrayOrNull(INDEX_HASHTAGS)?.let { parseStringVec(it) } ?: emptyList(),
+                videoUid = decoder.getString(INDEX_VIDEO_UID),
+                creator = decoder.getArrayOrNull(INDEX_CREATOR),
+                creatorOauthSubject = decoder.getString(INDEX_CREATOR_OAUTH_SUBJECT),
+                createdAt = decoder.getArrayOrNull(INDEX_CREATED_AT)?.let { parseLongVec(it) } ?: emptyList(),
+                totalViewCount = decoder.getULong(INDEX_TOTAL_VIEW_COUNT),
+                likeCount = decoder.getULong(INDEX_LIKE_COUNT),
+                likedByMe = decoder.getBoolean(INDEX_LIKED_BY_ME),
+                status = parsePostStatus(decoder.getArray(INDEX_STATUS)),
             )
         }
     }

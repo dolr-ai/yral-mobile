@@ -46,21 +46,36 @@ data class SpacetimeUserProfileV7(
     val accountType: SpacetimeUserAccountType,
 ) {
     companion object {
+        private const val INDEX_OAUTH_SUBJECT = 0
+        private const val INDEX_PROFILE_PICTURE = 1
+        private const val INDEX_BIO = 2
+        private const val INDEX_WEBSITE_URL = 3
+        private const val INDEX_FOLLOWERS_COUNT = 4
+        private const val INDEX_FOLLOWING_COUNT = 5
+        private const val INDEX_CALLER_FOLLOWS_USER = 6
+        private const val INDEX_USER_FOLLOWS_CALLER = 7
+        private const val INDEX_SUBSCRIPTION_PLAN = 8
+        private const val INDEX_IS_AI_INFLUENCER = 9
+        private const val INDEX_ACCOUNT_TYPE = 10
+
         fun fromJsonArray(array: JsonArray): SpacetimeUserProfileV7 {
             val decoder = SpacetimePositionalDecoder(array)
             return SpacetimeUserProfileV7(
-                oauthSubject = decoder.getString(0),
-                profilePicture = decoder.getArrayOrNull(1)?.let { parseOptionArray(it) }
-                    ?.let { SpacetimeProfilePictureData.fromJsonArray(it) },
-                bio = decoder.getString(2),
-                websiteUrl = decoder.getString(3),
-                followersCount = decoder.getULong(4),
-                followingCount = decoder.getULong(5),
-                callerFollowsUser = decoder.getArrayOrNull(6)?.let { parseOptionBool(it) },
-                userFollowsCaller = decoder.getArrayOrNull(7)?.let { parseOptionBool(it) },
-                subscriptionPlan = parseSubscriptionPlan(decoder.getArray(8)),
-                isAiInfluencer = decoder.getBoolean(9),
-                accountType = parseUserAccountType(decoder.getArray(10)),
+                oauthSubject = decoder.getString(INDEX_OAUTH_SUBJECT),
+                profilePicture =
+                    decoder
+                        .getArrayOrNull(INDEX_PROFILE_PICTURE)
+                        ?.let { parseOptionArray(it) }
+                        ?.let { SpacetimeProfilePictureData.fromJsonArray(it) },
+                bio = decoder.getString(INDEX_BIO),
+                websiteUrl = decoder.getString(INDEX_WEBSITE_URL),
+                followersCount = decoder.getULong(INDEX_FOLLOWERS_COUNT),
+                followingCount = decoder.getULong(INDEX_FOLLOWING_COUNT),
+                callerFollowsUser = decoder.getArrayOrNull(INDEX_CALLER_FOLLOWS_USER)?.let { parseOptionBool(it) },
+                userFollowsCaller = decoder.getArrayOrNull(INDEX_USER_FOLLOWS_CALLER)?.let { parseOptionBool(it) },
+                subscriptionPlan = parseSubscriptionPlan(decoder.getArray(INDEX_SUBSCRIPTION_PLAN)),
+                isAiInfluencer = decoder.getBoolean(INDEX_IS_AI_INFLUENCER),
+                accountType = parseUserAccountType(decoder.getArray(INDEX_ACCOUNT_TYPE)),
             )
         }
     }
@@ -105,13 +120,18 @@ data class SpacetimeNsfwInfo(
     val csamDetected: Boolean,
 ) {
     companion object {
+        private const val INDEX_IS_NSFW = 0
+        private const val INDEX_NSFW_EC = 1
+        private const val INDEX_NSFW_GORE = 2
+        private const val INDEX_CSAM_DETECTED = 3
+
         fun fromJsonArray(array: JsonArray): SpacetimeNsfwInfo {
             val decoder = SpacetimePositionalDecoder(array)
             return SpacetimeNsfwInfo(
-                isNsfw = decoder.getBoolean(0),
-                nsfwEc = decoder.getString(1),
-                nsfwGore = decoder.getString(2),
-                csamDetected = decoder.getBoolean(3),
+                isNsfw = decoder.getBoolean(INDEX_IS_NSFW),
+                nsfwEc = decoder.getString(INDEX_NSFW_EC),
+                nsfwGore = decoder.getString(INDEX_NSFW_GORE),
+                csamDetected = decoder.getBoolean(INDEX_CSAM_DETECTED),
             )
         }
     }
@@ -134,7 +154,10 @@ sealed class SpacetimeSubscriptionPlan {
 internal fun parseSubscriptionPlan(array: JsonArray): SpacetimeSubscriptionPlan {
     val variant = SumVariant.fromArray(array)
     return when (variant.tag) {
-        0 -> SpacetimeSubscriptionPlan.Free
+        0 -> {
+            SpacetimeSubscriptionPlan.Free
+        }
+
         1 -> {
             val decoder = SpacetimePositionalDecoder(variant.payload)
             SpacetimeSubscriptionPlan.Pro(
@@ -142,7 +165,10 @@ internal fun parseSubscriptionPlan(array: JsonArray): SpacetimeSubscriptionPlan 
                 totalVideoCreditsAlloted = decoder.getUInt(1),
             )
         }
-        else -> throw IllegalArgumentException("Unknown SubscriptionPlan variant tag: ${variant.tag}")
+
+        else -> {
+            throw IllegalArgumentException("Unknown SubscriptionPlan variant tag: ${variant.tag}")
+        }
     }
 }
 
@@ -170,13 +196,17 @@ internal fun parseUserAccountType(array: JsonArray): SpacetimeUserAccountType {
                 bots = decoder.getArrayOrNull(0)?.let { parseStringVec(it) } ?: emptyList(),
             )
         }
+
         1 -> {
             val decoder = SpacetimePositionalDecoder(variant.payload)
             SpacetimeUserAccountType.BotAccount(
                 owner = decoder.getString(0),
             )
         }
-        else -> throw IllegalArgumentException("Unknown UserAccountType variant tag: ${variant.tag}")
+
+        else -> {
+            throw IllegalArgumentException("Unknown UserAccountType variant tag: ${variant.tag}")
+        }
     }
 }
 
