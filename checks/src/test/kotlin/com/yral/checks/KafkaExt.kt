@@ -1,97 +1,155 @@
 package com.yral.checks
 
-import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.common.TopicPartition
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.time.Duration
-import java.util.Base64
 import java.util.UUID
 
-private val kafkaBootstrap: String = System.getenv("KAFKA_BOOTSTRAP") ?: "kafka.yral.com:9092"
+// Kafka Bridge HTTP REST API — replaces the native Kafka consumer.
+// The bridge is at https://kafka-bridge.yral.com, fronted by an nginx proxy
+// that validates the X-Bearer-Token header. The token is provided via the
+// KAFKA_BRIDGE_TOKEN environment variable (injected by fnox locally).
+private val bridgeUrl: String = System.getenv("KAFKA_BRIDGE_URL") ?: "https://kafka-bridge.yral.com"
 
-val kafkaPassword: String by lazy {
-    System.getenv("KAFKA_PASSWORD") ?: fetchPasswordFromKubectl()
-}
+private val bridgeToken: String =
+    System.getenv("KAFKA_BRIDGE_TOKEN")
+        ?: error("KAFKA_BRIDGE_TOKEN is not set. Run via `fnox exec` or mise (fnox injects it).")
 
+private val httpClient: HttpClient =
+    HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(10))
+        .build()
+
+/**
+ * Count Snowplow events in the `snowplow-raw` topic since [since] (epoch ms)
+ * that match the given [platformMarker] and optional [eventMarker].
+ *
+ * Uses the Kafka Bridge HTTP REST API instead of a native Kafka consumer.
+ * Creates a consumer, subscribes to snowplow-raw, polls for records, and
+ * deletes the consumer when done.
+ */
 fun countSnowplowEvents(
     since: Long,
     platformMarker: String,
     eventMarker: String? = null,
     minCount: Int = 1,
 ): Int {
-    val consumer = KafkaConsumer<ByteArray, ByteArray>(kafkaConsumerProps())
-    val partitions =
-        consumer
-            .partitionsFor("snowplow-raw")
-            .map { TopicPartition("snowplow-raw", it.partition()) }
-    consumer.assign(partitions)
+    val consumerGroup = "ci-e2e-assert-${UUID.randomUUID()}"
+    val consumerName = "consumer-$consumerGroup"
 
-    // offsetsForTimes seeks to exact test-start ms — no historical scan needed
-    consumer.offsetsForTimes(partitions.associateWith { since }).forEach { (tp, oTs) ->
-        if (oTs != null) consumer.seek(tp, oTs.offset()) else consumer.seekToEnd(listOf(tp))
-    }
+    // 1. Create a consumer instance via the Bridge
+    val createBody =
+        """
+        {
+          "name": "$consumerName",
+          "format": "binary",
+          "auto.offset.reset": "earliest",
+          "enable.auto.commit": false
+        }
+        """.trimIndent()
 
+    httpRequest(
+        "POST",
+        "/consumers/$consumerGroup",
+        createBody,
+        expectedStatus = 200,
+    )
+
+    // 2. Subscribe to the snowplow-raw topic
+    val subscribeBody = """{"topics":["snowplow-raw"]}"""
+    httpRequest(
+        "POST",
+        "/consumers/$consumerGroup/instances/$consumerName/subscription",
+        subscribeBody,
+        expectedStatus = 204,
+    )
+
+    // 3. Poll for records — snowplow-raw is Thrift-encoded binary, but
+    //    "yral-mobile-staging" and platform markers ("andr-", "ios-") are
+    //    embedded as readable UTF-8 substrings within the payload.
     var found = 0
-    val deadline = System.currentTimeMillis() + 5 * 60_000 // 5 min: collector→Kafka pipeline latency
+    val deadline = System.currentTimeMillis() + 5 * 60_000 // 5 min: collector to Kafka pipeline latency
     while (System.currentTimeMillis() < deadline) {
-        // snowplow-raw is Thrift-encoded binary; "yral-mobile" and "Android"/"iOS"
-        // are embedded as readable UTF-8 substrings within the payload
-        for (record in consumer.poll(Duration.ofSeconds(1))) {
-            val payload = String(record.value(), Charsets.UTF_8)
-            if (payload.contains("yral-mobile-staging") && payload.contains(platformMarker) &&
-                (eventMarker == null || payload.contains(eventMarker))
-            ) {
-                found++
+        val responseBody =
+            httpRequest(
+                "GET",
+                "/consumers/$consumerGroup/instances/$consumerName/records?timeout=1000",
+                null,
+                expectedStatus = 200,
+            )
+
+        if (responseBody.isNotBlank() && responseBody != "[]") {
+            val records = parseRecords(responseBody)
+            for (recordValue in records) {
+                val payload = String(recordValue, Charsets.UTF_8)
+                if (payload.contains("yral-mobile-staging") && payload.contains(platformMarker) &&
+                    (eventMarker == null || payload.contains(eventMarker))
+                ) {
+                    found++
+                }
             }
         }
+
         if (found >= minCount) break
     }
-    consumer.close()
+
+    // 4. Delete the consumer to clean up
+    httpRequest(
+        "DELETE",
+        "/consumers/$consumerGroup/instances/$consumerName",
+        null,
+        expectedStatus = 204,
+    )
+
     return found
 }
 
-private fun kafkaConsumerProps() =
-    mapOf(
-        "bootstrap.servers" to kafkaBootstrap,
-        "security.protocol" to "SASL_SSL",
-        "sasl.mechanism" to "SCRAM-SHA-512",
-        "sasl.jaas.config" to
-            """org.apache.kafka.common.security.scram.ScramLoginModule required username="ci-e2e-reader" password="$kafkaPassword";""",
-        "group.id" to "ci-e2e-assert-${UUID.randomUUID()}",
-        "key.deserializer" to "org.apache.kafka.common.serialization.ByteArrayDeserializer",
-        "value.deserializer" to "org.apache.kafka.common.serialization.ByteArrayDeserializer",
-        "enable.auto.commit" to "false",
-    )
+private fun httpRequest(
+    method: String,
+    path: String,
+    body: String?,
+    expectedStatus: Int,
+): String {
+    val requestBuilder =
+        HttpRequest.newBuilder()
+            .uri(URI.create("$bridgeUrl$path"))
+            .header("X-Bearer-Token", bridgeToken)
+            .timeout(Duration.ofSeconds(30))
 
-private fun fetchPasswordFromKubectl(): String {
-    // Mirror checks.sh _require_kubeconfig(): if KUBECONFIG is not set, fall back to
-    // the ci-e2e-reader.kubeconfig file in the repo root (for local dev).
-    val kubeconfig =
-        System.getenv("KUBECONFIG")?.takeIf { it.isNotBlank() }
-            ?: repoRoot
-                .resolve("ci-e2e-reader.kubeconfig")
-                .takeIf { it.exists() }
-                ?.absolutePath
-            ?: error(
-                "KUBECONFIG is not set and ci-e2e-reader.kubeconfig not found at $repoRoot. " +
-                    "Get the kubeconfig from a team member and place it there.",
-            )
+    if (body != null) {
+        requestBuilder.header("Content-Type", "application/vnd.kafka.v2+json")
+    }
 
-    val proc =
-        ProcessBuilder(
-            "kubectl",
-            "get",
-            "secret",
-            "ci-e2e-reader",
-            "-n",
-            "kafka",
-            "-o",
-            "jsonpath={.data.password}",
-        ).also { it.environment()["KUBECONFIG"] = kubeconfig }
-            .start()
-    val b64 =
-        proc.inputStream
-            .readBytes()
-            .toString(Charsets.UTF_8)
-            .trim()
-    return Base64.getDecoder().decode(b64).toString(Charsets.UTF_8)
+    when (method) {
+        "POST" -> requestBuilder.POST(HttpRequest.BodyPublishers.ofString(body ?: ""))
+        "GET" -> requestBuilder.GET()
+        "DELETE" -> requestBuilder.DELETE()
+    }
+
+    val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
+
+    if (response.statusCode() != expectedStatus) {
+        error("Kafka Bridge $method $path failed: ${response.statusCode()} — ${response.body()}")
+    }
+
+    return response.body()
+}
+
+/**
+ * Parse the Kafka Bridge records response and extract base64-decoded values.
+ * The response is a JSON array like:
+ * [{"topic":"snowplow-raw","partition":0,"offset":123,"value":"base64data",...},...]
+ */
+private fun parseRecords(json: String): List<ByteArray> {
+    val records = mutableListOf<ByteArray>()
+    val valueRegex = Regex(""""value"\s*:\s*"([A-Za-z0-9+/=]*)"\s*[,}]""")
+    for (match in valueRegex.findAll(json)) {
+        val base64Value = match.groupValues[1]
+        if (base64Value.isNotEmpty()) {
+            records.add(java.util.Base64.getDecoder().decode(base64Value))
+        }
+    }
+    return records
 }

@@ -2,7 +2,6 @@ plugins { kotlin("jvm") }
 
 dependencies {
     testImplementation(libs.junit.jupiter)
-    testImplementation(libs.kafka.clients)
     testRuntimeOnly(libs.slf4j.simple)
 }
 

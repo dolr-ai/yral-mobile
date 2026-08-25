@@ -70,11 +70,9 @@ multiplatform-markdown-renderer = "0.38.0"
 libphonenumber = "8.13.48"
 junit4 = "4.13.2"
 junit-jupiter = "5.10.3"
-kafka-clients = "3.9.2"
 slf4j = "2.0.13"
 
 [libraries]
-
 desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 
 accompanist-permission = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist-permission" }
@@ -150,30 +148,23 @@ firebase-config = { module = "com.google.firebase:firebase-config" }
 firebase-performance = { module = "com.google.firebase:firebase-perf" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 firebase-inappmessaging-display = { module = "com.google.firebase:firebase-inappmessaging-display" }
-
 googlePlay-inAppUpdate = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "inAppUpdate" }
 googlePlay-billingclient = { group = "com.android.billingclient", name = "billing", version.ref = "play-billing" }
 googlePlay-billingclient-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "play-billing" }
-
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
-
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koinBom" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }
 koin-android = { group = "io.insert-koin", name = "koin-android" }
 koin-compose = { group = "io.insert-koin", name = "koin-compose" }
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
-
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
-kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka-clients" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
-
 kotlinResult-core = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version.ref = "kotlinResult" }
 kotlinResult-coroutines = { group = "com.michael-bull.kotlin-result", name = "kotlin-result-coroutines", version.ref = "kotlinResult" }
-
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
@@ -246,7 +237,6 @@ ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devto
 spotless-gradlePlugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
-
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

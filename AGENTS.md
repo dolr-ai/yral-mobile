@@ -86,12 +86,12 @@ All CI checks live as ordered JUnit5 test classes in `checks/src/test/kotlin/com
 
 **Execution order** (enforced by `@Order`):
 1. `Checks` — iOS lint (SwiftLint), iOS setup (CocoaPods), iOS unit tests (xcodebuild), iOS simulator app build, Android emulator start
-2. `AndroidE2eTest` — installs APK, runs Maestro feed-scroll flow, asserts Snowplow events in Kafka
-3. `IosE2eTest` — installs staging app to simulator, runs Maestro feed-scroll flow, asserts Snowplow events in Kafka
+2. `AndroidE2eTest` — installs APK, runs Maestro feed-scroll flow, asserts Snowplow events via the Kafka Bridge HTTP API
+3. `IosE2eTest` — installs staging app to simulator, runs Maestro feed-scroll flow, asserts Snowplow events via the Kafka Bridge HTTP API
 
 **When adding a new check**, add it as a test method in `Checks.kt` (with `@Order`) or as a new test class (with `@Order` on the class). Do not add logic to bash scripts, `checks.yml`, or the VSCode task.
 
-**Local prerequisites**: Android emulator (API 35, Google APIs, 12 GB disk) and iOS simulator (iPhone, any recent iOS) must be available. The `android start emulator` test starts the emulator automatically if one isn't running; the iOS simulator is booted by `IosE2eTest.@BeforeAll`. KUBECONFIG is inherited from the root `mise.toml` (`~/.kube/config`); the checks module auto-discovers `ci-e2e-reader.kubeconfig` in the repo root as a fallback. Run `mise install` to set up all build tools (JDK, Ruby, CocoaPods, SwiftLint, Maestro, kubectl, Rust).
+**Local prerequisites**: Android emulator (API 35, Google APIs, 12 GB disk) and iOS simulator (iPhone, any recent iOS) must be available. The `android start emulator` test starts the emulator automatically if one isn't running; the iOS simulator is booted by `IosE2eTest.@BeforeAll`. The Kafka Bridge URL and bearer token are injected via `mise.toml` (`KAFKA_BRIDGE_URL`) and `fnox.toml` (`KAFKA_BRIDGE_TOKEN`) — run via `fnox exec` or mise to have the token available. Run `mise install` to set up all build tools (JDK, Ruby, CocoaPods, SwiftLint, Maestro, Rust).
 
 ## Architecture Rules
 
