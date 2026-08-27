@@ -50,7 +50,7 @@ jobs:
 
       - name: Restore Gradle and Rust caches
         id: restore-tooling-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.gradle/caches
@@ -300,7 +300,7 @@ jobs:
       # ── Post-deploy ──────────────────────────────────────────────────────
       - name: Save Gradle and Rust caches
         if: ${{ success() && steps.restore-tooling-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             ~/.gradle/caches

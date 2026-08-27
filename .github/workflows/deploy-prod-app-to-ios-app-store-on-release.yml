@@ -66,7 +66,7 @@ jobs:
           java-version: '17'
 
       - name: Restore Gradle and Rust caches
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.gradle/caches
@@ -185,7 +185,7 @@ jobs:
 
       - name: Save Gradle and Rust caches
         if: success()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             ~/.gradle/caches
