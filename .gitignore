@@ -115,11 +115,7 @@ google-services.json
 #Cargo.lock
 /doc/
 /build/
-/rust-agent/target/
 rust-analyzer.json
-/shared/rust/rust-agent/target/rust-analyzer/flycheck0/stderr
-/shared/rust/rust-agent/target/rust-analyzer/flycheck0/stdout
-shared/rust/rust-agent/rust-agent-uniffi/target
 
 # Kotlin Gradle plugin data
 # https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
