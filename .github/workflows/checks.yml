@@ -20,7 +20,7 @@ jobs:
       # SETUP  (CI-only — not needed locally)
       # ══════════════════════════════════════════════════════════════════════
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           show-progress: false
 
