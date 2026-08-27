@@ -15,13 +15,12 @@ Do **not** append changelog entries or "as of date X" notes. Rewrite the relevan
 
 ## Project Snapshot
 
-YRAL Mobile is a Kotlin Multiplatform app with thin Android and iOS wrappers and most product code in `/shared`. UI is Compose Multiplatform. Blockchain and canister work goes through Rust FFI.
+YRAL Mobile is a Kotlin Multiplatform app with thin Android and iOS wrappers and most product code in `/shared`. UI is Compose Multiplatform. Backend communication goes through SpacetimeDB REST API via Ktor HTTP client.
 
 Key directories:
 - `/androidApp` - Android wrapper
 - `/iosApp` - iOS wrapper
-- `/shared` - shared app, features, libs, routing, Rust wrappers
-- `/rust-agent` - Rust backend and FFI sources
+- `/shared` - shared app, features, libs, routing, data sources
 
 ## Non-Negotiables
 
@@ -74,8 +73,6 @@ mise run yral-mobile-ios-build       # = ./gradlew :iosSharedUmbrella:assembleXC
 mise run yral-mobile-ios-pod-install # = cd iosApp && pod install
 open iosApp/iosApp.xcworkspace
 
-# ── Rust ────────────────────────────────────────────────────────────
-cd shared/rust/rust-agent && cargo build
 ```
 
 ## Checks Module (`checks/`)

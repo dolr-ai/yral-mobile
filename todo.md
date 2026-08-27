@@ -5,12 +5,7 @@ Can you help me do this?
 - clean up the unused version code since we have separate version codes in for alpha and production apps in #build.gradle.kts
 - fix security codeql issues
 - update the dependencies to the latest versions
-- I would like to scour our entire codebase and figure out which of the canister modules in #file:rust-agent-uniffi  are not used and not being called by our UI code and are redundant there and remove them. Can you help me figure this out?
-
-Verify if the sonatype repository is still being used for any dependencies and if not, remove it from the build files.
 - Remove Roboelectric and corresponding tests from the codebase. We will either test logic via unit tests or test end to end flows via our e2e test pipeline
-
-- for the e2e tests that we are running with maestro and then checking on kafka, we added a filter to only fetch the events sent from yral-staging. But that's not enough as we could have interference with multiple devs testing and polluting the test data. We should also include the principal ID of the user in the filter to ensure that we are only fetching events from our tests and not from other devs testing at the same time. Can you help me with this?
 - Use version catalogs with bundles where applicable
 - Use build cache and configuration cache
 ```java
@@ -42,4 +37,4 @@ android {
 ```
 - Look at `@Keep` if the above messes with crashlytics
 - Remove the checks limitation where we are suppressing logs to github and just use the plain jane mechanism of displaying to github actions logs
-- break up ci if still large cache after rust cleanup
+- break up ci to separate ios and android steps. ci takes too long
