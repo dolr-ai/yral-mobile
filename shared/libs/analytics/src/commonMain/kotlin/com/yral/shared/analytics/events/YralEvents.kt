@@ -1925,6 +1925,9 @@ enum class InfluencerSource {
 
     @SerialName("profile")
     PROFILE,
+
+    @SerialName("deep_link")
+    DEEP_LINK,
 }
 
 @Serializable

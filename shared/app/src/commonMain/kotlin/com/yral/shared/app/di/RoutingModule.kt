@@ -8,6 +8,7 @@ import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.deeplink.engine.buildRoutingTable
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.Chat
+import com.yral.shared.libs.routing.routes.api.ConversationRoute
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Home
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -34,6 +35,7 @@ val routingModule =
                 route<GenerateAIVideo>(GenerateAIVideo.PATH)
                 route<Profile>(Profile.PATH)
                 route<Chat>(Chat.PATH)
+                route<ConversationRoute>(ConversationRoute.PATH)
                 route<UserProfileRoute>(UserProfileRoute.PATH)
 
                 route<VideoUploadSuccessful>(VideoUploadSuccessful.PATH)

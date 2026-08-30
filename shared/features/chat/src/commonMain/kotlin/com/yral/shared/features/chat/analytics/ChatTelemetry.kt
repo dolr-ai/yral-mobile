@@ -145,5 +145,6 @@ class ChatTelemetry(
         when (this) {
             ConversationInfluencerSource.CARD -> InfluencerSource.CARD
             ConversationInfluencerSource.PROFILE -> InfluencerSource.PROFILE
+            ConversationInfluencerSource.DEEP_LINK -> InfluencerSource.DEEP_LINK
         }
 }
