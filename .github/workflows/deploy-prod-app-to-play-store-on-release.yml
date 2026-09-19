@@ -46,7 +46,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Restore Gradle and Rust caches
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.gradle/caches
