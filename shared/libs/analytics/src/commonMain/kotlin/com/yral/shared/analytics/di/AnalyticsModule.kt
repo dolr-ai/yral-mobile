@@ -7,41 +7,28 @@ import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.adTracking.GetADIDUseCase
 import com.yral.shared.analytics.events.shouldSendToBranch
 import com.yral.shared.analytics.events.shouldSendToFacebook
-import com.yral.shared.analytics.events.shouldSendToYralBE
-import com.yral.shared.analytics.events.shouldSendViaCore
 import com.yral.shared.analytics.providers.branch.BranchAnalyticsProvider
 import com.yral.shared.analytics.providers.facebook.FacebookAnalyticsProvider
 import com.yral.shared.analytics.providers.firebase.FirebaseAnalyticsProvider
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.analytics.providers.snowplow.SnowplowAnalyticsProvider
-import com.yral.shared.analytics.providers.yral.AnalyticsApiService
-import com.yral.shared.analytics.providers.yral.CoreService
 import com.yral.shared.koin.koinInstance
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val analyticsModule =
     module {
-        singleOf(::AnalyticsApiService)
         singleOf(::EventToMapConverter)
         single { DeviceInstallIdStore(get<Settings>()) }
         single {
-            val isDebug: Boolean = get(IS_DEBUG)
-            CoreService(
-                analyticsApiService = get(),
-                crashlyticsManager = get(),
-                eventFilter = { it.shouldSendViaCore(isDebug) },
-            )
-        }
-        single {
             FirebaseAnalyticsProvider(
-                eventFilter = { !it.shouldSendToYralBE() },
+                eventFilter = { true },
                 mapConverter = get(),
             )
         }
         single {
             MixpanelAnalyticsProvider(
-                eventFilter = { !it.shouldSendToYralBE() },
+                eventFilter = { true },
                 mapConverter = get(),
                 token = get<String>(MIXPANEL_TOKEN),
             )
@@ -75,7 +62,6 @@ val analyticsModule =
                         get<BranchAnalyticsProvider>(),
                         get<SnowplowAnalyticsProvider>(),
                     ),
-                coreService = get<CoreService>(),
                 deviceInstallIdStore = get(),
             )
         }

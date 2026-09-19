@@ -21,24 +21,11 @@ abstract class BaseEventData(
     @SerialName("device") val device: String = "app",
 ) : EventData
 
-fun EventData.shouldSendToYralBE(): Boolean =
-    when (event) {
-        FeatureEvents.VIDEO_DURATION_WATCHED.getEventName() -> true
-        else -> false
-    }
-
 fun EventData.shouldSendToFacebook(): Boolean =
     when (event) {
         FeatureEvents.LOGIN_SUCCESS.getEventName() -> true
         FeatureEvents.GAME_PLAYED.getEventName() -> true
         else -> false
-    }
-
-fun EventData.shouldSendViaCore(isDebug: Boolean): Boolean =
-    when {
-        shouldSendToYralBE() -> true
-        isDebug -> false
-        else -> true
     }
 
 fun EventData.shouldSendToBranch(): Boolean =

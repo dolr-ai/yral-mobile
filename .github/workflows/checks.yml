@@ -9,7 +9,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write # detekt SARIF
 
 jobs:
   all-checks:
@@ -51,9 +50,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tooling-
 
+      # Pinned package list: the action's DEFAULT is `tools platform-tools`, and
+      # the legacy `tools` package no longer exists in the Android SDK
+      # repository — sdkmanager fails with "Failed to find package 'tools'" and
+      # the whole job dies before a single check runs. `cmdline-tools;latest` is
+      # preinstalled on the runner (the action reports finding it), so only
+      # platform-tools needs installing here.
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
+          packages: platform-tools
           log-accepted-android-sdk-licenses: false
 
       - name: Install Android NDK
@@ -75,9 +81,8 @@ jobs:
       # Run `./gradlew :checks:e2eTest` locally to execute the Maestro flows.
       # ══════════════════════════════════════════════════════════════════════
 
-      - name: Run detekt
-        run: ./gradlew detekt --continue
-
+      # detekt is already wired into `allChecks` (see the aggregate task in
+      # build.gradle.kts), so a separate invocation here would run it twice.
       - name: Run all checks
         run: ./gradlew allChecks
 
@@ -89,9 +94,3 @@ jobs:
           path: build/check-logs/**
           if-no-files-found: ignore
           retention-days: 5
-
-      - name: Upload detekt SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: build/reports/detekt/merge.sarif
