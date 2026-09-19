@@ -15,7 +15,6 @@ object AppConfigurations {
     const val VIDEOGEN_BASE_URL = "agent.rishi.yral.com"
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
     const val UPLOAD_BASE_URL = "agent.rishi.yral.com"
-    const val ANALYTICS_BASE_URL = "analytics.yral.com"
     const val CHAT_BASE_URL = "agent.rishi.yral.com"
     const val COACH_BASE_URL = "agent.rishi.yral.com"
     const val BILLING_BASE_URL = "billing.sarvesh.yral.com"

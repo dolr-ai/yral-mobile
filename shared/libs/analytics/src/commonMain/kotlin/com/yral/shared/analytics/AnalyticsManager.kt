@@ -7,7 +7,6 @@ import com.yral.shared.analytics.adTracking.getAdvertisingID
 import com.yral.shared.analytics.adTracking.getAdvertisingIdKey
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.IdentityTransitionEventData
-import com.yral.shared.analytics.providers.yral.CoreService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +16,6 @@ import kotlinx.coroutines.launch
 
 class AnalyticsManager(
     private val providers: List<AnalyticsProvider> = emptyList(),
-    private val coreService: CoreService? = null,
     private val deviceInstallIdStore: DeviceInstallIdStore? = null,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -27,9 +25,6 @@ class AnalyticsManager(
         eventBus.events
             .onEach { event ->
                 trackEventToProviders(event)
-                if (coreService?.shouldTrackEvent(event) == true) {
-                    coreService.trackEvent(event)
-                }
             }.launchIn(scope)
 
         applyCommonContextToProviders()
@@ -89,12 +84,10 @@ class AnalyticsManager(
 
     fun flush() {
         providers.forEach { it.flush() }
-        coreService?.flush()
     }
 
     fun setUserProperties(user: User) {
         providers.forEach { it.setUserProperties(user) }
-        coreService?.setUserProperties(user)
     }
 
     fun reset() {
@@ -116,9 +109,6 @@ class AnalyticsManager(
         applyCommonContextToProviders()
 
         trackIdentityTransition(reason, distinctIdBeforeReset)
-
-        coreService?.flush()
-        coreService?.reset()
     }
 
     private fun trackIdentityTransition(
