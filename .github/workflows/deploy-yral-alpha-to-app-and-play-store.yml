@@ -63,8 +63,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tooling-
 
+      # Pinned package list: the action defaults to `tools platform-tools`, and
+      # the legacy `tools` package no longer exists in the Android SDK
+      # repository — sdkmanager fails with "Failed to find package 'tools'" and
+      # the job dies before any build step runs.
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Android NDK
         run: |

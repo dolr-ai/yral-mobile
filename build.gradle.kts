@@ -23,10 +23,6 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
 
-val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
-    output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.sarif")) // or "reports/detekt/merge.sarif"
-}
-
 allprojects {
     repositories {
         google()
@@ -83,14 +79,6 @@ subprojects {
                 required.set(true)
                 outputLocation.set(file("build/reports/detekt/detekt.xml"))
             }
-            sarif {
-                required.set(true)
-                outputLocation.set(file("build/reports/detekt/detekt.sarif"))
-            }
-        }
-        finalizedBy(reportMerge)
-        reportMerge.configure {
-            input.from(sarifReportFile)
         }
     }
 
